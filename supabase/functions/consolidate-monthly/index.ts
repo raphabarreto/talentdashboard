@@ -38,8 +38,8 @@ Deno.serve(async () => {
       const peakViewers = liveSnaps.length > 0
         ? Math.max(...liveSnaps.map(sn => sn.viewers))
         : 0
-      const hoursStreamed = Math.round((liveSnaps.length * 5) / 60) // cada snap = 5min
-      const hoursWatched = Math.round(liveSnaps.reduce((sum, sn) => sum + sn.viewers * 5, 0) / 60)
+      const hoursStreamed = Math.round((liveSnaps.length * 240) / 60) // cada snap = 4h (240min)
+      const hoursWatched = Math.round(liveSnaps.reduce((sum, sn) => sum + sn.viewers * 240, 0) / 60)
 
       // Upsert no histórico
       await supabase.from("streamer_history").upsert({
@@ -63,13 +63,11 @@ Deno.serve(async () => {
       consolidated++
     }
 
-    // Limpar snapshots > 6 meses
-    const sixMonthsAgo = new Date()
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+    // Limpar snapshots do mês que foi consolidado
     await supabase
       .from("stream_snapshots")
       .delete()
-      .lt("captured_at", sixMonthsAgo.toISOString())
+      .lt("captured_at", endDate)
 
     return new Response(JSON.stringify({ consolidated, month, cleaned: true }), {
       headers: { "Content-Type": "application/json" }

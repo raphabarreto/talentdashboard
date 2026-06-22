@@ -483,8 +483,12 @@ document.getElementById('closeAddStreamer')?.addEventListener('click', () => doc
 document.getElementById('addStreamerForm')?.addEventListener('submit', async (e) => {
   e.preventDefault()
   const input = document.getElementById('streamerNameInput') as HTMLInputElement
+  const btn = e.target as HTMLFormElement
+  const submitBtn = btn.querySelector('button[type="submit"]') as HTMLButtonElement
   const name = input.value.trim()
   if (!name) return
+  submitBtn.disabled = true
+  submitBtn.textContent = 'Buscando...'
   try {
     const user = await fetchTwitchUser(name)
     if (!user) throw new Error('Streamer não encontrado.')
@@ -497,6 +501,7 @@ document.getElementById('addStreamerForm')?.addEventListener('submit', async (e)
     document.getElementById('addStreamerModal')!.classList.add('hidden')
     showToast('Streamer adicionado!')
   } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
+  finally { submitBtn.disabled = false; submitBtn.textContent = 'Buscar e Salvar' }
 })
 
 // Add Multiple
