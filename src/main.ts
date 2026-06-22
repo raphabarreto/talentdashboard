@@ -1,5 +1,5 @@
 import { getSession, signOut, onAuthChange } from './lib/auth'
-import { getStreamers, addStreamer, updateStreamer, deleteStreamer, getStreamerHistory, getCampaigns, addCampaign, deleteCampaign } from './lib/data'
+import { getStreamers, addStreamer, updateStreamer, deleteStreamer, getStreamerHistory, getCampaigns, addCampaign, updateCampaign, deleteCampaign } from './lib/data'
 import { fetchTwitchUser, fetchLiveStreams, fetchInitialStats } from './lib/twitch'
 import type { Streamer, Campaign } from './types'
 import './style.css'
@@ -12,6 +12,7 @@ const selectedStreamers = new Set<string>()
 const PAGE_SIZE = 12
 let overviewPage = 1
 let tablePage = 1
+let editingCampaignId: string | null = null
 
 // --- Auth ---
 async function init() {
@@ -128,25 +129,25 @@ function renderOverview() {
   paged.forEach(s => {
     const flagHtml = s.country ? `<span class="fi fi-${s.country} w-5 h-5 rounded-full shadow-md"></span> ${countryNames[s.country] || s.country}` : '-'
     const card = document.createElement('div')
-    card.className = 'bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700 hover:scale-[1.02] transition-transform'
+    card.className = 'bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700 hover:scale-105 transition-transform'
     card.innerHTML = `
-      <div class="flex items-center mb-3">
-        <div class="w-10 h-10 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold text-lg mr-3">${s.name.charAt(0).toUpperCase()}</div>
+      <div class="flex items-center mb-4">
+        <div class="w-12 h-12 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold text-xl mr-4">${s.name.charAt(0).toUpperCase()}</div>
         <div class="flex-1">
-          <a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-lg font-bold text-white hover:text-indigo-400 transition-colors">${s.name}</a>
+          <a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors">${s.name}</a>
         </div>
       </div>
-      <div class="space-y-1 text-sm">
+      <div class="space-y-2 text-sm">
         <p class="flex justify-between"><span class="text-slate-400">País:</span><span class="font-semibold text-indigo-400 flex items-center gap-2">${flagHtml}</span></p>
         <p class="flex justify-between"><span class="text-slate-400">Média de Viewers:</span><span class="font-semibold text-indigo-400">${fmt(s.avg_viewers)}</span></p>
         <p class="flex justify-between"><span class="text-slate-400">Pico de Viewers:</span><span class="font-semibold">${fmt(s.peak_viewers)}</span></p>
         <p class="flex justify-between"><span class="text-slate-400">Horas Assistidas:</span><span class="font-semibold">${fmt(s.hours_watched)}</span></p>
         <p class="flex justify-between"><span class="text-slate-400">Horas Transmitidas:</span><span class="font-semibold">${fmt(s.hours_streamed)}</span></p>
       </div>
-      <div class="mt-3 flex justify-between text-xs">
-        <button class="text-emerald-500 hover:text-emerald-400 font-semibold cursor-pointer history-btn" data-id="${s.id}" data-name="${s.name}">Histórico</button>
-        <button class="text-cyan-500 hover:text-cyan-400 font-semibold cursor-pointer refresh-btn" data-id="${s.id}">Atualizar</button>
-        <button class="text-red-500 hover:text-red-400 font-semibold cursor-pointer delete-btn" data-id="${s.id}">Remover</button>
+      <div class="mt-4 flex justify-between">
+        <button class="text-xs text-emerald-500 hover:text-emerald-400 font-semibold cursor-pointer history-btn" data-id="${s.id}" data-name="${s.name}">Histórico</button>
+        <button class="text-xs text-cyan-500 hover:text-cyan-400 font-semibold cursor-pointer refresh-btn" data-id="${s.id}">Atualizar</button>
+        <button class="text-xs text-red-500 hover:text-red-400 font-semibold cursor-pointer delete-btn" data-id="${s.id}">Remover</button>
       </div>
     `
     grid.appendChild(card)
@@ -192,6 +193,23 @@ function renderTable() {
     tbody.appendChild(row)
   })
 
+  // Paginação da tabela
+  const tableContainer = tbody.closest('.overflow-x-auto')!.parentElement!
+  const existingPag = tableContainer.querySelector('.table-pagination')
+  if (existingPag) existingPag.remove()
+  if (totalPages > 1) {
+    const pag = document.createElement('div')
+    pag.className = 'table-pagination flex items-center justify-center gap-4 mt-6'
+    pag.innerHTML = `
+      <button class="prev-table py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${tablePage === 1 ? 'disabled' : ''}>← Anterior</button>
+      <span class="text-sm text-slate-400">${tablePage} / ${totalPages}</span>
+      <button class="next-table py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${tablePage === totalPages ? 'disabled' : ''}>Próxima →</button>
+    `
+    tableContainer.appendChild(pag)
+    pag.querySelector('.prev-table')?.addEventListener('click', () => { tablePage--; renderTable() })
+    pag.querySelector('.next-table')?.addEventListener('click', () => { tablePage++; renderTable() })
+  }
+
   updateSelectionButtons()
 }
 
@@ -223,6 +241,7 @@ function renderCampaigns() {
       <td class="p-4">${fmtDate(c.end_date)}</td>
       <td class="p-4 font-semibold">${fmtCurrency(total)}</td>
       <td class="p-4 flex gap-3">
+        <button class="text-amber-500 hover:text-amber-400 text-sm font-semibold edit-campaign-btn" data-id="${c.id}">Editar</button>
         <button class="text-indigo-500 hover:text-indigo-400 text-sm font-semibold details-campaign-btn" data-id="${c.id}">Detalhes</button>
         <button class="text-red-500 hover:text-red-400 text-sm font-semibold delete-campaign-btn" data-id="${c.id}">Remover</button>
       </td>
@@ -376,6 +395,21 @@ document.addEventListener('click', async (e) => {
     await showHistory(id, name)
   }
 
+  if (target.classList.contains('edit-campaign-btn')) {
+    const id = target.dataset.id!
+    const c = campaigns.find(cp => cp.id === id)
+    if (!c) return
+    editingCampaignId = id
+    document.getElementById('campaignModalTitle')!.textContent = 'Editar Campanha'
+    document.getElementById('saveCampaignBtn')!.textContent = 'Atualizar'
+    ;(document.getElementById('companyInput') as HTMLInputElement).value = c.company
+    ;(document.getElementById('startDateInput') as HTMLInputElement).value = c.start_date
+    ;(document.getElementById('endDateInput') as HTMLInputElement).value = c.end_date
+    ;(document.getElementById('globalPaymentDate') as HTMLInputElement).value = c.campaign_streamers?.[0]?.payment_date || ''
+    ;(document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value = c.campaign_streamers?.map(s => `${s.streamer_name}:${s.payment || 0}`).join('\n') || ''
+    document.getElementById('campaignModal')!.classList.remove('hidden')
+  }
+
   if (target.classList.contains('details-campaign-btn')) {
     const id = target.dataset.id!
     const c = campaigns.find(cp => cp.id === id)
@@ -508,7 +542,13 @@ document.getElementById('refreshAllBtn')?.addEventListener('click', async () => 
 })
 
 // Campaigns
-document.getElementById('openAddCampaign')?.addEventListener('click', () => document.getElementById('campaignModal')!.classList.remove('hidden'))
+document.getElementById('openAddCampaign')?.addEventListener('click', () => {
+  editingCampaignId = null
+  document.getElementById('campaignModalTitle')!.textContent = 'Adicionar Campanha'
+  document.getElementById('saveCampaignBtn')!.textContent = 'Salvar'
+  ;(document.getElementById('campaignForm') as HTMLFormElement).reset()
+  document.getElementById('campaignModal')!.classList.remove('hidden')
+})
 document.getElementById('closeCampaignModal')?.addEventListener('click', () => document.getElementById('campaignModal')!.classList.add('hidden'))
 document.getElementById('campaignForm')?.addEventListener('submit', async (e) => {
   e.preventDefault()
@@ -516,15 +556,44 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
   const startDate = (document.getElementById('startDateInput') as HTMLInputElement).value
   const endDate = (document.getElementById('endDateInput') as HTMLInputElement).value
   const paymentDate = (document.getElementById('globalPaymentDate') as HTMLInputElement).value || null
-  const names = (document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value.split('\n').map(n => n.trim()).filter(n => n)
 
-  await addCampaign(
-    { company, start_date: startDate, end_date: endDate },
-    names.map(n => ({ streamer_name: n, payment: 0, payment_date: paymentDate }))
-  )
+  // Validação de datas
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  if (isNaN(start.getTime()) || start.getFullYear() < 2020 || start.getFullYear() > 2030) {
+    showToast('Data de início inválida', 'error'); return
+  }
+  if (isNaN(end.getTime()) || end.getFullYear() < 2020 || end.getFullYear() > 2030) {
+    showToast('Data de fim inválida', 'error'); return
+  }
+  if (end < start) {
+    showToast('Data de fim não pode ser antes da data de início', 'error'); return
+  }
+  if (paymentDate) {
+    const pay = new Date(paymentDate)
+    if (isNaN(pay.getTime()) || pay.getFullYear() < 2020 || pay.getFullYear() > 2030) {
+      showToast('Data de pagamento inválida', 'error'); return
+    }
+  }
+
+  const lines = (document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value.split('\n').map(n => n.trim()).filter(n => n)
+
+  const streamerRows = lines.map(line => {
+    const [name, payment] = line.split(':')
+    return { streamer_name: name.trim(), payment: Number(payment) || 0, payment_date: paymentDate }
+  })
+
+  if (editingCampaignId) {
+    await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate }, streamerRows)
+    showToast('Campanha atualizada!')
+  } else {
+    await addCampaign({ company, start_date: startDate, end_date: endDate }, streamerRows)
+    showToast('Campanha adicionada!')
+  }
+
+  editingCampaignId = null
   await loadData(); renderAll()
   document.getElementById('campaignModal')!.classList.add('hidden')
-  showToast('Campanha adicionada!')
 })
 
 // Remove selected

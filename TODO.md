@@ -4,12 +4,12 @@
 - [ ] Botão "Definir Categoria" (lógica)
 - [ ] Botão "Limpar Categorias Avulsas" (lógica)
 - [ ] Botão "Atualizar" individual (recalcular métricas dos snapshots)
-- [ ] Remover v1tona duplicado no banco
-- [ ] Popular streamers atuais com dados do TwitchTracker (seed 1x)
+- [x] Remover v1tona duplicado no banco
+- [x] Popular streamers atuais com dados do TwitchTracker (seed 1x)
 
 ## Melhorias visuais
-- [ ] Paginação na tabela de dados
-- [ ] Modal de editar campanha
+- [x] Paginação na tabela de dados
+- [x] Modal de editar campanha
 
 ## Deploy
 - [ ] Criar repo no GitHub
