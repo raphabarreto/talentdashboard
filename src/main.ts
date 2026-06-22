@@ -120,6 +120,11 @@ function renderOverview() {
   const paged = data.slice((overviewPage - 1) * PAGE_SIZE, overviewPage * PAGE_SIZE)
   grid.innerHTML = ''
 
+  if (data.length === 0) {
+    grid.innerHTML = '<p class="text-slate-400 text-sm col-span-full text-center py-8">Nenhum streamer encontrado.</p>'
+    return
+  }
+
   paged.forEach(s => {
     const flagHtml = s.country ? `<span class="fi fi-${s.country} w-5 h-5 rounded-full shadow-md"></span> ${countryNames[s.country] || s.country}` : '-'
     const card = document.createElement('div')
@@ -139,9 +144,9 @@ function renderOverview() {
         <p class="flex justify-between"><span class="text-slate-400">Horas Transmitidas:</span><span class="font-semibold">${fmt(s.hours_streamed)}</span></p>
       </div>
       <div class="mt-3 flex justify-between text-xs">
-        <button class="text-emerald-500 hover:text-emerald-400 font-semibold history-btn" data-id="${s.id}" data-name="${s.name}">Histórico</button>
-        <button class="text-cyan-500 hover:text-cyan-400 font-semibold refresh-btn" data-id="${s.id}">Atualizar</button>
-        <button class="text-red-500 hover:text-red-400 font-semibold delete-btn" data-id="${s.id}">Remover</button>
+        <button class="text-emerald-500 hover:text-emerald-400 font-semibold cursor-pointer history-btn" data-id="${s.id}" data-name="${s.name}">Histórico</button>
+        <button class="text-cyan-500 hover:text-cyan-400 font-semibold cursor-pointer refresh-btn" data-id="${s.id}">Atualizar</button>
+        <button class="text-red-500 hover:text-red-400 font-semibold cursor-pointer delete-btn" data-id="${s.id}">Remover</button>
       </div>
     `
     grid.appendChild(card)

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Talentos Twitch</title>
+    <link rel="icon" type="image/png" href="/src/favicon.png">
     <link rel="stylesheet" href="/src/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,9 +37,9 @@
 
         <!-- Navigation -->
         <nav class="flex items-center border-b border-slate-700 mb-8">
-            <button data-view="overview" class="nav-link py-3 px-6 font-medium text-indigo-400 border-b-2 border-indigo-500 transition-colors">Visão Geral</button>
-            <button data-view="table" class="nav-link py-3 px-6 font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors">Tabela de Dados</button>
-            <button data-view="campaigns" class="nav-link py-3 px-6 font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors">Campanhas</button>
+            <button data-view="overview" class="nav-link py-3 px-6 font-medium text-indigo-400 border-b-2 border-indigo-500 transition-colors cursor-pointer">Visão Geral</button>
+            <button data-view="table" class="nav-link py-3 px-6 font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors cursor-pointer">Tabela de Dados</button>
+            <button data-view="campaigns" class="nav-link py-3 px-6 font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors cursor-pointer">Campanhas</button>
         </nav>
 
         <!-- View: Overview -->
@@ -192,17 +193,17 @@
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
             <h3 id="historyTitle" class="text-lg font-bold text-white mb-4"></h3>
             <div id="historyContent"></div>
-            <button id="closeHistoryModal" class="mt-4 w-full py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>
+            <button id="closeHistoryModal" class="mt-4 py-2 px-6 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors text-sm">Fechar</button>
         </div>
     </div>
 
     <!-- Modal: Confirmação -->
     <div id="confirmModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl px-8 py-6 flex flex-col items-center gap-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl px-10 py-8 flex flex-col items-center gap-5 min-w-[300px]">
             <p id="confirmText" class="text-white font-semibold text-lg text-center"></p>
-            <div class="flex gap-3">
-                <button id="confirmYes" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">Remover</button>
-                <button id="confirmNo" class="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors">Cancelar</button>
+            <div class="flex gap-4">
+                <button id="confirmYes" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors">Remover</button>
+                <button id="confirmNo" class="bg-slate-600 hover:bg-slate-500 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors">Cancelar</button>
             </div>
         </div>
     </div>
