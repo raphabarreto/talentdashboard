@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Talentos Twitch</title>
+    <link rel="stylesheet" href="/src/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-200 font-[Inter]">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white">Dashboard de Talentos Twitch</h1>
+                <p class="mt-1 text-slate-400">Gerencie e analise o desempenho dos seus streamers.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 sm:mt-0">
+                <button id="refreshAllBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm">&#x21BB; Atualizar Todos</button>
+                <button id="addMultipleBtn" class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm">+ Adicionar Vários</button>
+                <button id="openAddStreamer" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm">+ Adicionar Streamer</button>
+                <button id="openAddCampaign" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm">+ Adicionar Campanha</button>
+                <button id="logoutBtn" class="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors text-sm">Sair</button>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="flex items-center border-b border-slate-700 mb-8">
+            <button data-view="overview" class="nav-link py-3 px-6 font-medium text-indigo-400 border-b-2 border-indigo-500 transition-colors">Visão Geral</button>
+            <button data-view="table" class="nav-link py-3 px-6 font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors">Tabela de Dados</button>
+            <button data-view="campaigns" class="nav-link py-3 px-6 font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors">Campanhas</button>
+        </nav>
+
+        <!-- View: Overview -->
+        <section id="view-overview" class="view">
+            <p class="text-slate-400 text-sm mb-6">Esta seção oferece uma visão rápida do desempenho individual de cada streamer através de cartões de resumo. É ideal para uma análise rápida dos principais indicadores de cada talento que você gerencia.</p>
+            <div class="flex flex-wrap gap-3 mb-6">
+                <input id="search-overview" type="text" placeholder="Nome do streamer..." class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
+                <select id="category-filter-overview" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todas Categorias</option></select>
+                <select id="country-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os Países</option></select>
+                <select id="status-filter-overview" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
+                    <option value="all">Todos</option><option value="active">Ativos</option><option value="inactive">Inativos</option>
+                </select>
+            </div>
+            <div id="overview-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+        </section>
+
+        <!-- View: Table -->
+        <section id="view-table" class="view hidden">
+            <p class="text-slate-400 text-sm mb-6">Aqui você encontra todos os dados em um formato de tabela detalhado. Esta visão é perfeita para uma análise aprofundada e para exportação. Clique nos cabeçalhos das colunas para ordenar os dados e encontrar a informação que precisa com mais facilidade.</p>
+            <div class="flex flex-wrap gap-3 mb-4">
+                <input id="search-table" type="text" placeholder="Nome do streamer..." class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
+                <select id="category-filter-table" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todas Categorias</option></select>
+                <select id="country-filter-table" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os Países</option></select>
+                <select id="status-filter-table" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
+                    <option value="all">Todos</option><option value="active">Ativos</option><option value="inactive">Inativos</option>
+                </select>
+            </div>
+            <div class="flex gap-3 mb-4">
+                <button id="generatePdfBtn" class="hidden bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">Gerar PDF (<span id="selectedCount">0</span>)</button>
+                <button id="removeSelectedBtn" class="hidden bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">Remover (<span id="selectedCountRemove">0</span>)</button>
+            </div>
+            <div class="overflow-x-auto rounded-lg border border-slate-700">
+                <table class="w-full text-sm text-left">
+                    <thead class="border-b border-slate-600 text-slate-400 bg-slate-800/50">
+                        <tr>
+                            <th class="p-4"><input type="checkbox" id="selectAll" class="w-4 h-4 rounded"></th>
+                            <th class="p-4 cursor-pointer hover:text-white" data-sort="name">Nome do Streamer</th>
+                            <th class="p-4 cursor-pointer hover:text-white" data-sort="avg_viewers">Média de Viewers</th>
+                            <th class="p-4">Twitch</th>
+                            <th class="p-4">SullyGnome</th>
+                            <th class="p-4">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-slate-700"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- View: Campaigns -->
+        <section id="view-campaigns" class="view hidden">
+            <p class="text-slate-400 text-sm mb-6">Gerencie suas campanhas de marketing aqui. Adicione novos projetos, associe streamers e acompanhe os pagamentos.</p>
+            <div class="flex flex-wrap gap-4 mb-6 items-end">
+                <div>
+                    <label class="text-sm font-semibold text-white block mb-1">Filtrar por Mês:</label>
+                    <select id="month-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-[220px]"><option value="all">Todos os Meses</option></select>
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-white block mb-1">Filtrar por Ano:</label>
+                    <select id="year-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-[160px]"><option value="all">Todos os Anos</option></select>
+                </div>
+            </div>
+            <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-6">
+                <p class="text-slate-400 text-sm">Valor Total de Campanhas do Mês</p>
+                <p id="monthly-total" class="text-2xl font-bold text-indigo-400">R$ 0,00</p>
+            </div>
+            <div class="overflow-x-auto rounded-lg border border-slate-700">
+                <table class="w-full text-sm text-left">
+                    <thead class="border-b border-slate-600 text-slate-400 bg-slate-800/50">
+                        <tr>
+                            <th class="p-4">Empresa</th>
+                            <th class="p-4">Data de Início</th>
+                            <th class="p-4">Data de Fim</th>
+                            <th class="p-4">Valor Total</th>
+                            <th class="p-4">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="campaigns-body" class="divide-y divide-slate-700"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal: Adicionar Streamer -->
+    <div id="addStreamerModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-bold text-white mb-4">Adicionar Streamer</h3>
+            <form id="addStreamerForm" class="space-y-4">
+                <input id="streamerNameInput" type="text" placeholder="Nome do streamer na Twitch" required
+                    class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">Buscar e Salvar</button>
+                    <button type="button" id="closeAddStreamer" class="flex-1 py-3 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Adicionar Vários -->
+    <div id="addMultipleModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-bold text-white mb-4">Adicionar Vários Streamers</h3>
+            <textarea id="multipleNamesInput" rows="8" placeholder="Um nome por linha..." class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></textarea>
+            <p id="multipleProgress" class="text-sm text-slate-400 mt-2 hidden"></p>
+            <div class="flex gap-3 mt-4">
+                <button id="saveMultipleBtn" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">Buscar e Salvar</button>
+                <button id="closeMultipleModal" class="flex-1 py-3 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Campanha -->
+    <div id="campaignModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 id="campaignModalTitle" class="text-lg font-bold text-white mb-4">Adicionar Campanha</h3>
+            <form id="campaignForm" class="space-y-4">
+                <input id="companyInput" type="text" placeholder="Empresa" required class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="grid grid-cols-2 gap-3">
+                    <input id="startDateInput" type="date" required class="px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input id="endDateInput" type="date" required class="px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <input id="globalPaymentDate" type="date" placeholder="Data de Pagamento" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <textarea id="campaignStreamersInput" rows="4" placeholder="Streamers (um por linha)" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></textarea>
+                <div class="flex gap-3">
+                    <button type="submit" id="saveCampaignBtn" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">Salvar</button>
+                    <button type="button" id="closeCampaignModal" class="flex-1 py-3 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Detalhes Campanha -->
+    <div id="campaignDetailsModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-lg">
+            <h3 id="detailsTitle" class="text-lg font-bold text-white mb-4"></h3>
+            <div class="space-y-2 text-sm mb-4">
+                <p><span class="text-slate-400">Empresa:</span> <span id="detailsCompany" class="text-white font-semibold"></span></p>
+                <p><span class="text-slate-400">Período:</span> <span id="detailsPeriod" class="text-white"></span></p>
+                <p><span class="text-slate-400">Valor Total:</span> <span id="detailsTotal" class="text-white font-semibold"></span></p>
+                <p><span class="text-slate-400">Data Pagamento:</span> <span id="detailsPaymentDate" class="text-white"></span></p>
+            </div>
+            <table class="w-full text-sm text-left">
+                <thead class="border-b border-slate-600 text-slate-400"><tr><th class="p-2">Streamer</th><th class="p-2">Pagamento</th></tr></thead>
+                <tbody id="detailsStreamers" class="divide-y divide-slate-700"></tbody>
+            </table>
+            <button id="closeDetailsModal" class="mt-4 w-full py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Modal: Histórico -->
+    <div id="historyModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <h3 id="historyTitle" class="text-lg font-bold text-white mb-4"></h3>
+            <div id="historyContent"></div>
+            <button id="closeHistoryModal" class="mt-4 w-full py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 bg-emerald-600 text-white translate-y-[200%] transition-transform duration-300">
+        <span id="toast-message"></span>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
