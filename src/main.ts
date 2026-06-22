@@ -1,21 +1,17 @@
 import { getSession, signOut, onAuthChange } from './lib/auth'
 import { supabase } from './lib/supabase'
-import { getStreamers, addStreamer, deleteStreamer, getStreamerHistory, getCampaigns, addCampaign, updateCampaign, deleteCampaign } from './lib/data'
+import { getStreamers, addStreamer, deleteStreamer, getCampaigns, addCampaign, updateCampaign, deleteCampaign } from './lib/data'
 import { fetchTwitchUser, fetchInitialStats, fetchLiveStreams } from './lib/twitch'
-import type { Streamer, Campaign } from './types'
+import { streamers, campaigns, selectedStreamers, currentSort, editingCampaignId, setStreamers, setCampaigns, setOverviewPage, setTablePage, setEditingCampaignId } from './state'
+import { showToast, confirmAction, fmtDate, fmtCurrency, fmt, langToCountry } from './utils'
+import { renderOverview } from './ui/overview'
+import { renderTable } from './ui/table'
+import { renderCampaigns } from './ui/campaigns'
+import { showHistory } from './ui/history'
+import { populateFilters, setupAutocomplete, getExistingCompanies, getFilteredStreamers } from './ui/filters'
 import './style.css'
 
-// --- Estado ---
-let streamers: Streamer[] = []
-let campaigns: Campaign[] = []
-let currentSort = { key: 'avg_viewers', order: 'desc' as 'asc' | 'desc' }
-const selectedStreamers = new Set<string>()
-const PAGE_SIZE = 12
-let overviewPage = 1
-let tablePage = 1
-let editingCampaignId: string | null = null
-
-// --- Auth ---
+// --- Init ---
 async function init() {
   const session = await getSession()
   if (!session) { window.location.href = '/login.html'; return }
@@ -30,68 +26,16 @@ async function init() {
 onAuthChange((loggedIn) => { if (!loggedIn) window.location.href = '/login.html' })
 
 async function loadData() {
-  ;[streamers, campaigns] = await Promise.all([getStreamers(), getCampaigns()])
+  const [s, c] = await Promise.all([getStreamers(), getCampaigns()])
+  setStreamers(s)
+  setCampaigns(c)
 }
 
-// --- Helpers ---
-function getExistingCategories(): string[] {
-  return [...new Set(streamers.map(s => s.main_category).filter(Boolean))].sort()
-}
-
-function getExistingCompanies(): string[] {
-  return [...new Set(campaigns.map(c => c.company).filter(Boolean))].sort()
-}
-
-function setupAutocomplete(inputId: string, suggestionsId: string, dataFn?: () => string[]) {
-  const input = document.getElementById(inputId) as HTMLInputElement
-  const suggestions = document.getElementById(suggestionsId)!
-  const getData = dataFn || getExistingCategories
-
-  input.addEventListener('focus', () => showSuggestions(input, suggestions, getData))
-  input.addEventListener('input', () => showSuggestions(input, suggestions, getData))
-  document.addEventListener('click', (e) => {
-    if (!suggestions.contains(e.target as Node) && e.target !== input) suggestions.classList.add('hidden')
-  })
-}
-
-function showSuggestions(input: HTMLInputElement, container: HTMLElement, dataFn: () => string[]) {
-  const items = dataFn()
-  const val = input.value.toLowerCase()
-  const filtered = val ? items.filter(c => c.toLowerCase().includes(val)) : items
-  if (!filtered.length) { container.classList.add('hidden'); return }
-  container.innerHTML = filtered.map(c => `<div class="px-4 py-3 hover:bg-slate-600 cursor-pointer text-white">${c}</div>`).join('')
-  container.classList.remove('hidden')
-  container.querySelectorAll('div').forEach(el => {
-    el.addEventListener('click', () => { input.value = el.textContent!; container.classList.add('hidden') })
-  })
-}
-
-const langToCountry: Record<string, string> = {
-  pt: 'br', en: 'us', es: 'es', fr: 'fr', de: 'de', it: 'it', ja: 'jp', ko: 'kr', ru: 'ru', zh: 'cn', pl: 'pl', nl: 'nl', sv: 'se'
-}
-
-function isActive(s: Streamer): boolean {
-  if (!s.last_live_at) return false
-  return Date.now() - new Date(s.last_live_at).getTime() < 15 * 24 * 60 * 60 * 1000
-}
-const countryNames: Record<string, string> = {
-  us: 'Estados Unidos', br: 'Brasil', ca: 'Canadá', de: 'Alemanha', fr: 'França', gb: 'Reino Unido', es: 'Espanha', jp: 'Japão',
-  kr: 'Coreia do Sul', mx: 'México', ar: 'Argentina', it: 'Itália', au: 'Austrália', in: 'Índia', ru: 'Rússia', cn: 'China',
-  se: 'Suécia', pl: 'Polônia', nl: 'Holanda', pt: 'Portugal'
-}
-const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
-const fmt = (n: number) => n.toLocaleString('pt-BR')
-const fmtCurrency = (n: number) => `R$ ${n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
-const fmtDate = (d: string) => { if (!d) return '-'; const [y, m, day] = d.split('-'); return `${day}/${m}/${y}` }
-
-function showToast(msg: string, type: 'success' | 'error' = 'success') {
-  const toast = document.getElementById('toast')!
-  const toastMsg = document.getElementById('toast-message')!
-  toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 ${type === 'error' ? 'bg-red-600' : 'bg-emerald-600'} text-white`
-  toastMsg.textContent = msg
-  toast.classList.remove('translate-y-[200%]')
-  toast.classList.add('translate-y-0')
-  setTimeout(() => { toast.classList.remove('translate-y-0'); toast.classList.add('translate-y-[200%]') }, 3000)
+function renderAll() {
+  populateFilters()
+  renderOverview()
+  renderTable()
+  renderCampaigns()
 }
 
 // --- Navigation ---
@@ -101,297 +45,15 @@ function setupNav() {
       const viewId = (link as HTMLElement).dataset.view!
       document.querySelectorAll('.view').forEach(v => v.classList.toggle('hidden', v.id !== `view-${viewId}`))
       document.querySelectorAll('.nav-link').forEach(l => {
-        const isActive = (l as HTMLElement).dataset.view === viewId
-        l.classList.toggle('border-indigo-500', isActive)
-        l.classList.toggle('text-indigo-400', isActive)
-        l.classList.toggle('border-transparent', !isActive)
-        l.classList.toggle('text-slate-400', !isActive)
+        const active = (l as HTMLElement).dataset.view === viewId
+        l.classList.toggle('border-indigo-500', active)
+        l.classList.toggle('text-indigo-400', active)
+        l.classList.toggle('border-transparent', !active)
+        l.classList.toggle('text-slate-400', !active)
       })
     })
   })
   document.querySelector('.nav-link')?.dispatchEvent(new Event('click'))
-}
-
-// --- Filters ---
-function getFilteredStreamers(prefix: string) {
-  const search = (document.getElementById(`search-${prefix}`) as HTMLInputElement)?.value.toLowerCase() || ''
-  const country = (document.getElementById(prefix === 'overview' ? 'country-filter' : 'country-filter-table') as HTMLSelectElement)?.value || 'all'
-  const status = (document.getElementById(`status-filter-${prefix}`) as HTMLSelectElement)?.value || 'all'
-  const category = (document.getElementById(`category-filter-${prefix}`) as HTMLSelectElement)?.value || 'all'
-
-  return streamers
-    .filter(s => !search || s.name.toLowerCase().includes(search))
-    .filter(s => country === 'all' || s.country === country)
-    .filter(s => status === 'all' || (status === 'active' ? isActive(s) : !isActive(s)))
-    .filter(s => category === 'all' || s.main_category?.toLowerCase() === category)
-    .sort((a, b) => {
-      const aVal = a[currentSort.key as keyof Streamer] as number
-      const bVal = b[currentSort.key as keyof Streamer] as number
-      return currentSort.order === 'desc' ? bVal - aVal : aVal - bVal
-    })
-}
-
-function populateFilters() {
-  const countries = [...new Set(streamers.map(s => s.country).filter(Boolean))].sort()
-  const categories = [...new Set(streamers.map(s => s.main_category?.toLowerCase()).filter(Boolean))].sort()
-
-  ;['country-filter', 'country-filter-table'].forEach(id => {
-    const el = document.getElementById(id) as HTMLSelectElement
-    const val = el.value
-    el.innerHTML = '<option value="all">Todos os Países</option>'
-    countries.forEach(c => { el.innerHTML += `<option value="${c}">${countryNames[c] || c.toUpperCase()}</option>` })
-    el.value = val || 'all'
-  })
-  ;['category-filter-overview', 'category-filter-table'].forEach(id => {
-    const el = document.getElementById(id) as HTMLSelectElement
-    if (!el) return
-    const val = el.value
-    el.innerHTML = '<option value="all">Todas Categorias</option>'
-    categories.forEach(c => { el.innerHTML += `<option value="${c}">${c.replace(/\b\w/g, l => l.toUpperCase())}</option>` })
-    el.value = val || 'all'
-  })
-}
-
-
-// --- Render Overview ---
-function renderOverview() {
-  const grid = document.getElementById('overview-grid')!
-  const data = getFilteredStreamers('overview')
-  const totalPages = Math.ceil(data.length / PAGE_SIZE)
-  if (overviewPage > totalPages) overviewPage = Math.max(1, totalPages)
-  const paged = data.slice((overviewPage - 1) * PAGE_SIZE, overviewPage * PAGE_SIZE)
-  grid.innerHTML = ''
-
-  if (data.length === 0) {
-    grid.innerHTML = '<p class="text-slate-400 text-sm col-span-full text-center py-8">Nenhum streamer encontrado.</p>'
-    return
-  }
-
-  paged.forEach(s => {
-    const flagHtml = s.country ? `<span class="fi fi-${s.country} w-5 h-5 rounded-full shadow-md"></span> ${countryNames[s.country] || s.country}` : '-'
-    const card = document.createElement('div')
-    card.className = 'bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700 hover:scale-105 transition-transform'
-    card.innerHTML = `
-      <div class="flex items-center mb-4">
-        <div class="w-12 h-12 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold text-xl mr-4">${s.name.charAt(0).toUpperCase()}</div>
-        <div class="flex-1">
-          <a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors">${s.name}</a>
-        </div>
-      </div>
-      <div class="space-y-2 text-sm">
-        <p class="flex justify-between"><span class="text-slate-400">País:</span><span class="font-semibold text-indigo-400 flex items-center gap-2">${flagHtml}</span></p>
-        <p class="flex justify-between"><span class="text-slate-400">Média de Viewers:</span><span class="font-semibold text-indigo-400">${fmt(s.avg_viewers)}</span></p>
-        <p class="flex justify-between"><span class="text-slate-400">Pico de Viewers:</span><span class="font-semibold">${fmt(s.peak_viewers)}</span></p>
-        <p class="flex justify-between"><span class="text-slate-400">Horas Assistidas:</span><span class="font-semibold">${fmt(s.hours_watched)}</span></p>
-        <p class="flex justify-between"><span class="text-slate-400">Horas Transmitidas:</span><span class="font-semibold">${fmt(s.hours_streamed)}</span></p>
-      </div>
-      <div class="mt-4 flex justify-between">
-        <button class="text-xs text-emerald-500 hover:text-emerald-400 font-semibold cursor-pointer history-btn" data-id="${s.id}" data-name="${s.name}">Histórico</button>
-        <button class="text-xs text-red-500 hover:text-red-400 font-semibold cursor-pointer delete-btn" data-id="${s.id}">Remover</button>
-      </div>
-    `
-    grid.appendChild(card)
-  })
-
-  // Paginação
-  const existingPag = grid.parentElement!.querySelector('.pagination')
-  if (existingPag) existingPag.remove()
-  if (totalPages > 1) {
-    const pag = document.createElement('div')
-    pag.className = 'pagination flex items-center justify-center gap-4 mt-6'
-    pag.innerHTML = `
-      <button class="prev-overview py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${overviewPage === 1 ? 'disabled' : ''}>← Anterior</button>
-      <span class="text-sm text-slate-400">${overviewPage} / ${totalPages}</span>
-      <button class="next-overview py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${overviewPage === totalPages ? 'disabled' : ''}>Próxima →</button>
-    `
-    grid.parentElement!.appendChild(pag)
-    pag.querySelector('.prev-overview')?.addEventListener('click', () => { overviewPage--; renderOverview() })
-    pag.querySelector('.next-overview')?.addEventListener('click', () => { overviewPage++; renderOverview() })
-  }
-}
-
-// --- Render Table ---
-function renderTable() {
-  const tbody = document.getElementById('table-body')!
-  const data = getFilteredStreamers('table')
-  const totalPages = Math.ceil(data.length / PAGE_SIZE)
-  if (tablePage > totalPages) tablePage = Math.max(1, totalPages)
-  const paged = data.slice((tablePage - 1) * PAGE_SIZE, tablePage * PAGE_SIZE)
-  tbody.innerHTML = ''
-
-  paged.forEach(s => {
-    const row = document.createElement('tr')
-    row.className = 'hover:bg-slate-700/50 transition-colors'
-    row.innerHTML = `
-      <td class="p-4"><input type="checkbox" class="streamer-checkbox w-4 h-4 rounded" data-id="${s.id}" ${selectedStreamers.has(s.id) ? 'checked' : ''}></td>
-      <td class="p-4 font-medium"><button class="history-btn text-left hover:text-indigo-400 transition-colors" data-id="${s.id}" data-name="${s.name}">${s.name}</button></td>
-      <td class="p-4">${fmt(s.avg_viewers)}</td>
-      <td class="p-4"><a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-indigo-400 hover:underline">twitch.tv/${s.name.toLowerCase()}</a></td>
-      <td class="p-4"><a href="https://sullygnome.com/channel/${s.name.toLowerCase()}/30" target="_blank" class="text-indigo-400 hover:underline">Ver no SullyGnome</a></td>
-      <td class="p-4"><button class="text-sm text-red-500 hover:text-red-400 font-semibold delete-btn" data-id="${s.id}">Remover</button></td>
-    `
-    tbody.appendChild(row)
-  })
-
-  // Paginação da tabela
-  const tableContainer = tbody.closest('.overflow-x-auto')!.parentElement!
-  const existingPag = tableContainer.querySelector('.table-pagination')
-  if (existingPag) existingPag.remove()
-  if (totalPages > 1) {
-    const pag = document.createElement('div')
-    pag.className = 'table-pagination flex items-center justify-center gap-4 mt-6'
-    pag.innerHTML = `
-      <button class="prev-table py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${tablePage === 1 ? 'disabled' : ''}>← Anterior</button>
-      <span class="text-sm text-slate-400">${tablePage} / ${totalPages}</span>
-      <button class="next-table py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${tablePage === totalPages ? 'disabled' : ''}>Próxima →</button>
-    `
-    tableContainer.appendChild(pag)
-    pag.querySelector('.prev-table')?.addEventListener('click', () => { tablePage--; renderTable() })
-    pag.querySelector('.next-table')?.addEventListener('click', () => { tablePage++; renderTable() })
-  }
-
-  updateSelectionButtons()
-}
-
-
-// --- Render Campaigns ---
-function renderCampaigns() {
-  const tbody = document.getElementById('campaigns-body')!
-  const monthVal = (document.getElementById('month-filter') as HTMLSelectElement).value
-  const yearVal = (document.getElementById('year-filter') as HTMLSelectElement).value
-  tbody.innerHTML = ''
-
-  const filtered = campaigns.filter(c => {
-    if (!c.start_date) return false
-    const [y, m] = c.start_date.split('-')
-    const monthMatch = monthVal === 'all' || String(parseInt(m) - 1) === monthVal
-    const yearMatch = yearVal === 'all' || y === yearVal
-    return monthMatch && yearMatch
-  })
-
-  let grandTotal = 0
-  filtered.forEach(c => {
-    grandTotal += c.my_commission || 0
-    const row = document.createElement('tr')
-    row.className = 'hover:bg-slate-700/50 transition-colors'
-    row.innerHTML = `
-      <td class="p-4">${c.company}</td>
-      <td class="p-4">${fmtDate(c.start_date)}</td>
-      <td class="p-4">${fmtDate(c.end_date)}</td>
-      <td class="p-4 font-semibold">${fmtCurrency(c.my_commission || 0)}</td>
-      <td class="p-4 flex gap-3">
-        <button class="text-amber-500 hover:text-amber-400 text-sm font-semibold edit-campaign-btn" data-id="${c.id}">Editar</button>
-        <button class="text-indigo-500 hover:text-indigo-400 text-sm font-semibold details-campaign-btn" data-id="${c.id}">Detalhes</button>
-        <button class="text-red-500 hover:text-red-400 text-sm font-semibold delete-campaign-btn" data-id="${c.id}">Remover</button>
-      </td>
-    `
-    tbody.appendChild(row)
-  })
-
-  document.getElementById('monthly-total')!.textContent = fmtCurrency(grandTotal)
-  populateCampaignFilters()
-}
-
-function populateCampaignFilters() {
-  const months = new Set<number>()
-  const years = new Set<number>()
-  const now = new Date()
-  months.add(now.getMonth())
-  years.add(now.getFullYear())
-
-  campaigns.forEach(c => {
-    if (c.start_date) {
-      const [y, m] = c.start_date.split('-').map(Number)
-      months.add(m - 1)
-      years.add(y)
-    }
-  })
-
-  const mFilter = document.getElementById('month-filter') as HTMLSelectElement
-  const yFilter = document.getElementById('year-filter') as HTMLSelectElement
-  const mVal = mFilter.value, yVal = yFilter.value
-
-  mFilter.innerHTML = '<option value="all">Todos os Meses</option>'
-  ;[...months].sort().forEach(m => { mFilter.innerHTML += `<option value="${m}">${monthNames[m]}</option>` })
-
-  yFilter.innerHTML = '<option value="all">Todos os Anos</option>'
-  ;[...years].sort().forEach(y => { yFilter.innerHTML += `<option value="${y}">${y}</option>` })
-
-  mFilter.value = mVal || String(now.getMonth())
-  yFilter.value = yVal || String(now.getFullYear())
-}
-
-// --- History Modal ---
-async function showHistory(id: string, name: string) {
-  const modal = document.getElementById('historyModal')!
-  const title = document.getElementById('historyTitle')!
-  const content = document.getElementById('historyContent')!
-  title.textContent = `Histórico - ${name}`
-  content.innerHTML = '<p class="text-slate-400">Carregando...</p>'
-  modal.classList.remove('hidden')
-
-  const docs = await getStreamerHistory(id)
-  if (!docs.length) {
-    content.innerHTML = '<p class="text-slate-400">Nenhum histórico disponível. O cron vai começar a popular automaticamente.</p>'
-    return
-  }
-
-  const maxAvg = Math.max(...docs.map(h => h.avg_viewers || 0))
-  let html = '<div class="space-y-2 mb-6">'
-  ;[...docs].reverse().forEach(h => {
-    const pct = maxAvg > 0 ? ((h.avg_viewers || 0) / maxAvg * 100) : 0
-    const [y, m] = h.month.split('-')
-    const short = monthNames[parseInt(m) - 1]?.slice(0, 3) || h.month
-    html += `<div class="flex items-center gap-2 text-xs">
-      <span class="w-16 text-slate-400">${short} ${y}</span>
-      <div class="flex-1 bg-slate-700 rounded-full h-4 overflow-hidden"><div class="bg-indigo-500 h-full rounded-full" style="width:${pct}%"></div></div>
-      <span class="w-14 text-right text-slate-300">${fmt(h.avg_viewers)}</span>
-    </div>`
-  })
-  html += '</div>'
-
-  html += `<table class="w-full text-sm text-left"><thead class="border-b border-slate-600 text-slate-400"><tr><th class="p-3">Mês</th><th class="p-3">Média</th><th class="p-3">Pico</th><th class="p-3">Hrs Assistidas</th><th class="p-3">Hrs Streamadas</th></tr></thead><tbody class="divide-y divide-slate-700">`
-  docs.forEach(h => {
-    const [y, m] = h.month.split('-')
-    html += `<tr class="hover:bg-slate-700/50"><td class="p-3">${monthNames[parseInt(m) - 1]} ${y}</td><td class="p-3">${fmt(h.avg_viewers)}</td><td class="p-3">${fmt(h.peak_viewers)}</td><td class="p-3">${fmt(h.hours_watched)}</td><td class="p-3">${fmt(h.hours_streamed)}</td></tr>`
-  })
-  html += '</tbody></table>'
-  content.innerHTML = html
-}
-
-// --- Selection ---
-function updateSelectionButtons() {
-  const count = selectedStreamers.size
-  document.getElementById('generatePdfBtn')!.classList.toggle('hidden', count === 0)
-  document.getElementById('setCategoryBtn')!.classList.toggle('hidden', count === 0)
-  document.getElementById('removeSelectedBtn')!.classList.toggle('hidden', count === 0)
-  document.getElementById('selectedCount')!.textContent = String(count)
-  document.getElementById('selectedCountCategory')!.textContent = String(count)
-  document.getElementById('selectedCountRemove')!.textContent = String(count)
-}
-
-
-// --- Confirm Modal ---
-function confirmAction(text: string, btnText = 'Remover'): Promise<boolean> {
-  return new Promise(resolve => {
-    const modal = document.getElementById('confirmModal')!
-    document.getElementById('confirmText')!.textContent = text
-    document.getElementById('confirmYes')!.textContent = btnText
-    modal.classList.remove('hidden')
-    const yes = document.getElementById('confirmYes')!
-    const no = document.getElementById('confirmNo')!
-    const cleanup = () => { modal.classList.add('hidden'); yes.replaceWith(yes.cloneNode(true)); no.replaceWith(no.cloneNode(true)) }
-    document.getElementById('confirmYes')!.addEventListener('click', () => { cleanup(); resolve(true) }, { once: true })
-    document.getElementById('confirmNo')!.addEventListener('click', () => { cleanup(); resolve(false) }, { once: true })
-  })
-}
-
-// --- Render All ---
-function renderAll() {
-  populateFilters()
-  renderOverview()
-  renderTable()
-  renderCampaigns()
 }
 
 // --- Event Listeners ---
@@ -407,16 +69,13 @@ document.addEventListener('click', async (e) => {
   }
 
   if (target.classList.contains('history-btn')) {
-    const id = target.dataset.id!
-    const name = target.dataset.name!
-    await showHistory(id, name)
+    await showHistory(target.dataset.id!, target.dataset.name!)
   }
 
   if (target.classList.contains('edit-campaign-btn')) {
-    const id = target.dataset.id!
-    const c = campaigns.find(cp => cp.id === id)
+    const c = campaigns.find(cp => cp.id === target.dataset.id!)
     if (!c) return
-    editingCampaignId = id
+    setEditingCampaignId(c.id)
     document.getElementById('campaignModalTitle')!.textContent = 'Editar Campanha'
     document.getElementById('saveCampaignBtn')!.textContent = 'Atualizar'
     ;(document.getElementById('companyInput') as HTMLInputElement).value = c.company
@@ -431,8 +90,7 @@ document.addEventListener('click', async (e) => {
   }
 
   if (target.classList.contains('details-campaign-btn')) {
-    const id = target.dataset.id!
-    const c = campaigns.find(cp => cp.id === id)
+    const c = campaigns.find(cp => cp.id === target.dataset.id!)
     if (!c) return
     document.getElementById('detailsTitle')!.textContent = c.company
     document.getElementById('detailsCompany')!.textContent = c.company
@@ -450,13 +108,11 @@ document.addEventListener('click', async (e) => {
   }
 
   if (target.classList.contains('delete-campaign-btn')) {
-    const id = target.dataset.id!
     if (!await confirmAction('Você tem certeza que deseja remover esta campanha?')) return
-    await deleteCampaign(id)
+    await deleteCampaign(target.dataset.id!)
     await loadData(); renderAll()
     showToast('Campanha removida!')
   }
-
 })
 
 // Checkbox handling
@@ -464,7 +120,7 @@ document.addEventListener('change', (e) => {
   const target = e.target as HTMLInputElement
   if (target.classList.contains('streamer-checkbox')) {
     target.checked ? selectedStreamers.add(target.dataset.id!) : selectedStreamers.delete(target.dataset.id!)
-    updateSelectionButtons()
+    renderTable()
   }
 })
 
@@ -477,12 +133,12 @@ document.getElementById('selectAll')?.addEventListener('change', (e) => {
 
 // Filter listeners
 ;['search-overview', 'country-filter', 'status-filter-overview', 'category-filter-overview'].forEach(id => {
-  document.getElementById(id)?.addEventListener('input', () => { overviewPage = 1; renderOverview() })
-  document.getElementById(id)?.addEventListener('change', () => { overviewPage = 1; renderOverview() })
+  document.getElementById(id)?.addEventListener('input', () => { setOverviewPage(1); renderOverview() })
+  document.getElementById(id)?.addEventListener('change', () => { setOverviewPage(1); renderOverview() })
 })
 ;['search-table', 'country-filter-table', 'status-filter-table', 'category-filter-table'].forEach(id => {
-  document.getElementById(id)?.addEventListener('input', () => { tablePage = 1; renderTable() })
-  document.getElementById(id)?.addEventListener('change', () => { tablePage = 1; renderTable() })
+  document.getElementById(id)?.addEventListener('input', () => { setTablePage(1); renderTable() })
+  document.getElementById(id)?.addEventListener('change', () => { setTablePage(1); renderTable() })
 })
 ;['month-filter', 'year-filter'].forEach(id => {
   document.getElementById(id)?.addEventListener('change', renderCampaigns)
@@ -504,12 +160,10 @@ document.getElementById('closeAddStreamer')?.addEventListener('click', () => doc
 document.getElementById('addStreamerForm')?.addEventListener('submit', async (e) => {
   e.preventDefault()
   const input = document.getElementById('streamerNameInput') as HTMLInputElement
-  const btn = e.target as HTMLFormElement
-  const submitBtn = btn.querySelector('button[type="submit"]') as HTMLButtonElement
+  const submitBtn = (e.target as HTMLFormElement).querySelector('button[type="submit"]') as HTMLButtonElement
   const name = input.value.trim()
   if (!name) return
-  submitBtn.disabled = true
-  submitBtn.textContent = 'Buscando...'
+  submitBtn.disabled = true; submitBtn.textContent = 'Buscando...'
   try {
     const user = await fetchTwitchUser(name)
     if (!user) throw new Error('Streamer não encontrado.')
@@ -519,8 +173,7 @@ document.getElementById('addStreamerForm')?.addEventListener('submit', async (e)
     const stats = await fetchInitialStats(user.login)
     await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: category })
     await loadData(); renderAll()
-    input.value = ''
-    ;(document.getElementById('streamerCategoryInput') as HTMLInputElement).value = ''
+    input.value = ''; (document.getElementById('streamerCategoryInput') as HTMLInputElement).value = ''
     document.getElementById('addStreamerModal')!.classList.add('hidden')
     showToast('Streamer adicionado!')
   } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
@@ -557,7 +210,7 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
 
 // Campaigns
 document.getElementById('openAddCampaign')?.addEventListener('click', () => {
-  editingCampaignId = null
+  setEditingCampaignId(null)
   document.getElementById('campaignModalTitle')!.textContent = 'Adicionar Campanha'
   document.getElementById('saveCampaignBtn')!.textContent = 'Salvar'
   ;(document.getElementById('campaignForm') as HTMLFormElement).reset()
@@ -574,47 +227,34 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
   const myCommission = Number((document.getElementById('myCommissionInput') as HTMLInputElement).value) || 0
   const paymentDate = (document.getElementById('paymentDateInput') as HTMLInputElement).value || null
 
-  // Validação de datas
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  if (isNaN(start.getTime()) || start.getFullYear() < 2020 || start.getFullYear() > 2030) {
-    showToast('Data de início inválida', 'error'); return
-  }
-  if (isNaN(end.getTime()) || end.getFullYear() < 2020 || end.getFullYear() > 2030) {
-    showToast('Data de fim inválida', 'error'); return
-  }
-  if (end < start) {
-    showToast('Data de fim não pode ser antes da data de início', 'error'); return
-  }
-  if (paymentDate && new Date(paymentDate) < start) {
-    showToast('Data de pagamento não pode ser antes da data de início', 'error'); return
-  }
+  const start = new Date(startDate), end = new Date(endDate)
+  if (isNaN(start.getTime()) || start.getFullYear() < 2020 || start.getFullYear() > 2030) { showToast('Data de início inválida', 'error'); return }
+  if (isNaN(end.getTime()) || end.getFullYear() < 2020 || end.getFullYear() > 2030) { showToast('Data de fim inválida', 'error'); return }
+  if (end < start) { showToast('Data de fim não pode ser antes da data de início', 'error'); return }
+  if (paymentDate && new Date(paymentDate) < start) { showToast('Data de pagamento não pode ser antes da data de início', 'error'); return }
 
   const lines = (document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value.split('\n').map(n => n.trim()).filter(n => n)
-
   const streamerRows = lines.map(line => {
     const [name, payment] = line.split(':')
     return { streamer_name: name.trim(), payment: Number(payment) || 0, payment_date: null as string | null }
   })
 
-  // Auto-cadastrar streamers que não existem na tabela principal
+  // Auto-cadastrar streamers que não existem
   for (const row of streamerRows) {
-    const exists = streamers.some(s => s.name.toLowerCase() === row.streamer_name.toLowerCase())
-    if (!exists) {
+    if (!streamers.some(s => s.name.toLowerCase() === row.streamer_name.toLowerCase())) {
       try {
         const user = await fetchTwitchUser(row.streamer_name)
         if (user) {
           const lang = user.broadcaster_language?.split('-')[0]
           const stats = await fetchInitialStats(user.login)
           await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
-          // Checar se está live e marcar last_live_at
           const lives = await fetchLiveStreams([user.login])
           if (lives.length > 0) {
             const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
             if (added) await supabase.from('streamers').update({ last_live_at: new Date().toISOString() }).eq('id', added.id)
           }
         }
-      } catch { /* ignora erro, segue com a campanha */ }
+      } catch { /* ignora */ }
     }
   }
 
@@ -626,7 +266,7 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
     showToast('Campanha adicionada!')
   }
 
-  editingCampaignId = null
+  setEditingCampaignId(null)
   await loadData(); renderAll()
   document.getElementById('campaignModal')!.classList.add('hidden')
 })
@@ -676,7 +316,6 @@ document.getElementById('closeHistoryModal')?.addEventListener('click', () => do
 document.getElementById('logoutBtn')?.addEventListener('click', async () => {
   if (await confirmAction('Deseja sair?', 'Sair')) signOut()
 })
-
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'))
 })
@@ -698,5 +337,4 @@ document.getElementById('saveCategoryBtn')?.addEventListener('click', async () =
   showToast(`Categoria "${category}" aplicada!`)
 })
 
-// --- Init ---
 init()
