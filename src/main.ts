@@ -20,6 +20,7 @@ async function init() {
   await loadData()
   setupNav()
   renderAll()
+  document.getElementById('loading-overlay')?.classList.add('hidden')
 }
 onAuthChange((loggedIn) => { if (!loggedIn) window.location.href = '/login.html' })
 
@@ -305,6 +306,21 @@ function updateSelectionButtons() {
 }
 
 
+// --- Confirm Modal ---
+function confirmAction(text: string, btnText = 'Remover'): Promise<boolean> {
+  return new Promise(resolve => {
+    const modal = document.getElementById('confirmModal')!
+    document.getElementById('confirmText')!.textContent = text
+    document.getElementById('confirmYes')!.textContent = btnText
+    modal.classList.remove('hidden')
+    const yes = document.getElementById('confirmYes')!
+    const no = document.getElementById('confirmNo')!
+    const cleanup = () => { modal.classList.add('hidden'); yes.replaceWith(yes.cloneNode(true)); no.replaceWith(no.cloneNode(true)) }
+    document.getElementById('confirmYes')!.addEventListener('click', () => { cleanup(); resolve(true) }, { once: true })
+    document.getElementById('confirmNo')!.addEventListener('click', () => { cleanup(); resolve(false) }, { once: true })
+  })
+}
+
 // --- Render All ---
 function renderAll() {
   populateFilters()
@@ -341,7 +357,7 @@ document.addEventListener('click', async (e) => {
 
   if (target.classList.contains('delete-btn')) {
     const id = target.dataset.id!
-    if (!confirm('Remover este streamer?')) return
+    if (!await confirmAction('Você tem certeza que deseja remover este streamer?')) return
     await deleteStreamer(id)
     await loadData(); renderAll()
     showToast('Streamer removido!')
@@ -374,7 +390,7 @@ document.addEventListener('click', async (e) => {
 
   if (target.classList.contains('delete-campaign-btn')) {
     const id = target.dataset.id!
-    if (!confirm('Remover esta campanha?')) return
+    if (!await confirmAction('Você tem certeza que deseja remover esta campanha?')) return
     await deleteCampaign(id)
     await loadData(); renderAll()
     showToast('Campanha removida!')
@@ -504,7 +520,7 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
 
 // Remove selected
 document.getElementById('removeSelectedBtn')?.addEventListener('click', async () => {
-  if (!confirm(`Remover ${selectedStreamers.size} streamers?`)) return
+  if (!await confirmAction(`Remover ${selectedStreamers.size} streamers?`)) return
   for (const id of selectedStreamers) { await deleteStreamer(id) }
   selectedStreamers.clear()
   await loadData(); renderAll()
@@ -544,7 +560,9 @@ document.getElementById('generatePdfBtn')?.addEventListener('click', async () =>
 // Close modals
 document.getElementById('closeDetailsModal')?.addEventListener('click', () => document.getElementById('campaignDetailsModal')!.classList.add('hidden'))
 document.getElementById('closeHistoryModal')?.addEventListener('click', () => document.getElementById('historyModal')!.classList.add('hidden'))
-document.getElementById('logoutBtn')?.addEventListener('click', () => signOut())
+document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+  if (await confirmAction('Deseja sair?', 'Sair')) signOut()
+})
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'))
