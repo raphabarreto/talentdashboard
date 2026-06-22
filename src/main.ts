@@ -23,6 +23,7 @@ async function init() {
   setupNav()
   setupAutocomplete('streamerCategoryInput', 'streamerCategorySuggestions')
   setupAutocomplete('categoryInput', 'categorySuggestions')
+  setupAutocomplete('companyInput', 'companySuggestions', getExistingCompanies)
   renderAll()
   document.getElementById('loading-overlay')?.classList.add('hidden')
 }
@@ -37,21 +38,26 @@ function getExistingCategories(): string[] {
   return [...new Set(streamers.map(s => s.main_category).filter(Boolean))].sort()
 }
 
-function setupAutocomplete(inputId: string, suggestionsId: string) {
+function getExistingCompanies(): string[] {
+  return [...new Set(campaigns.map(c => c.company).filter(Boolean))].sort()
+}
+
+function setupAutocomplete(inputId: string, suggestionsId: string, dataFn?: () => string[]) {
   const input = document.getElementById(inputId) as HTMLInputElement
   const suggestions = document.getElementById(suggestionsId)!
+  const getData = dataFn || getExistingCategories
 
-  input.addEventListener('focus', () => showSuggestions(input, suggestions))
-  input.addEventListener('input', () => showSuggestions(input, suggestions))
+  input.addEventListener('focus', () => showSuggestions(input, suggestions, getData))
+  input.addEventListener('input', () => showSuggestions(input, suggestions, getData))
   document.addEventListener('click', (e) => {
     if (!suggestions.contains(e.target as Node) && e.target !== input) suggestions.classList.add('hidden')
   })
 }
 
-function showSuggestions(input: HTMLInputElement, container: HTMLElement) {
-  const cats = getExistingCategories()
+function showSuggestions(input: HTMLInputElement, container: HTMLElement, dataFn: () => string[]) {
+  const items = dataFn()
   const val = input.value.toLowerCase()
-  const filtered = val ? cats.filter(c => c.toLowerCase().includes(val)) : cats
+  const filtered = val ? items.filter(c => c.toLowerCase().includes(val)) : items
   if (!filtered.length) { container.classList.add('hidden'); return }
   container.innerHTML = filtered.map(c => `<div class="px-4 py-3 hover:bg-slate-600 cursor-pointer text-white">${c}</div>`).join('')
   container.classList.remove('hidden')
@@ -579,6 +585,9 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
   }
   if (end < start) {
     showToast('Data de fim não pode ser antes da data de início', 'error'); return
+  }
+  if (paymentDate && new Date(paymentDate) < start) {
+    showToast('Data de pagamento não pode ser antes da data de início', 'error'); return
   }
 
   const lines = (document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value.split('\n').map(n => n.trim()).filter(n => n)
