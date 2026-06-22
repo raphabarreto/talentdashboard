@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
 
     for (let i = 0; i < streamers.length; i += 100) {
       const batch = streamers.slice(i, i + 100)
-      const params = batch.map(s => `user_login=${encodeURIComponent(s.name)}`).join("&")
+      const params = batch.map(s => `user_login=${encodeURIComponent(s.name.toLowerCase())}`).join("&")
       const res = await fetch(`https://api.twitch.tv/helix/streams?${params}&first=100`, {
         headers: { "Client-ID": twitchClientId, "Authorization": `Bearer ${access_token}` }
       })
