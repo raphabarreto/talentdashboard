@@ -52,3 +52,21 @@ export async function fetchLiveStreams(usernames: string[]) {
     game_name: string
   }>
 }
+
+
+// Fallback: busca métricas iniciais do TwitchTracker (só no cadastro)
+export async function fetchInitialStats(username: string) {
+  try {
+    const res = await fetch(`https://twitchtracker.com/api/channels/summary/${username.toLowerCase()}`)
+    if (!res.ok) return null
+    const data = await res.json()
+    return {
+      avg_viewers: data.avg_viewers || 0,
+      peak_viewers: data.max_viewers || 0,
+      hours_watched: data.hours_watched || 0,
+      hours_streamed: data.minutes_streamed ? Math.round(data.minutes_streamed / 60) : 0,
+    }
+  } catch {
+    return null
+  }
+}

@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous"/>
 </head>
 <body class="min-h-screen bg-slate-900 text-slate-200 font-[Inter]">
     <!-- Loading Overlay -->
@@ -44,7 +45,6 @@
 
         <!-- View: Overview -->
         <section id="view-overview" class="view">
-            <p class="text-slate-400 text-sm mb-6">Esta seção oferece uma visão rápida do desempenho individual de cada streamer através de cartões de resumo. É ideal para uma análise rápida dos principais indicadores de cada talento que você gerencia.</p>
             <div class="flex flex-wrap gap-3 mb-6">
                 <input id="search-overview" type="text" placeholder="Nome do streamer..." class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
                 <select id="category-filter-overview" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todas Categorias</option></select>
@@ -58,7 +58,6 @@
 
         <!-- View: Table -->
         <section id="view-table" class="view hidden">
-            <p class="text-slate-400 text-sm mb-6">Aqui você encontra todos os dados em um formato de tabela detalhado. Esta visão é perfeita para uma análise aprofundada e para exportação. Clique nos cabeçalhos das colunas para ordenar os dados e encontrar a informação que precisa com mais facilidade.</p>
             <div class="flex flex-wrap gap-3 mb-4">
                 <input id="search-table" type="text" placeholder="Nome do streamer..." class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
                 <select id="category-filter-table" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todas Categorias</option></select>
@@ -68,8 +67,10 @@
                 </select>
             </div>
             <div class="flex gap-3 mb-4">
-                <button id="generatePdfBtn" class="hidden bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">Gerar PDF (<span id="selectedCount">0</span>)</button>
-                <button id="removeSelectedBtn" class="hidden bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">Remover (<span id="selectedCountRemove">0</span>)</button>
+                <button id="generatePdfBtn" class="hidden bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md text-sm transition-colors"><i class="fas fa-file-pdf"></i> Gerar PDF (<span id="selectedCount">0</span>)</button>
+                <button id="setCategoryBtn" class="hidden bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md text-sm transition-colors"><i class="fas fa-gamepad"></i> Definir Categoria (<span id="selectedCountCategory">0</span>)</button>
+                <button id="removeSelectedBtn" class="hidden bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md text-sm transition-colors"><i class="fas fa-trash"></i> Remover (<span id="selectedCountRemove">0</span>)</button>
+                <button id="cleanOrphanBtn" class="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md text-sm transition-colors"><i class="fas fa-broom"></i> Limpar Categorias Avulsas</button>
             </div>
             <div class="overflow-x-auto rounded-lg border border-slate-700">
                 <table class="w-full text-sm text-left">
@@ -90,7 +91,6 @@
 
         <!-- View: Campaigns -->
         <section id="view-campaigns" class="view hidden">
-            <p class="text-slate-400 text-sm mb-6">Gerencie suas campanhas de marketing aqui. Adicione novos projetos, associe streamers e acompanhe os pagamentos.</p>
             <div class="flex flex-wrap gap-4 mb-6 items-end">
                 <div>
                     <label class="text-sm font-semibold text-white block mb-1">Filtrar por Mês:</label>

@@ -1,6 +1,6 @@
 import { getSession, signOut, onAuthChange } from './lib/auth'
 import { getStreamers, addStreamer, updateStreamer, deleteStreamer, getStreamerHistory, getCampaigns, addCampaign, deleteCampaign } from './lib/data'
-import { fetchTwitchUser, fetchLiveStreams } from './lib/twitch'
+import { fetchTwitchUser, fetchLiveStreams, fetchInitialStats } from './lib/twitch'
 import type { Streamer, Campaign } from './types'
 import './style.css'
 
@@ -305,8 +305,10 @@ async function showHistory(id: string, name: string) {
 function updateSelectionButtons() {
   const count = selectedStreamers.size
   document.getElementById('generatePdfBtn')!.classList.toggle('hidden', count === 0)
+  document.getElementById('setCategoryBtn')!.classList.toggle('hidden', count === 0)
   document.getElementById('removeSelectedBtn')!.classList.toggle('hidden', count === 0)
   document.getElementById('selectedCount')!.textContent = String(count)
+  document.getElementById('selectedCountCategory')!.textContent = String(count)
   document.getElementById('selectedCountRemove')!.textContent = String(count)
 }
 
@@ -454,7 +456,8 @@ document.getElementById('addStreamerForm')?.addEventListener('submit', async (e)
     if (!user) throw new Error('Streamer não encontrado.')
     if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) throw new Error('Já cadastrado.')
     const lang = user.broadcaster_language?.split('-')[0]
-    await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: 0, peak_viewers: 0, hours_watched: 0, hours_streamed: 0, is_active: true, game_name: user.game_name || '' })
+    const stats = await fetchInitialStats(user.login)
+    await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, is_active: true, game_name: user.game_name || '' })
     await loadData(); renderAll()
     input.value = ''
     document.getElementById('addStreamerModal')!.classList.add('hidden')
@@ -479,7 +482,8 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
       if (!user) continue
       if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) continue
       const lang = user.broadcaster_language?.split('-')[0]
-      await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: 0, peak_viewers: 0, hours_watched: 0, hours_streamed: 0, is_active: true, game_name: user.game_name || '' })
+      const stats = await fetchInitialStats(user.login)
+      await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, is_active: true, game_name: user.game_name || '' })
       added++
     } catch { /* skip */ }
   }
