@@ -27,6 +27,7 @@ src/
 supabase/functions/
   collect-snapshots/    # Coleta viewers a cada 5min
   consolidate-monthly/  # Consolida métricas mensais
+  twitch-proxy/         # Proxy autenticado para Twitch API
 ```
 
 ## Configuração local
@@ -48,9 +49,9 @@ O servidor roda em `http://localhost:8000`.
 |----------|-----------|
 | VITE_SUPABASE_URL | URL do projeto Supabase |
 | VITE_SUPABASE_ANON_KEY | Chave pública (anon) do Supabase |
-| VITE_TWITCH_CLIENT_ID | Client ID do app na Twitch |
-| VITE_TWITCH_CLIENT_SECRET | Client Secret do app na Twitch |
 | VITE_ALLOWED_EMAILS | Emails autorizados a logar (separados por vírgula) |
+
+As credenciais da Twitch (Client ID e Secret) ficam apenas nos secrets das Edge Functions no Supabase, sem exposição no front-end.
 
 ## Deploy
 
