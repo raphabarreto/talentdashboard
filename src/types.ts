@@ -7,7 +7,7 @@ export interface Streamer {
   hours_watched: number
   hours_streamed: number
   is_active: boolean
-  game_name: string
+  main_category: string
   created_at: string
 }
 
@@ -20,15 +20,6 @@ export interface StreamerHistory {
   hours_watched: number
   hours_streamed: number
   created_at: string
-}
-
-export interface StreamSnapshot {
-  id: string
-  streamer_id: string
-  viewers: number
-  is_live: boolean
-  game: string
-  captured_at: string
 }
 
 export interface Campaign {

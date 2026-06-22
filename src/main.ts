@@ -1,6 +1,7 @@
 import { getSession, signOut, onAuthChange } from './lib/auth'
-import { getStreamers, addStreamer, updateStreamer, deleteStreamer, getStreamerHistory, getCampaigns, addCampaign, updateCampaign, deleteCampaign } from './lib/data'
-import { fetchTwitchUser, fetchLiveStreams, fetchInitialStats } from './lib/twitch'
+import { supabase } from './lib/supabase'
+import { getStreamers, addStreamer, deleteStreamer, getStreamerHistory, getCampaigns, addCampaign, updateCampaign, deleteCampaign } from './lib/data'
+import { fetchTwitchUser } from './lib/twitch'
 import type { Streamer, Campaign } from './types'
 import './style.css'
 
@@ -20,6 +21,8 @@ async function init() {
   if (!session) { window.location.href = '/login.html'; return }
   await loadData()
   setupNav()
+  setupAutocomplete('streamerCategoryInput', 'streamerCategorySuggestions')
+  setupAutocomplete('categoryInput', 'categorySuggestions')
   renderAll()
   document.getElementById('loading-overlay')?.classList.add('hidden')
 }
@@ -30,6 +33,33 @@ async function loadData() {
 }
 
 // --- Helpers ---
+function getExistingCategories(): string[] {
+  return [...new Set(streamers.map(s => s.main_category).filter(Boolean))].sort()
+}
+
+function setupAutocomplete(inputId: string, suggestionsId: string) {
+  const input = document.getElementById(inputId) as HTMLInputElement
+  const suggestions = document.getElementById(suggestionsId)!
+
+  input.addEventListener('focus', () => showSuggestions(input, suggestions))
+  input.addEventListener('input', () => showSuggestions(input, suggestions))
+  document.addEventListener('click', (e) => {
+    if (!suggestions.contains(e.target as Node) && e.target !== input) suggestions.classList.add('hidden')
+  })
+}
+
+function showSuggestions(input: HTMLInputElement, container: HTMLElement) {
+  const cats = getExistingCategories()
+  const val = input.value.toLowerCase()
+  const filtered = val ? cats.filter(c => c.toLowerCase().includes(val)) : cats
+  if (!filtered.length) { container.classList.add('hidden'); return }
+  container.innerHTML = filtered.map(c => `<div class="px-4 py-2 hover:bg-slate-600 cursor-pointer text-white text-sm">${c}</div>`).join('')
+  container.classList.remove('hidden')
+  container.querySelectorAll('div').forEach(el => {
+    el.addEventListener('click', () => { input.value = el.textContent!; container.classList.add('hidden') })
+  })
+}
+
 const langToCountry: Record<string, string> = {
   pt: 'br', en: 'us', es: 'es', fr: 'fr', de: 'de', it: 'it', ja: 'jp', ko: 'kr', ru: 'ru', zh: 'cn', pl: 'pl', nl: 'nl', sv: 'se'
 }
@@ -82,7 +112,7 @@ function getFilteredStreamers(prefix: string) {
     .filter(s => !search || s.name.toLowerCase().includes(search))
     .filter(s => country === 'all' || s.country === country)
     .filter(s => status === 'all' || (status === 'active' ? s.is_active : !s.is_active))
-    .filter(s => category === 'all' || s.game_name?.toLowerCase() === category)
+    .filter(s => category === 'all' || s.main_category?.toLowerCase() === category)
     .sort((a, b) => {
       const aVal = a[currentSort.key as keyof Streamer] as number
       const bVal = b[currentSort.key as keyof Streamer] as number
@@ -92,7 +122,7 @@ function getFilteredStreamers(prefix: string) {
 
 function populateFilters() {
   const countries = [...new Set(streamers.map(s => s.country).filter(Boolean))].sort()
-  const categories = [...new Set(streamers.map(s => s.game_name?.toLowerCase()).filter(Boolean))].sort()
+  const categories = [...new Set(streamers.map(s => s.main_category?.toLowerCase()).filter(Boolean))].sort()
 
   ;['country-filter', 'country-filter-table'].forEach(id => {
     const el = document.getElementById(id) as HTMLSelectElement
@@ -146,7 +176,6 @@ function renderOverview() {
       </div>
       <div class="mt-4 flex justify-between">
         <button class="text-xs text-emerald-500 hover:text-emerald-400 font-semibold cursor-pointer history-btn" data-id="${s.id}" data-name="${s.name}">Histórico</button>
-        <button class="text-xs text-cyan-500 hover:text-cyan-400 font-semibold cursor-pointer refresh-btn" data-id="${s.id}">Atualizar</button>
         <button class="text-xs text-red-500 hover:text-red-400 font-semibold cursor-pointer delete-btn" data-id="${s.id}">Remover</button>
       </div>
     `
@@ -359,28 +388,6 @@ function renderAll() {
 document.addEventListener('click', async (e) => {
   const target = e.target as HTMLElement
 
-  if (target.classList.contains('refresh-btn')) {
-    const id = target.dataset.id!
-    const s = streamers.find(st => st.id === id)
-    if (!s) return
-    target.textContent = '...'
-    try {
-      const liveData = await fetchLiveStreams([s.name])
-      const live = liveData.find(l => l.user_login.toLowerCase() === s.name.toLowerCase())
-      const user = await fetchTwitchUser(s.name)
-      const updates: Partial<Streamer> = { game_name: user?.game_name || s.game_name, is_active: !!live }
-      if (user && !s.country) {
-        const lang = user.broadcaster_language?.split('-')[0]
-        if (lang && langToCountry[lang]) updates.country = langToCountry[lang]
-      }
-      await updateStreamer(s.id, updates)
-      await loadData()
-      renderAll()
-      showToast(`${s.name} atualizado!`)
-    } catch { showToast('Erro ao atualizar', 'error') }
-    target.textContent = 'Atualizar'
-  }
-
   if (target.classList.contains('delete-btn')) {
     const id = target.dataset.id!
     if (!await confirmAction('Você tem certeza que deseja remover este streamer?')) return
@@ -494,10 +501,11 @@ document.getElementById('addStreamerForm')?.addEventListener('submit', async (e)
     if (!user) throw new Error('Streamer não encontrado.')
     if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) throw new Error('Já cadastrado.')
     const lang = user.broadcaster_language?.split('-')[0]
-    const stats = await fetchInitialStats(user.login)
-    await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, is_active: true, game_name: user.game_name || '' })
+    const category = (document.getElementById('streamerCategoryInput') as HTMLInputElement).value.trim()
+    await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: 0, peak_viewers: 0, hours_watched: 0, hours_streamed: 0, is_active: true, main_category: category })
     await loadData(); renderAll()
     input.value = ''
+    ;(document.getElementById('streamerCategoryInput') as HTMLInputElement).value = ''
     document.getElementById('addStreamerModal')!.classList.add('hidden')
     showToast('Streamer adicionado!')
   } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
@@ -521,8 +529,7 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
       if (!user) continue
       if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) continue
       const lang = user.broadcaster_language?.split('-')[0]
-      const stats = await fetchInitialStats(user.login)
-      await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, is_active: true, game_name: user.game_name || '' })
+      await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: 0, peak_viewers: 0, hours_watched: 0, hours_streamed: 0, is_active: true, main_category: '' })
       added++
     } catch { /* skip */ }
   }
@@ -536,14 +543,27 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
 document.getElementById('refreshAllBtn')?.addEventListener('click', async () => {
   const btn = document.getElementById('refreshAllBtn')!
   btn.textContent = 'Atualizando...'
-  const liveData = await fetchLiveStreams(streamers.map(s => s.name))
-  for (const s of streamers) {
-    const live = liveData.find(l => l.user_login.toLowerCase() === s.name.toLowerCase())
-    await updateStreamer(s.id, { is_active: !!live, game_name: live?.game_name || s.game_name })
-  }
+
+  // Buscar quem esteve live nos últimos 30 dias via snapshots
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: liveSnapshots } = await supabase
+    .from('stream_snapshots')
+    .select('streamer_id')
+    .eq('is_live', true)
+    .gte('captured_at', thirtyDaysAgo)
+
+  const activeIds = new Set((liveSnapshots || []).map(s => s.streamer_id))
+
+  // Batch: ativos e inativos em 2 queries
+  const activeList = streamers.filter(s => activeIds.has(s.id)).map(s => s.id)
+  const inactiveList = streamers.filter(s => !activeIds.has(s.id)).map(s => s.id)
+
+  if (activeList.length) await supabase.from('streamers').update({ is_active: true }).in('id', activeList)
+  if (inactiveList.length) await supabase.from('streamers').update({ is_active: false }).in('id', inactiveList)
+
   await loadData(); renderAll()
   btn.textContent = 'Atualizar Todos'
-  showToast('Todos atualizados!')
+  showToast('Status atualizado com base nos últimos 30 dias!')
 })
 
 // Campaigns
@@ -604,7 +624,7 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
 // Remove selected
 document.getElementById('removeSelectedBtn')?.addEventListener('click', async () => {
   if (!await confirmAction(`Remover ${selectedStreamers.size} streamers?`)) return
-  for (const id of selectedStreamers) { await deleteStreamer(id) }
+  await supabase.from('streamers').delete().in('id', [...selectedStreamers])
   selectedStreamers.clear()
   await loadData(); renderAll()
   showToast('Streamers removidos!')
@@ -649,6 +669,23 @@ document.getElementById('logoutBtn')?.addEventListener('click', async () => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'))
+})
+
+// Set Category
+document.getElementById('setCategoryBtn')?.addEventListener('click', () => {
+  document.getElementById('categoryCount')!.textContent = String(selectedStreamers.size)
+  ;(document.getElementById('categoryInput') as HTMLInputElement).value = ''
+  document.getElementById('categoryModal')!.classList.remove('hidden')
+})
+document.getElementById('closeCategoryModal')?.addEventListener('click', () => document.getElementById('categoryModal')!.classList.add('hidden'))
+document.getElementById('saveCategoryBtn')?.addEventListener('click', async () => {
+  const category = (document.getElementById('categoryInput') as HTMLInputElement).value.trim()
+  if (!category) { showToast('Digite uma categoria', 'error'); return }
+  await supabase.from('streamers').update({ main_category: category }).in('id', [...selectedStreamers])
+  selectedStreamers.clear()
+  await loadData(); renderAll()
+  document.getElementById('categoryModal')!.classList.add('hidden')
+  showToast(`Categoria "${category}" aplicada!`)
 })
 
 // --- Init ---
