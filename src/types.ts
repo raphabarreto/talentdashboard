@@ -6,7 +6,7 @@ export interface Streamer {
   peak_viewers: number
   hours_watched: number
   hours_streamed: number
-  is_active: boolean
+  last_live_at: string | null
   main_category: string
   created_at: string
 }
@@ -27,6 +27,10 @@ export interface Campaign {
   company: string
   start_date: string
   end_date: string
+  campaign_value: number
+  currency: 'BRL' | 'USD'
+  my_commission: number
+  payment_date: string | null
   created_at: string
   campaign_streamers?: CampaignStreamer[]
 }

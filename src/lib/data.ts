@@ -8,7 +8,7 @@ export async function getStreamers() {
   return data as Streamer[]
 }
 
-export async function addStreamer(streamer: Omit<Streamer, 'id' | 'created_at'>) {
+export async function addStreamer(streamer: Omit<Streamer, 'id' | 'created_at' | 'last_live_at'>) {
   const { data, error } = await supabase.from('streamers').insert(streamer).select().single()
   if (error) throw error
   return data as Streamer

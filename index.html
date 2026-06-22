@@ -28,7 +28,6 @@
                 <p class="mt-1 text-slate-400">Gerencie e analise o desempenho dos seus streamers.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 sm:mt-0">
-                <button id="refreshAllBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">&#x21BB; Atualizar Todos</button>
                 <button id="addMultipleBtn" class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Vários</button>
                 <button id="openAddStreamer" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Streamer</button>
                 <button id="openAddCampaign" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Campanha</button>
@@ -101,7 +100,7 @@
                 </div>
             </div>
             <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-6">
-                <p class="text-slate-400 text-sm">Valor Total de Campanhas do Mês</p>
+                <p class="text-slate-400 text-sm">Comissão Total do Mês</p>
                 <p id="monthly-total" class="text-2xl font-bold text-indigo-400">R$ 0,00</p>
             </div>
             <div class="overflow-x-auto rounded-lg border border-slate-700">
@@ -111,7 +110,7 @@
                             <th class="p-4">Empresa</th>
                             <th class="p-4">Data de Início</th>
                             <th class="p-4">Data de Fim</th>
-                            <th class="p-4">Valor Total</th>
+                            <th class="p-4">Minha Comissão</th>
                             <th class="p-4">Ações</th>
                         </tr>
                     </thead>
@@ -131,7 +130,7 @@
                 <div class="relative">
                     <input id="streamerCategoryInput" type="text" placeholder="Categoria (opcional)" autocomplete="off"
                         class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <div id="streamerCategorySuggestions" class="hidden absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-40 overflow-y-auto"></div>
+                    <div id="streamerCategorySuggestions" class="hidden absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
                 </div>
                 <div class="flex gap-3">
                     <button type="submit" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">Buscar e Salvar</button>
@@ -170,11 +169,28 @@
                         <input id="endDateInput" type="date" min="2020-01-01" max="2030-12-31" required class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
-                <div>
-                    <label for="globalPaymentDate" class="text-sm text-slate-400 block mb-1">Data de Pagamento <span class="text-slate-500">(opcional, pode preencher depois)</span></label>
-                    <input id="globalPaymentDate" type="date" min="2020-01-01" max="2030-12-31" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="grid grid-cols-[1fr_auto] gap-3">
+                    <div>
+                        <label for="campaignValueInput" class="text-sm text-slate-400 block mb-1">Valor da Campanha</label>
+                        <input id="campaignValueInput" type="number" step="0.01" min="0" placeholder="0,00" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="currencyInput" class="text-sm text-slate-400 block mb-1">Moeda</label>
+                        <select id="currencyInput" class="px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="USD">USD</option>
+                            <option value="BRL">BRL</option>
+                        </select>
+                    </div>
                 </div>
-                <textarea id="campaignStreamersInput" rows="4" placeholder="Streamers (um por linha)" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></textarea>
+                <div>
+                    <label for="myCommissionInput" class="text-sm text-slate-400 block mb-1">Minha Comissão (R$)</label>
+                    <input id="myCommissionInput" type="number" step="0.01" min="0" placeholder="0,00" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="paymentDateInput" class="text-sm text-slate-400 block mb-1">Data de Pagamento <span class="text-slate-500">(opcional)</span></label>
+                    <input id="paymentDateInput" type="date" min="2020-01-01" max="2030-12-31" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <textarea id="campaignStreamersInput" rows="4" placeholder="Streamers (um por linha, ex: nome:valor)" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></textarea>
                 <div class="flex gap-3">
                     <button type="submit" id="saveCampaignBtn" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">Salvar</button>
                     <button type="button" id="closeCampaignModal" class="flex-1 py-3 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Cancelar</button>
@@ -185,16 +201,28 @@
 
     <!-- Modal: Detalhes Campanha -->
     <div id="campaignDetailsModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-lg">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto">
             <h3 id="detailsTitle" class="text-lg font-bold text-white mb-4"></h3>
             <div class="space-y-2 text-sm mb-4">
                 <p><span class="text-slate-400">Empresa:</span> <span id="detailsCompany" class="text-white font-semibold"></span></p>
                 <p><span class="text-slate-400">Período:</span> <span id="detailsPeriod" class="text-white"></span></p>
-                <p><span class="text-slate-400">Valor Total:</span> <span id="detailsTotal" class="text-white font-semibold"></span></p>
-                <p><span class="text-slate-400">Data Pagamento:</span> <span id="detailsPaymentDate" class="text-white"></span></p>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mb-4 text-center">
+                <div class="bg-slate-700/50 rounded-lg p-3">
+                    <p class="text-xs text-slate-400">Valor da Campanha</p>
+                    <p id="detailsCampaignValue" class="text-white font-bold"></p>
+                </div>
+                <div class="bg-slate-700/50 rounded-lg p-3">
+                    <p class="text-xs text-slate-400">Minha Comissão</p>
+                    <p id="detailsCommission" class="text-emerald-400 font-bold"></p>
+                </div>
+                <div class="bg-slate-700/50 rounded-lg p-3">
+                    <p class="text-xs text-slate-400">Pagamento</p>
+                    <p id="detailsPaymentDate" class="text-white font-bold"></p>
+                </div>
             </div>
             <table class="w-full text-sm text-left">
-                <thead class="border-b border-slate-600 text-slate-400"><tr><th class="p-2">Streamer</th><th class="p-2">Pagamento</th></tr></thead>
+                <thead class="border-b border-slate-600 text-slate-400"><tr><th class="p-2">Streamer</th><th class="p-2">Valor</th></tr></thead>
                 <tbody id="detailsStreamers" class="divide-y divide-slate-700"></tbody>
             </table>
             <button id="closeDetailsModal" class="mt-4 w-full py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>
@@ -210,9 +238,6 @@
         </div>
     </div>
 
-    <!-- Modal: Confirmação -->
-    <div id="confirmModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
-
     <!-- Modal: Definir Categoria -->
     <div id="categoryModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-sm">
@@ -220,7 +245,7 @@
             <p class="text-sm text-slate-400 mb-3">Aplicar para <span id="categoryCount" class="text-white font-semibold">0</span> streamers selecionados</p>
             <div class="relative">
                 <input id="categoryInput" type="text" placeholder="Digite ou selecione uma categoria..." autocomplete="off" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <div id="categorySuggestions" class="hidden absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-40 overflow-y-auto"></div>
+                <div id="categorySuggestions" class="hidden absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
             </div>
             <div class="flex gap-3 mt-4">
                 <button id="saveCategoryBtn" class="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg transition-colors">Aplicar</button>
@@ -228,6 +253,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal: Confirmação -->
+    <div id="confirmModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl px-10 py-8 flex flex-col items-center gap-5 min-w-[300px]">
             <p id="confirmText" class="text-white font-semibold text-lg text-center"></p>
             <div class="flex gap-4">

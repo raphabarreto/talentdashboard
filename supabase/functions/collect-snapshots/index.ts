@@ -58,6 +58,12 @@ Deno.serve(async (req) => {
 
     const { error: insertError } = await supabase.from("stream_snapshots").insert(snapshots)
 
+    // 5. Atualizar last_live_at dos que estão ao vivo
+    const liveIds = streamers.filter(s => liveMap.has(s.name.toLowerCase())).map(s => s.id)
+    if (liveIds.length) {
+      await supabase.from("streamers").update({ last_live_at: new Date().toISOString() }).in("id", liveIds)
+    }
+
     return new Response(
       JSON.stringify({ collected: snapshots.length, live: liveMap.size, error: insertError }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

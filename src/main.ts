@@ -1,7 +1,7 @@
 import { getSession, signOut, onAuthChange } from './lib/auth'
 import { supabase } from './lib/supabase'
 import { getStreamers, addStreamer, deleteStreamer, getStreamerHistory, getCampaigns, addCampaign, updateCampaign, deleteCampaign } from './lib/data'
-import { fetchTwitchUser } from './lib/twitch'
+import { fetchTwitchUser, fetchInitialStats, fetchLiveStreams } from './lib/twitch'
 import type { Streamer, Campaign } from './types'
 import './style.css'
 
@@ -53,7 +53,7 @@ function showSuggestions(input: HTMLInputElement, container: HTMLElement) {
   const val = input.value.toLowerCase()
   const filtered = val ? cats.filter(c => c.toLowerCase().includes(val)) : cats
   if (!filtered.length) { container.classList.add('hidden'); return }
-  container.innerHTML = filtered.map(c => `<div class="px-4 py-2 hover:bg-slate-600 cursor-pointer text-white text-sm">${c}</div>`).join('')
+  container.innerHTML = filtered.map(c => `<div class="px-4 py-3 hover:bg-slate-600 cursor-pointer text-white">${c}</div>`).join('')
   container.classList.remove('hidden')
   container.querySelectorAll('div').forEach(el => {
     el.addEventListener('click', () => { input.value = el.textContent!; container.classList.add('hidden') })
@@ -62,6 +62,11 @@ function showSuggestions(input: HTMLInputElement, container: HTMLElement) {
 
 const langToCountry: Record<string, string> = {
   pt: 'br', en: 'us', es: 'es', fr: 'fr', de: 'de', it: 'it', ja: 'jp', ko: 'kr', ru: 'ru', zh: 'cn', pl: 'pl', nl: 'nl', sv: 'se'
+}
+
+function isActive(s: Streamer): boolean {
+  if (!s.last_live_at) return false
+  return Date.now() - new Date(s.last_live_at).getTime() < 15 * 24 * 60 * 60 * 1000
 }
 const countryNames: Record<string, string> = {
   us: 'Estados Unidos', br: 'Brasil', ca: 'Canadá', de: 'Alemanha', fr: 'França', gb: 'Reino Unido', es: 'Espanha', jp: 'Japão',
@@ -111,7 +116,7 @@ function getFilteredStreamers(prefix: string) {
   return streamers
     .filter(s => !search || s.name.toLowerCase().includes(search))
     .filter(s => country === 'all' || s.country === country)
-    .filter(s => status === 'all' || (status === 'active' ? s.is_active : !s.is_active))
+    .filter(s => status === 'all' || (status === 'active' ? isActive(s) : !isActive(s)))
     .filter(s => category === 'all' || s.main_category?.toLowerCase() === category)
     .sort((a, b) => {
       const aVal = a[currentSort.key as keyof Streamer] as number
@@ -260,15 +265,14 @@ function renderCampaigns() {
 
   let grandTotal = 0
   filtered.forEach(c => {
-    const total = c.campaign_streamers?.reduce((sum, s) => sum + Number(s.payment || 0), 0) || 0
-    grandTotal += total
+    grandTotal += c.my_commission || 0
     const row = document.createElement('tr')
     row.className = 'hover:bg-slate-700/50 transition-colors'
     row.innerHTML = `
       <td class="p-4">${c.company}</td>
       <td class="p-4">${fmtDate(c.start_date)}</td>
       <td class="p-4">${fmtDate(c.end_date)}</td>
-      <td class="p-4 font-semibold">${fmtCurrency(total)}</td>
+      <td class="p-4 font-semibold">${fmtCurrency(c.my_commission || 0)}</td>
       <td class="p-4 flex gap-3">
         <button class="text-amber-500 hover:text-amber-400 text-sm font-semibold edit-campaign-btn" data-id="${c.id}">Editar</button>
         <button class="text-indigo-500 hover:text-indigo-400 text-sm font-semibold details-campaign-btn" data-id="${c.id}">Detalhes</button>
@@ -412,8 +416,11 @@ document.addEventListener('click', async (e) => {
     ;(document.getElementById('companyInput') as HTMLInputElement).value = c.company
     ;(document.getElementById('startDateInput') as HTMLInputElement).value = c.start_date
     ;(document.getElementById('endDateInput') as HTMLInputElement).value = c.end_date
-    ;(document.getElementById('globalPaymentDate') as HTMLInputElement).value = c.campaign_streamers?.[0]?.payment_date || ''
-    ;(document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value = c.campaign_streamers?.map(s => `${s.streamer_name}:${s.payment || 0}`).join('\n') || ''
+    ;(document.getElementById('campaignValueInput') as HTMLInputElement).value = c.campaign_value ? String(c.campaign_value) : ''
+    ;(document.getElementById('currencyInput') as HTMLSelectElement).value = c.currency || 'USD'
+    ;(document.getElementById('myCommissionInput') as HTMLInputElement).value = c.my_commission ? String(c.my_commission) : ''
+    ;(document.getElementById('paymentDateInput') as HTMLInputElement).value = c.payment_date || ''
+    ;(document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value = c.campaign_streamers?.map(s => `${s.streamer_name}${s.payment ? ':' + s.payment : ''}`).join('\n') || ''
     document.getElementById('campaignModal')!.classList.remove('hidden')
   }
 
@@ -424,10 +431,10 @@ document.addEventListener('click', async (e) => {
     document.getElementById('detailsTitle')!.textContent = c.company
     document.getElementById('detailsCompany')!.textContent = c.company
     document.getElementById('detailsPeriod')!.textContent = `${fmtDate(c.start_date)} a ${fmtDate(c.end_date)}`
-    const total = c.campaign_streamers?.reduce((sum, s) => sum + Number(s.payment || 0), 0) || 0
-    document.getElementById('detailsTotal')!.textContent = fmtCurrency(total)
-    const payDate = c.campaign_streamers?.find(s => s.payment_date)?.payment_date
-    document.getElementById('detailsPaymentDate')!.textContent = payDate ? fmtDate(payDate) : '-'
+    const valueTxt = c.currency === 'USD' ? `US$ ${(c.campaign_value || 0).toFixed(2)}` : fmtCurrency(c.campaign_value || 0)
+    document.getElementById('detailsCampaignValue')!.textContent = valueTxt
+    document.getElementById('detailsCommission')!.textContent = fmtCurrency(c.my_commission || 0)
+    document.getElementById('detailsPaymentDate')!.textContent = c.payment_date ? fmtDate(c.payment_date) : 'Pendente'
     const tbody = document.getElementById('detailsStreamers')!
     tbody.innerHTML = ''
     c.campaign_streamers?.forEach(s => {
@@ -443,6 +450,7 @@ document.addEventListener('click', async (e) => {
     await loadData(); renderAll()
     showToast('Campanha removida!')
   }
+
 })
 
 // Checkbox handling
@@ -502,7 +510,8 @@ document.getElementById('addStreamerForm')?.addEventListener('submit', async (e)
     if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) throw new Error('Já cadastrado.')
     const lang = user.broadcaster_language?.split('-')[0]
     const category = (document.getElementById('streamerCategoryInput') as HTMLInputElement).value.trim()
-    await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: 0, peak_viewers: 0, hours_watched: 0, hours_streamed: 0, is_active: true, main_category: category })
+    const stats = await fetchInitialStats(user.login)
+    await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: category })
     await loadData(); renderAll()
     input.value = ''
     ;(document.getElementById('streamerCategoryInput') as HTMLInputElement).value = ''
@@ -529,7 +538,8 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
       if (!user) continue
       if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) continue
       const lang = user.broadcaster_language?.split('-')[0]
-      await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: 0, peak_viewers: 0, hours_watched: 0, hours_streamed: 0, is_active: true, main_category: '' })
+      const stats = await fetchInitialStats(user.login)
+      await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
       added++
     } catch { /* skip */ }
   }
@@ -537,33 +547,6 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
   document.getElementById('addMultipleModal')!.classList.add('hidden')
   await loadData(); renderAll()
   showToast(`${added}/${names.length} streamers adicionados!`)
-})
-
-// Refresh All
-document.getElementById('refreshAllBtn')?.addEventListener('click', async () => {
-  const btn = document.getElementById('refreshAllBtn')!
-  btn.textContent = 'Atualizando...'
-
-  // Buscar quem esteve live nos últimos 30 dias via snapshots
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-  const { data: liveSnapshots } = await supabase
-    .from('stream_snapshots')
-    .select('streamer_id')
-    .eq('is_live', true)
-    .gte('captured_at', thirtyDaysAgo)
-
-  const activeIds = new Set((liveSnapshots || []).map(s => s.streamer_id))
-
-  // Batch: ativos e inativos em 2 queries
-  const activeList = streamers.filter(s => activeIds.has(s.id)).map(s => s.id)
-  const inactiveList = streamers.filter(s => !activeIds.has(s.id)).map(s => s.id)
-
-  if (activeList.length) await supabase.from('streamers').update({ is_active: true }).in('id', activeList)
-  if (inactiveList.length) await supabase.from('streamers').update({ is_active: false }).in('id', inactiveList)
-
-  await loadData(); renderAll()
-  btn.textContent = 'Atualizar Todos'
-  showToast('Status atualizado com base nos últimos 30 dias!')
 })
 
 // Campaigns
@@ -580,7 +563,10 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
   const company = (document.getElementById('companyInput') as HTMLInputElement).value
   const startDate = (document.getElementById('startDateInput') as HTMLInputElement).value
   const endDate = (document.getElementById('endDateInput') as HTMLInputElement).value
-  const paymentDate = (document.getElementById('globalPaymentDate') as HTMLInputElement).value || null
+  const campaignValue = Number((document.getElementById('campaignValueInput') as HTMLInputElement).value) || 0
+  const currency = (document.getElementById('currencyInput') as HTMLSelectElement).value as 'BRL' | 'USD'
+  const myCommission = Number((document.getElementById('myCommissionInput') as HTMLInputElement).value) || 0
+  const paymentDate = (document.getElementById('paymentDateInput') as HTMLInputElement).value || null
 
   // Validação de datas
   const start = new Date(startDate)
@@ -594,25 +580,40 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
   if (end < start) {
     showToast('Data de fim não pode ser antes da data de início', 'error'); return
   }
-  if (paymentDate) {
-    const pay = new Date(paymentDate)
-    if (isNaN(pay.getTime()) || pay.getFullYear() < 2020 || pay.getFullYear() > 2030) {
-      showToast('Data de pagamento inválida', 'error'); return
-    }
-  }
 
   const lines = (document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value.split('\n').map(n => n.trim()).filter(n => n)
 
   const streamerRows = lines.map(line => {
     const [name, payment] = line.split(':')
-    return { streamer_name: name.trim(), payment: Number(payment) || 0, payment_date: paymentDate }
+    return { streamer_name: name.trim(), payment: Number(payment) || 0, payment_date: null as string | null }
   })
 
+  // Auto-cadastrar streamers que não existem na tabela principal
+  for (const row of streamerRows) {
+    const exists = streamers.some(s => s.name.toLowerCase() === row.streamer_name.toLowerCase())
+    if (!exists) {
+      try {
+        const user = await fetchTwitchUser(row.streamer_name)
+        if (user) {
+          const lang = user.broadcaster_language?.split('-')[0]
+          const stats = await fetchInitialStats(user.login)
+          await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
+          // Checar se está live e marcar last_live_at
+          const lives = await fetchLiveStreams([user.login])
+          if (lives.length > 0) {
+            const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
+            if (added) await supabase.from('streamers').update({ last_live_at: new Date().toISOString() }).eq('id', added.id)
+          }
+        }
+      } catch { /* ignora erro, segue com a campanha */ }
+    }
+  }
+
   if (editingCampaignId) {
-    await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate }, streamerRows)
+    await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate, campaign_value: campaignValue, currency, my_commission: myCommission, payment_date: paymentDate }, streamerRows)
     showToast('Campanha atualizada!')
   } else {
-    await addCampaign({ company, start_date: startDate, end_date: endDate }, streamerRows)
+    await addCampaign({ company, start_date: startDate, end_date: endDate, campaign_value: campaignValue, currency, my_commission: myCommission, payment_date: paymentDate }, streamerRows)
     showToast('Campanha adicionada!')
   }
 

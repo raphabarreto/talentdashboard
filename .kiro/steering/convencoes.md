@@ -41,3 +41,12 @@ supabase/functions/
 - Usar modal customizado em vez de `confirm()` / `alert()`
 - Commits em português
 - Não fazer push/deploy sem autorização explícita do usuário
+
+
+
+## Ideias pendentes
+
+### Opção C - Pagamentos simplificados (se opção A não agradar)
+- Um campo "valor total recebido" na campanha (quanto a empresa pagou)
+- Pagamentos individuais aos streamers separados do valor da campanha
+- Comissão calculada: total recebido - soma dos pagamentos feitos
