@@ -1,12 +1,13 @@
+import 'dotenv/config'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
-  'https://javnlhanjbkefzwiddww.supabase.co',
-  'sb_publishable_cF5P7pkV_2oa3Gb7aCmHjQ_uLR3zYul'
+  process.env.VITE_SUPABASE_URL!,
+  process.env.VITE_SUPABASE_ANON_KEY!
 )
 
-const TWITCH_CLIENT_ID = '0a3mnlmypnfuh96z4mtasgvvetw4gr'
-const TWITCH_CLIENT_SECRET = '2dtpml86ons4adrvge0q4uxykueefi'
+const TWITCH_CLIENT_ID = process.env.VITE_TWITCH_CLIENT_ID!
+const TWITCH_CLIENT_SECRET = process.env.VITE_TWITCH_CLIENT_SECRET!
 
 const langToCountry: Record<string, string> = {
   pt: 'br', en: 'us', es: 'es', fr: 'fr', de: 'de',
