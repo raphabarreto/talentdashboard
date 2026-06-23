@@ -19,7 +19,7 @@ const PAGE_SIZE = 10
 
 const EMAIL_REGEX = /[\w.+-]+@[\w-]+\.[\w.-]+/g
 
-const DEFAULT_TEMPLATE = `Fala {streamer}, tudo bem?
+const DEFAULT_TEMPLATE_PT = `Fala {streamer}, tudo bem?
 
 Sou o Raphael Barreto, responsável pelas campanhas na Lugs Hub.
 
@@ -33,14 +33,32 @@ Se tiver interesse, me dá um salve por aqui, pelo Discord (raphalugs) ou WhatsA
 
 Abraço!`
 
+const DEFAULT_TEMPLATE_ES = `Buenas, {streamer}
+
+Soy Raphael Barreto, responsable de campañas en Lugs Hub.
+
+Sigo tu contenido y he seleccionado tu canal para una posible colaboración con {empresa} durante este mes.
+
+Por el perfil de tu comunidad y tu estilo de directos, creo que la acción encaja muy bien con lo que buscamos.
+
+La propuesta incluye una parte fija garantizada más incentivos por resultados.
+
+Si te interesa, avísame por aquí o por Discord (raphalugs) y te paso todos los detalles.
+
+¡Un saludo!`
+
 function extractEmail(description: string): string | null {
   const matches = description.match(EMAIL_REGEX)
   return matches?.[0] || null
 }
 
-function getTemplate(): string {
-  const el = document.getElementById('emailTemplate') as HTMLTextAreaElement
-  return el?.value || DEFAULT_TEMPLATE
+function getTemplate(lang: string): string {
+  if (lang === 'es') {
+    const el = document.getElementById('emailTemplateEs') as HTMLTextAreaElement
+    return el?.value || DEFAULT_TEMPLATE_ES
+  }
+  const el = document.getElementById('emailTemplatePt') as HTMLTextAreaElement
+  return el?.value || DEFAULT_TEMPLATE_PT
 }
 
 function getCompany(): string {
@@ -124,8 +142,17 @@ export function setupProspecting() {
       </div>
 
       <details>
-        <summary class="text-sm text-slate-400 cursor-pointer hover:text-white">Template de Email</summary>
-        <textarea id="emailTemplate" rows="10" class="mt-2 w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">${DEFAULT_TEMPLATE}</textarea>
+        <summary class="text-sm text-slate-400 cursor-pointer hover:text-white">Templates de Email</summary>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div>
+            <label class="text-xs font-semibold text-slate-300 block mb-1">🇧🇷 Português</label>
+            <textarea id="emailTemplatePt" rows="8" class="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">${DEFAULT_TEMPLATE_PT}</textarea>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-300 block mb-1">🇪🇸 Español</label>
+            <textarea id="emailTemplateEs" rows="8" class="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">${DEFAULT_TEMPLATE_ES}</textarea>
+          </div>
+        </div>
         <p class="text-xs text-slate-500 mt-1">Variáveis: {streamer}, {empresa}</p>
       </details>
     </div>
@@ -253,8 +280,8 @@ export function setupProspecting() {
       if (!r || !r.email) return
       const company = getCompany()
       if (!company) { showToast('Preencha o campo Empresa', 'error'); return }
-      const body = getTemplate().replace(/{streamer}/g, r.user_name).replace(/{empresa}/g, company)
-      const subject = `Proposta de colaboração ${r.user_name} x ${company}`
+      const body = getTemplate(r.language).replace(/{streamer}/g, r.user_name).replace(/{empresa}/g, company)
+      const subject = r.language === 'es' ? `Propuesta de Colaboración ${r.user_name} x ${company}` : `Proposta de colaboração ${r.user_name} x ${company}`
       window.open(`https://mail.google.com/mail/?view=cm&to=${r.email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank')
     }
   })
@@ -269,8 +296,8 @@ export function setupProspecting() {
       if (!r) return
       const company = getCompany()
       if (!company) { showToast('Preencha o campo Empresa', 'error'); return }
-      const body = getTemplate().replace(/{streamer}/g, r.user_name).replace(/{empresa}/g, company)
-      const subject = `Proposta de colaboração ${r.user_name} x ${company}`
+      const body = getTemplate(r.language).replace(/{streamer}/g, r.user_name).replace(/{empresa}/g, company)
+      const subject = r.language === 'es' ? `Propuesta de Colaboración ${r.user_name} x ${company}` : `Proposta de colaboração ${r.user_name} x ${company}`
       window.open(`https://mail.google.com/mail/?view=cm&to=${email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank')
     }
   })
