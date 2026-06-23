@@ -8,10 +8,12 @@ interface ProspectStream {
   game_name: string
   email: string | null
   description: string
+  language: string
 }
 
 let results: ProspectStream[] = []
 let selected = new Set<string>()
+let shortlist: ProspectStream[] = []
 let page = 1
 const PAGE_SIZE = 10
 
@@ -67,13 +69,16 @@ export function setupProspecting() {
           <label class="text-sm font-semibold text-white block mb-1">Empresa</label>
           <input id="prospectCompany" type="text" placeholder="Nome da empresa..." class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[200px]">
         </div>
+        <div>
+          <label class="text-sm font-semibold text-white block mb-1">Viewers mín.</label>
+          <input id="prospectMinViewers" type="number" value="50" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[100px]">
+        </div>
         <button id="prospectSearchBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-colors cursor-pointer">Buscar</button>
         <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" id="prospectOnlyEmail" class="w-4 h-4 rounded" checked> Só com email</label>
       </div>
 
       <div id="prospectActions" class="flex gap-3 hidden">
-        <button id="copyListBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-copy"></i> Copiar Lista (<span id="prospectSelectedCount">0</span>)</button>
-        <button id="copyEmailsBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-envelope"></i> Copiar Emails (<span id="prospectEmailCount">0</span>)</button>
+        <button id="addToListBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-plus"></i> Adicionar à Lista (<span id="prospectSelectedCount">0</span>)</button>
       </div>
 
       <div id="prospectResults" class="hidden">
@@ -92,6 +97,30 @@ export function setupProspecting() {
           </table>
         </div>
         <div id="prospectPagination" class="flex items-center justify-center gap-4 mt-4"></div>
+      </div>
+
+      <div id="shortlistSection" class="hidden">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-white font-semibold text-base"><i class="fas fa-list mr-2"></i>Minha Lista (<span id="shortlistCount">0</span>)</h3>
+          <div class="flex gap-3">
+            <button id="copyListBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-copy mr-1"></i>Copiar Lista</button>
+            <button id="copyEmailsBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-envelope mr-1"></i>Copiar Emails</button>
+            <button id="clearListBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-trash mr-1"></i>Limpar</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-lg border border-slate-700 bg-slate-800">
+          <table class="w-full text-left">
+            <thead class="border-b border-slate-700 text-sm text-slate-400">
+              <tr>
+                <th class="p-3">Streamer</th>
+                <th class="p-3">Categoria</th>
+                <th class="p-3">Email</th>
+                <th class="p-3">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="shortlistBody" class="divide-y divide-slate-700"></tbody>
+          </table>
+        </div>
       </div>
 
       <details>
@@ -150,6 +179,7 @@ export function setupProspecting() {
     btn.disabled = true; btn.textContent = 'Buscando...'
     try {
       const language = (document.getElementById('prospectLanguage') as HTMLSelectElement).value
+      const minViewers = parseInt((document.getElementById('prospectMinViewers') as HTMLInputElement).value) || 0
       const streams = await fetchStreamsByGame(selectedGameId, 100, language)
       results = streams.map(s => ({
         user_login: s.user_login,
@@ -157,8 +187,9 @@ export function setupProspecting() {
         viewer_count: s.viewer_count,
         game_name: s.game_name,
         description: s.user_info?.description || '',
-        email: extractEmail(s.user_info?.description || '')
-      }))
+        email: extractEmail(s.user_info?.description || ''),
+        language
+      })).filter(s => s.viewer_count >= minViewers)
       selected.clear()
       page = 1
       renderResults()
@@ -176,18 +207,56 @@ export function setupProspecting() {
     renderResults()
   })
 
+  document.getElementById('addToListBtn')!.addEventListener('click', () => {
+    const toAdd = results.filter(r => selected.has(r.user_login) && !shortlist.some(s => s.user_login === r.user_login))
+    shortlist.push(...toAdd)
+    selected.clear()
+    renderResults()
+    renderShortlist()
+    showToast(`${toAdd.length} adicionados à lista!`)
+  })
+
   document.getElementById('copyListBtn')!.addEventListener('click', () => {
-    const list = results.filter(r => selected.has(r.user_login))
-      .map(r => `• ${r.user_name} — https://www.twitch.tv/${r.user_login}`)
-      .join('\n')
-    navigator.clipboard.writeText(list)
-    showToast(`Lista copiada! (${selected.size} streamers)`)
+    const br = shortlist.filter(r => r.language === 'pt')
+    const es = shortlist.filter(r => r.language === 'es')
+    const other = shortlist.filter(r => r.language !== 'pt' && r.language !== 'es')
+    let list = ''
+    if (br.length) list += `🇧🇷 Brazil\n${br.map(r => `• ${r.user_name} — https://www.twitch.tv/${r.user_login}`).join('\n')}\n\n`
+    if (es.length) list += `🇪🇸 Spain\n${es.map(r => `• ${r.user_name} — https://www.twitch.tv/${r.user_login}`).join('\n')}\n\n`
+    if (other.length) list += `🌐 Others\n${other.map(r => `• ${r.user_name} — https://www.twitch.tv/${r.user_login}`).join('\n')}\n`
+    navigator.clipboard.writeText(list.trim())
+    showToast(`Lista copiada! (${shortlist.length} streamers)`)
   })
 
   document.getElementById('copyEmailsBtn')!.addEventListener('click', () => {
-    const emails = results.filter(r => selected.has(r.user_login) && r.email).map(r => r.email!)
+    const emails = shortlist.filter(r => r.email).map(r => r.email!)
     navigator.clipboard.writeText(emails.join(', '))
     showToast(`${emails.length} emails copiados!`)
+  })
+
+  document.getElementById('clearListBtn')!.addEventListener('click', () => {
+    shortlist = []
+    renderShortlist()
+    showToast('Lista limpa!')
+  })
+
+  document.getElementById('shortlistBody')!.addEventListener('click', (e) => {
+    const removeBtn = (e.target as HTMLElement).closest('.shortlist-remove') as HTMLElement
+    if (removeBtn) {
+      shortlist = shortlist.filter(s => s.user_login !== removeBtn.dataset.login)
+      renderShortlist()
+    }
+    const link = (e.target as HTMLElement).closest('.shortlist-mail-link') as HTMLElement
+    if (link) {
+      e.preventDefault()
+      const r = shortlist.find(s => s.user_login === link.dataset.login)
+      if (!r || !r.email) return
+      const company = getCompany()
+      if (!company) { showToast('Preencha o campo Empresa', 'error'); return }
+      const body = getTemplate().replace(/{streamer}/g, r.user_name).replace(/{empresa}/g, company)
+      const subject = `Proposta de colaboração ${r.user_name} x ${company}`
+      window.open(`https://mail.google.com/mail/?view=cm&to=${r.email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank')
+    }
   })
 
   document.getElementById('prospectBody')!.addEventListener('click', (e) => {
@@ -273,8 +342,27 @@ function renderPagination(totalPages: number) {
 function updateActions() {
   const actions = document.getElementById('prospectActions')!
   const count = selected.size
-  const emailCount = results.filter(r => selected.has(r.user_login) && r.email).length
   actions.classList.toggle('hidden', count === 0)
   document.getElementById('prospectSelectedCount')!.textContent = String(count)
-  document.getElementById('prospectEmailCount')!.textContent = String(emailCount)
+}
+
+function renderShortlist() {
+  const section = document.getElementById('shortlistSection')!
+  const body = document.getElementById('shortlistBody')!
+  section.classList.toggle('hidden', shortlist.length === 0)
+  document.getElementById('shortlistCount')!.textContent = String(shortlist.length)
+
+  body.innerHTML = shortlist.map(r => `
+    <tr class="hover:bg-slate-700/30 transition-colors">
+      <td class="p-3">
+        <a href="https://twitch.tv/${r.user_login}" target="_blank" class="text-white hover:text-indigo-400 font-semibold">${r.user_name}</a>
+      </td>
+      <td class="p-3 text-sm text-slate-400">${r.game_name}</td>
+      <td class="p-3 text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${r.email || '-'}</td>
+      <td class="p-3 flex gap-3">
+        ${r.email ? `<a href="#" class="shortlist-mail-link text-indigo-400 hover:text-indigo-300 font-semibold text-sm" data-login="${r.user_login}"><i class="fas fa-paper-plane"></i></a>` : ''}
+        <button class="shortlist-remove text-red-400 hover:text-red-300 cursor-pointer text-sm" data-login="${r.user_login}"><i class="fas fa-times"></i></button>
+      </td>
+    </tr>
+  `).join('')
 }
