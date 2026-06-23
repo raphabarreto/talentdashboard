@@ -286,6 +286,14 @@ export function setupProspecting() {
       saveShortlist()
       renderShortlist()
     }
+    const markBtn = (e.target as HTMLElement).closest('.shortlist-mark-sent') as HTMLElement
+    if (markBtn) {
+      const login = markBtn.dataset.login!
+      if (emailsSent.has(login)) emailsSent.delete(login)
+      else emailsSent.add(login)
+      saveShortlist()
+      renderShortlist()
+    }
     const link = (e.target as HTMLElement).closest('.shortlist-mail-link') as HTMLElement
     if (link) {
       e.preventDefault()
@@ -296,9 +304,6 @@ export function setupProspecting() {
       const body = getTemplate(r.language).replace(/{streamer}/g, r.user_name).replace(/{empresa}/g, company)
       const subject = r.language === 'es' ? `Propuesta de Colaboración ${r.user_name} x ${company}` : `Proposta de colaboração ${r.user_name} x ${company}`
       window.open(`https://mail.google.com/mail/?view=cm&to=${r.email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank')
-      emailsSent.add(r.user_login)
-      saveShortlist()
-      renderShortlist()
     }
   })
 
@@ -410,9 +415,12 @@ function renderShortlist() {
       </td>
       <td class="p-3 text-sm text-slate-400">${r.language === 'pt' ? '🇧🇷' : r.language === 'es' ? '🇪🇸' : '🌐'} ${r.game_name}</td>
       <td class="p-3 text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${r.email || '-'}</td>
-      <td class="p-3 flex gap-3">
-        ${r.email ? `<a href="#" class="shortlist-mail-link text-indigo-400 hover:text-indigo-300 font-semibold text-sm" data-login="${r.user_login}"><i class="fas fa-paper-plane"></i></a>` : ''}
-        <button class="shortlist-remove text-red-400 hover:text-red-300 cursor-pointer text-sm" data-login="${r.user_login}"><i class="fas fa-times"></i></button>
+      <td class="p-3">
+        <div class="flex gap-2">
+          ${r.email ? `<a href="#" class="shortlist-mail-link bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-3 rounded text-xs font-semibold transition-colors" data-login="${r.user_login}">Enviar</a>` : ''}
+          <button class="shortlist-mark-sent ${sent ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-600 hover:bg-slate-500'} text-white py-1 px-3 rounded text-xs font-semibold cursor-pointer transition-colors" data-login="${r.user_login}">${sent ? '✓ Enviado' : 'Marcar'}</button>
+          <button class="shortlist-remove bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded text-xs font-semibold cursor-pointer transition-colors" data-login="${r.user_login}">Remover</button>
+        </div>
       </td>
     </tr>
   `}).join('')
