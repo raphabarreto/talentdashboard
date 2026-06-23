@@ -71,6 +71,16 @@ Deno.serve(async (req) => {
       const data = await res.json()
       result = data.data || []
 
+    } else if (action === "last_video") {
+      const userId = url.searchParams.get("user_id")
+      if (!userId) return new Response("Missing user_id", { status: 400, headers: corsHeaders })
+
+      const res = await fetch(`https://api.twitch.tv/helix/videos?user_id=${userId}&first=1&type=archive`, {
+        headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+      })
+      const data = await res.json()
+      result = data.data?.[0] || null
+
     } else {
       return new Response("Invalid action", { status: 400, headers: corsHeaders })
     }

@@ -27,6 +27,13 @@ export async function fetchLiveStreams(usernames: string[]) {
   }>>
 }
 
+export async function fetchLastLiveDate(userId: string): Promise<string | null> {
+  try {
+    const video = await callProxy({ action: 'last_video', user_id: userId })
+    return video?.created_at || null
+  } catch { return null }
+}
+
 export async function fetchInitialStats(username: string) {
   try {
     const res = await fetch(`https://twitchtracker.com/api/channels/summary/${username.toLowerCase()}`)

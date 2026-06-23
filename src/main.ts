@@ -1,7 +1,7 @@
 import { getSession, signOut, onAuthChange } from './lib/auth'
 import { supabase } from './lib/supabase'
 import { getStreamers, addStreamer, deleteStreamer, getCampaigns, addCampaign, updateCampaign, deleteCampaign } from './lib/data'
-import { fetchTwitchUser, fetchInitialStats, fetchLiveStreams } from './lib/twitch'
+import { fetchTwitchUser, fetchInitialStats, fetchLastLiveDate } from './lib/twitch'
 import { streamers, campaigns, selectedStreamers, currentSort, editingCampaignId, setStreamers, setCampaigns, setOverviewPage, setTablePage, setEditingCampaignId } from './state'
 import { showToast, confirmAction, fmtDate, fmtCurrency, fmt, langToCountry } from './utils'
 import { renderOverview } from './ui/overview'
@@ -172,6 +172,11 @@ document.getElementById('addStreamerForm')?.addEventListener('submit', async (e)
     const category = (document.getElementById('streamerCategoryInput') as HTMLInputElement).value.trim()
     const stats = await fetchInitialStats(user.login)
     await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: category })
+    const lastLive = await fetchLastLiveDate(user.id)
+    if (lastLive) {
+      const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
+      if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)
+    }
     await loadData(); renderAll()
     input.value = ''; (document.getElementById('streamerCategoryInput') as HTMLInputElement).value = ''
     document.getElementById('addStreamerModal')!.classList.add('hidden')
@@ -199,6 +204,11 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
       const lang = user.broadcaster_language?.split('-')[0]
       const stats = await fetchInitialStats(user.login)
       await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
+      const lastLive = await fetchLastLiveDate(user.id)
+      if (lastLive) {
+        const rec = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
+        if (rec) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', rec.id)
+      }
       added++
     } catch { /* skip */ }
   }
@@ -248,10 +258,10 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
           const lang = user.broadcaster_language?.split('-')[0]
           const stats = await fetchInitialStats(user.login)
           await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
-          const lives = await fetchLiveStreams([user.login])
-          if (lives.length > 0) {
+          const lastLive = await fetchLastLiveDate(user.id)
+          if (lastLive) {
             const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
-            if (added) await supabase.from('streamers').update({ last_live_at: new Date().toISOString() }).eq('id', added.id)
+            if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)
           }
         }
       } catch { /* ignora */ }
