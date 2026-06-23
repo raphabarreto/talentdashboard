@@ -15,6 +15,7 @@ interface ProspectStream {
 let results: ProspectStream[] = []
 let selected = new Set<string>()
 let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')
+let emailsSent: Set<string> = new Set(JSON.parse(localStorage.getItem('prospectEmailsSent') || '[]'))
 let page = 1
 const PAGE_SIZE = 10
 
@@ -22,6 +23,7 @@ const EMAIL_REGEX = /[\w.+-]+@[\w-]+\.[\w.-]+/g
 
 function saveShortlist() {
   localStorage.setItem('prospectShortlist', JSON.stringify(shortlist))
+  localStorage.setItem('prospectEmailsSent', JSON.stringify([...emailsSent]))
 }
 
 const DEFAULT_TEMPLATE_PT = `Fala {streamer}, tudo bem?
@@ -105,6 +107,7 @@ export function setupProspecting() {
       </div>
 
       <div id="prospectResults" class="hidden">
+        <p id="prospectCounter" class="text-sm text-slate-400 mb-2"></p>
         <div class="overflow-x-auto rounded-lg border border-slate-700 bg-slate-800">
           <table class="w-full text-left">
             <thead class="border-b border-slate-700 text-sm text-slate-400">
@@ -270,6 +273,7 @@ export function setupProspecting() {
 
   document.getElementById('clearListBtn')!.addEventListener('click', () => {
     shortlist = []
+    emailsSent.clear()
     saveShortlist()
     renderShortlist()
     showToast('Lista limpa!')
@@ -292,6 +296,9 @@ export function setupProspecting() {
       const body = getTemplate(r.language).replace(/{streamer}/g, r.user_name).replace(/{empresa}/g, company)
       const subject = r.language === 'es' ? `Propuesta de Colaboración ${r.user_name} x ${company}` : `Proposta de colaboração ${r.user_name} x ${company}`
       window.open(`https://mail.google.com/mail/?view=cm&to=${r.email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank')
+      emailsSent.add(r.user_login)
+      saveShortlist()
+      renderShortlist()
     }
   })
 
@@ -333,6 +340,8 @@ function renderResults() {
   const wrapper = document.getElementById('prospectResults')!
   wrapper.classList.remove('hidden')
   const visible = getVisibleResults()
+  const withEmail = results.filter(r => r.email).length
+  document.getElementById('prospectCounter')!.textContent = `${results.length} encontrados • ${withEmail} com email`
   const totalPages = Math.ceil(visible.length / PAGE_SIZE)
   if (page > totalPages) page = Math.max(1, totalPages)
   const paged = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -392,10 +401,12 @@ function renderShortlist() {
   section.classList.toggle('hidden', shortlist.length === 0)
   document.getElementById('shortlistCount')!.textContent = String(shortlist.length)
 
-  body.innerHTML = shortlist.map(r => `
-    <tr class="hover:bg-slate-700/30 transition-colors">
+  body.innerHTML = shortlist.map(r => {
+    const sent = emailsSent.has(r.user_login)
+    return `
+    <tr class="hover:bg-slate-700/30 transition-colors ${sent ? 'opacity-60' : ''}">
       <td class="p-3">
-        <a href="https://twitch.tv/${r.user_login}" target="_blank" class="text-white hover:text-indigo-400 font-semibold">${r.user_name}</a>
+        <a href="https://twitch.tv/${r.user_login}" target="_blank" class="text-white hover:text-indigo-400 font-semibold">${r.user_name}</a>${sent ? ' <span class="text-xs text-emerald-500">✓ enviado</span>' : ''}
       </td>
       <td class="p-3 text-sm text-slate-400">${r.language === 'pt' ? '🇧🇷' : r.language === 'es' ? '🇪🇸' : '🌐'} ${r.game_name}</td>
       <td class="p-3 text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${r.email || '-'}</td>
@@ -404,5 +415,5 @@ function renderShortlist() {
         <button class="shortlist-remove text-red-400 hover:text-red-300 cursor-pointer text-sm" data-login="${r.user_login}"><i class="fas fa-times"></i></button>
       </td>
     </tr>
-  `).join('')
+  `}).join('')
 }
