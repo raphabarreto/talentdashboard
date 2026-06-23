@@ -71,6 +71,42 @@ Deno.serve(async (req) => {
       const data = await res.json()
       result = data.data || []
 
+    } else if (action === "search_categories") {
+      const query = url.searchParams.get("query")
+      if (!query) return new Response("Missing query", { status: 400, headers: corsHeaders })
+
+      const res = await fetch(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}&first=10`, {
+        headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+      })
+      const data = await res.json()
+      result = data.data || []
+
+    } else if (action === "streams_by_game") {
+      const gameId = url.searchParams.get("game_id")
+      if (!gameId) return new Response("Missing game_id", { status: 400, headers: corsHeaders })
+
+      const first = url.searchParams.get("first") || "20"
+      const language = url.searchParams.get("language") || ""
+      const langParam = language ? `&language=${language}` : ""
+      const res = await fetch(`https://api.twitch.tv/helix/streams?game_id=${gameId}&first=${first}${langParam}`, {
+        headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+      })
+      const data = await res.json()
+      const streams = data.data || []
+
+      // Buscar info dos users (description) em batch
+      if (streams.length) {
+        const ids = streams.map((s: { user_id: string }) => `id=${s.user_id}`).join("&")
+        const usersRes = await fetch(`https://api.twitch.tv/helix/users?${ids}`, {
+          headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+        })
+        const usersData = await usersRes.json()
+        const usersMap = new Map((usersData.data || []).map((u: { id: string }) => [u.id, u]))
+        result = streams.map((s: { user_id: string }) => ({ ...s, user_info: usersMap.get(s.user_id) || null }))
+      } else {
+        result = []
+      }
+
     } else if (action === "last_video") {
       const userId = url.searchParams.get("user_id")
       if (!userId) return new Response("Missing user_id", { status: 400, headers: corsHeaders })

@@ -18,20 +18,24 @@ export async function fetchTwitchUser(username: string) {
   return callProxy({ action: 'user', username })
 }
 
-export async function fetchLiveStreams(usernames: string[]) {
-  if (!usernames.length) return []
-  return callProxy({ action: 'streams', usernames: usernames.join(',') }) as Promise<Array<{
-    user_login: string
-    viewer_count: number
-    game_name: string
-  }>>
-}
-
 export async function fetchLastLiveDate(userId: string): Promise<string | null> {
   try {
     const video = await callProxy({ action: 'last_video', user_id: userId })
     return video?.created_at || null
   } catch { return null }
+}
+
+export async function searchCategories(query: string) {
+  return callProxy({ action: 'search_categories', query }) as Promise<Array<{ id: string; name: string; box_art_url: string }>>
+}
+
+export async function fetchStreamsByGame(gameId: string, first = 20, language = '') {
+  const params: Record<string, string> = { action: 'streams_by_game', game_id: gameId, first: String(first) }
+  if (language) params.language = language
+  return callProxy(params) as Promise<Array<{
+    user_id: string; user_login: string; user_name: string; viewer_count: number; game_name: string
+    user_info: { description: string; profile_image_url: string } | null
+  }>>
 }
 
 export async function fetchInitialStats(username: string) {

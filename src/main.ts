@@ -9,6 +9,7 @@ import { renderTable } from './ui/table'
 import { renderCampaigns } from './ui/campaigns'
 import { showHistory } from './ui/history'
 import { populateFilters, setupAutocomplete, getExistingCompanies, getFilteredStreamers } from './ui/filters'
+import { setupProspecting } from './ui/prospecting'
 import './style.css'
 
 // --- Init ---
@@ -17,6 +18,7 @@ async function init() {
   if (!session) { window.location.href = '/login.html'; return }
   await loadData()
   setupNav()
+  setupProspecting()
   setupAutocomplete('streamerCategoryInput', 'streamerCategorySuggestions')
   setupAutocomplete('categoryInput', 'categorySuggestions')
   setupAutocomplete('companyInput', 'companySuggestions', getExistingCompanies)
