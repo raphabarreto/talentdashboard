@@ -55,7 +55,7 @@ As credenciais da Twitch (Client ID e Secret) ficam apenas nos secrets das Edge 
 
 ## Deploy
 
-O deploy é automático via Vercel — cada push no `master` gera um novo build.
+O deploy é automático via Vercel — cada push no `main` gera um novo build.
 
 URL de produção: https://dashlugs.vercel.app
 
