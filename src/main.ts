@@ -354,4 +354,82 @@ document.getElementById('saveCategoryBtn')?.addEventListener('click', async () =
   showToast(`Categoria "${category}" aplicada!`)
 })
 
+// Lookup
+document.getElementById('openLookup')?.addEventListener('click', () => {
+  document.getElementById('lookupResult')!.classList.add('hidden')
+  document.getElementById('lookupError')!.classList.add('hidden')
+  document.getElementById('lookupActions')!.classList.add('hidden')
+  document.getElementById('closeLookupModalAlt')!.classList.remove('hidden')
+  ;(document.getElementById('lookupInput') as HTMLInputElement).value = ''
+  document.getElementById('lookupModal')!.classList.remove('hidden')
+})
+document.getElementById('closeLookupModal')?.addEventListener('click', () => document.getElementById('lookupModal')!.classList.add('hidden'))
+document.getElementById('closeLookupModalAlt')?.addEventListener('click', () => document.getElementById('lookupModal')!.classList.add('hidden'))
+
+let lookupUser: any = null
+let lookupStats: any = null
+
+async function doLookup() {
+  const input = document.getElementById('lookupInput') as HTMLInputElement
+  const name = input.value.trim()
+  if (!name) return
+  const btn = document.getElementById('lookupSearchBtn') as HTMLButtonElement
+  btn.disabled = true; btn.textContent = 'Buscando...'
+  document.getElementById('lookupResult')!.classList.add('hidden')
+  document.getElementById('lookupError')!.classList.add('hidden')
+  document.getElementById('lookupActions')!.classList.add('hidden')
+  document.getElementById('closeLookupModalAlt')!.classList.remove('hidden')
+  lookupUser = null; lookupStats = null
+  try {
+    const user = await fetchTwitchUser(name)
+    if (!user) throw new Error('Streamer não encontrado.')
+    lookupUser = user
+    document.getElementById('lookupAvatar')!.setAttribute('src', user.profile_image_url || '')
+    document.getElementById('lookupName')!.textContent = user.display_name
+    const link = document.getElementById('lookupTwitchLink') as HTMLAnchorElement
+    link.href = `https://twitch.tv/${user.login}`
+    link.textContent = `twitch.tv/${user.login}`
+    const stats = await fetchInitialStats(user.login)
+    lookupStats = stats
+    document.getElementById('lookupAvgViewers')!.textContent = fmt(stats?.avg_viewers || 0)
+    document.getElementById('lookupPeakViewers')!.textContent = fmt(stats?.peak_viewers || 0)
+    document.getElementById('lookupHoursWatched')!.textContent = fmt(stats?.hours_watched || 0)
+    document.getElementById('lookupHoursStreamed')!.textContent = fmt(stats?.hours_streamed || 0)
+    document.getElementById('lookupResult')!.classList.remove('hidden')
+    const alreadyAdded = streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())
+    if (alreadyAdded) {
+      document.getElementById('lookupActions')!.classList.add('hidden')
+      document.getElementById('closeLookupModalAlt')!.classList.remove('hidden')
+    } else {
+      document.getElementById('lookupActions')!.classList.remove('hidden')
+      document.getElementById('closeLookupModalAlt')!.classList.add('hidden')
+    }
+  } catch (err: unknown) {
+    const el = document.getElementById('lookupError')!
+    el.textContent = err instanceof Error ? err.message : 'Erro ao buscar'
+    el.classList.remove('hidden')
+  } finally { btn.disabled = false; btn.textContent = 'Buscar' }
+}
+document.getElementById('lookupSearchBtn')?.addEventListener('click', doLookup)
+document.getElementById('lookupInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLookup() })
+
+document.getElementById('lookupAddBtn')?.addEventListener('click', async () => {
+  if (!lookupUser) return
+  const btn = document.getElementById('lookupAddBtn') as HTMLButtonElement
+  btn.disabled = true; btn.textContent = 'Adicionando...'
+  try {
+    const lang = lookupUser.broadcaster_language?.split('-')[0]
+    await addStreamer({ name: lookupUser.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: lookupStats?.avg_viewers || 0, peak_viewers: lookupStats?.peak_viewers || 0, hours_watched: lookupStats?.hours_watched || 0, hours_streamed: lookupStats?.hours_streamed || 0, main_category: '' })
+    const lastLive = await fetchLastLiveDate(lookupUser.id)
+    if (lastLive) {
+      const added = (await supabase.from('streamers').select('id').eq('name', lookupUser.display_name).single()).data
+      if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)
+    }
+    await loadData(); renderAll()
+    document.getElementById('lookupModal')!.classList.add('hidden')
+    showToast('Streamer adicionado!')
+  } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
+  finally { btn.disabled = false; btn.textContent = '+ Adicionar' }
+})
+
 init()

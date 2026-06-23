@@ -96,10 +96,10 @@ export function setupProspecting() {
         </div>
         <div>
           <label class="text-sm font-semibold text-white block mb-1">Viewers mín.</label>
-          <input id="prospectMinViewers" type="number" value="50" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[100px]">
+          <input id="prospectMinViewers" type="number" value="50" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[100px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
         </div>
         <button id="prospectSearchBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-colors cursor-pointer">Buscar</button>
-        <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" id="prospectOnlyEmail" class="w-4 h-4 rounded" checked> Só com email</label>
+        <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none"><input type="checkbox" id="prospectOnlyEmail" class="w-4 h-4 rounded accent-indigo-500" checked> Só com email</label>
       </div>
 
       <div id="prospectActions" class="flex gap-3 hidden">
@@ -107,7 +107,9 @@ export function setupProspecting() {
       </div>
 
       <div id="prospectResults" class="hidden">
-        <p id="prospectCounter" class="text-sm text-slate-400 mb-2"></p>
+        <div class="flex items-center justify-between mb-3">
+          <p id="prospectCounter" class="text-sm text-slate-400"></p>
+        </div>
         <div class="overflow-x-auto rounded-lg border border-slate-700 bg-slate-800">
           <table class="w-full text-left">
             <thead class="border-b border-slate-700 text-sm text-slate-400">
@@ -141,7 +143,7 @@ export function setupProspecting() {
                 <th class="p-3">Streamer</th>
                 <th class="p-3">Categoria</th>
                 <th class="p-3">Email</th>
-                <th class="p-3">Ações</th>
+                <th class="p-3 w-[120px]">Ações</th>
               </tr>
             </thead>
             <tbody id="shortlistBody" class="divide-y divide-slate-700"></tbody>
@@ -416,10 +418,10 @@ function renderShortlist() {
       <td class="p-3 text-sm text-slate-400">${r.language === 'pt' ? '🇧🇷' : r.language === 'es' ? '🇪🇸' : '🌐'} ${r.game_name}</td>
       <td class="p-3 text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${r.email || '-'}</td>
       <td class="p-3">
-        <div class="flex gap-2">
-          ${r.email ? `<a href="#" class="shortlist-mail-link bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-3 rounded text-xs font-semibold transition-colors" data-login="${r.user_login}">Enviar</a>` : ''}
-          <button class="shortlist-mark-sent ${sent ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-600 hover:bg-slate-500'} text-white py-1 px-3 rounded text-xs font-semibold cursor-pointer transition-colors" data-login="${r.user_login}">${sent ? '✓ Enviado' : 'Marcar'}</button>
-          <button class="shortlist-remove bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded text-xs font-semibold cursor-pointer transition-colors" data-login="${r.user_login}">Remover</button>
+        <div class="flex items-center gap-4">
+          ${r.email ? `<a href="#" class="shortlist-mail-link text-indigo-400 hover:text-indigo-300 transition-colors" data-login="${r.user_login}" title="Enviar email"><i class="fas fa-paper-plane"></i></a>` : ''}
+          <button class="shortlist-mark-sent ${sent ? 'text-emerald-400' : 'text-slate-400 hover:text-emerald-400'} transition-colors cursor-pointer" data-login="${r.user_login}" title="${sent ? 'Enviado' : 'Marcar como enviado'}"><i class="fas fa-check-circle"></i></button>
+          <button class="shortlist-remove text-slate-400 hover:text-red-400 transition-colors cursor-pointer" data-login="${r.user_login}" title="Remover"><i class="fas fa-trash"></i></button>
         </div>
       </td>
     </tr>
