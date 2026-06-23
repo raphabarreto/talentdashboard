@@ -1,5 +1,6 @@
 import { searchCategories, fetchStreamsByGame } from '../lib/twitch'
 import { showToast } from '../utils'
+import { streamers } from '../state'
 
 interface ProspectStream {
   user_login: string
@@ -13,21 +14,25 @@ interface ProspectStream {
 
 let results: ProspectStream[] = []
 let selected = new Set<string>()
-let shortlist: ProspectStream[] = []
+let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')
 let page = 1
 const PAGE_SIZE = 10
 
 const EMAIL_REGEX = /[\w.+-]+@[\w-]+\.[\w.-]+/g
 
+function saveShortlist() {
+  localStorage.setItem('prospectShortlist', JSON.stringify(shortlist))
+}
+
 const DEFAULT_TEMPLATE_PT = `Fala {streamer}, tudo bem?
 
 Sou o Raphael Barreto, responsável pelas campanhas na Lugs Hub.
 
-Acompanho seu conteúdo e selecionei seu canal para uma possível parceria com o {empresa}.
+Acompanho seu conteúdo e selecionei seu canal para uma possível parceria com o {empresa} neste mês.
 
 Pelo perfil da sua comunidade e seu estilo de live, acho que a ação encaixa muito bem.
 
-A proposta tem uma parte fixa garantida, além de um bônus por performance
+A proposta tem uma parte fixa garantida, além de um bônus por performance.
 
 Se tiver interesse, me dá um salve por aqui, pelo Discord (raphalugs) ou WhatsApp 11976732064, que te passo todos os detalhes.
 
@@ -85,7 +90,7 @@ export function setupProspecting() {
         </div>
         <div>
           <label class="text-sm font-semibold text-white block mb-1">Empresa</label>
-          <input id="prospectCompany" type="text" placeholder="Nome da empresa..." class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[200px]">
+          <input id="prospectCompany" type="text" placeholder="Nome da empresa..." value="${localStorage.getItem('prospectCompany') || ''}" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[200px]">
         </div>
         <div>
           <label class="text-sm font-semibold text-white block mb-1">Viewers mín.</label>
@@ -216,7 +221,7 @@ export function setupProspecting() {
         description: s.user_info?.description || '',
         email: extractEmail(s.user_info?.description || ''),
         language
-      })).filter(s => s.viewer_count >= minViewers)
+      })).filter(s => s.viewer_count >= minViewers && !streamers.some(st => st.name.toLowerCase() === s.user_name.toLowerCase()))
       selected.clear()
       page = 1
       renderResults()
@@ -225,6 +230,7 @@ export function setupProspecting() {
   })
 
   document.getElementById('prospectOnlyEmail')!.addEventListener('change', () => { page = 1; renderResults() })
+  document.getElementById('prospectCompany')!.addEventListener('input', (e) => { localStorage.setItem('prospectCompany', (e.target as HTMLInputElement).value) })
 
   document.getElementById('prospectSelectAll')!.addEventListener('change', (e) => {
     const checked = (e.target as HTMLInputElement).checked
@@ -237,6 +243,7 @@ export function setupProspecting() {
   document.getElementById('addToListBtn')!.addEventListener('click', () => {
     const toAdd = results.filter(r => selected.has(r.user_login) && !shortlist.some(s => s.user_login === r.user_login))
     shortlist.push(...toAdd)
+    saveShortlist()
     selected.clear()
     renderResults()
     renderShortlist()
@@ -263,6 +270,7 @@ export function setupProspecting() {
 
   document.getElementById('clearListBtn')!.addEventListener('click', () => {
     shortlist = []
+    saveShortlist()
     renderShortlist()
     showToast('Lista limpa!')
   })
@@ -271,6 +279,7 @@ export function setupProspecting() {
     const removeBtn = (e.target as HTMLElement).closest('.shortlist-remove') as HTMLElement
     if (removeBtn) {
       shortlist = shortlist.filter(s => s.user_login !== removeBtn.dataset.login)
+      saveShortlist()
       renderShortlist()
     }
     const link = (e.target as HTMLElement).closest('.shortlist-mail-link') as HTMLElement
@@ -310,6 +319,8 @@ export function setupProspecting() {
       updateActions()
     }
   })
+
+  if (shortlist.length) renderShortlist()
 }
 
 function getVisibleResults(): ProspectStream[] {
@@ -332,11 +343,13 @@ function renderResults() {
     return
   }
 
-  body.innerHTML = paged.map(r => `
-    <tr class="hover:bg-slate-700/30 transition-colors">
-      <td class="p-4"><input type="checkbox" class="prospect-check w-4 h-4 rounded" data-login="${r.user_login}" ${selected.has(r.user_login) ? 'checked' : ''}></td>
+  body.innerHTML = paged.map(r => {
+    const inList = shortlist.some(s => s.user_login === r.user_login)
+    return `
+    <tr class="hover:bg-slate-700/30 transition-colors ${inList ? 'opacity-50' : ''}">
+      <td class="p-4"><input type="checkbox" class="prospect-check w-4 h-4 rounded" data-login="${r.user_login}" ${selected.has(r.user_login) ? 'checked' : ''} ${inList ? 'disabled' : ''}></td>
       <td class="p-4">
-        <a href="https://twitch.tv/${r.user_login}" target="_blank" class="text-white hover:text-indigo-400 font-semibold text-base">${r.user_name}</a>
+        <a href="https://twitch.tv/${r.user_login}" target="_blank" class="text-white hover:text-indigo-400 font-semibold text-base">${r.user_name}</a>${inList ? ' <span class="text-xs text-slate-500">✓ na lista</span>' : ''}
       </td>
       <td class="p-4 text-center">
         <span class="text-sm font-medium text-slate-300">${r.viewer_count.toLocaleString()}</span>
@@ -348,7 +361,7 @@ function renderResults() {
         ${r.email ? `<a href="#" class="prospect-mail-link text-indigo-400 hover:text-indigo-300 font-semibold text-sm" data-login="${r.user_login}" data-email="${r.email}"><i class="fas fa-paper-plane mr-1"></i>Enviar</a>` : ''}
       </td>
     </tr>
-  `).join('')
+  `}).join('')
 
   renderPagination(totalPages)
   updateActions()
@@ -384,7 +397,7 @@ function renderShortlist() {
       <td class="p-3">
         <a href="https://twitch.tv/${r.user_login}" target="_blank" class="text-white hover:text-indigo-400 font-semibold">${r.user_name}</a>
       </td>
-      <td class="p-3 text-sm text-slate-400">${r.game_name}</td>
+      <td class="p-3 text-sm text-slate-400">${r.language === 'pt' ? '🇧🇷' : r.language === 'es' ? '🇪🇸' : '🌐'} ${r.game_name}</td>
       <td class="p-3 text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${r.email || '-'}</td>
       <td class="p-3 flex gap-3">
         ${r.email ? `<a href="#" class="shortlist-mail-link text-indigo-400 hover:text-indigo-300 font-semibold text-sm" data-login="${r.user_login}"><i class="fas fa-paper-plane"></i></a>` : ''}
