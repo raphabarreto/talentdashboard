@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+// v10 - com language filter e paginação
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
