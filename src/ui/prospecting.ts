@@ -12,14 +12,18 @@ interface ProspectStream {
   language: string
 }
 
-const PT_KEYWORDS = ['portuguese', 'português', 'portugues', 'brazil', 'brasil', 'brasileiro', 'br']
-const ES_KEYWORDS = ['spanish', 'español', 'espanol', 'latam', 'latino', 'argentina', 'mexico', 'chile', 'colombia']
+const PT_TAGS = new Set(['portuguese', 'portugues', 'português', 'brazil', 'brasil'])
+const ES_TAGS = new Set(['spanish', 'espanol', 'español', 'latam', 'latino'])
+
+function normalize(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
 
 function detectLanguage(stream: { language?: string; tags?: string[]; title?: string }): string {
   if (stream.language === 'pt' || stream.language === 'es') return stream.language
-  const text = [...(stream.tags || []), stream.title || ''].join(' ').toLowerCase()
-  if (PT_KEYWORDS.some(k => text.includes(k))) return 'pt'
-  if (ES_KEYWORDS.some(k => text.includes(k))) return 'es'
+  const tags = (stream.tags || []).map(normalize)
+  if (tags.some(t => PT_TAGS.has(t))) return 'pt'
+  if (tags.some(t => ES_TAGS.has(t))) return 'es'
   return stream.language || ''
 }
 
@@ -228,7 +232,7 @@ export function setupProspecting() {
     try {
       const language = (document.getElementById('prospectLanguage') as HTMLSelectElement).value
       const minViewers = parseInt((document.getElementById('prospectMinViewers') as HTMLInputElement).value) || 0
-      const streams = await fetchStreamsByGame(selectedGameId, 100)
+      const streams = await fetchStreamsByGame(selectedGameId, 200)
       results = streams.map(s => ({
         user_login: s.user_login,
         user_name: s.user_name,
