@@ -99,7 +99,7 @@ export function setupProspecting() {
           <input id="prospectMinViewers" type="number" value="50" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[100px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
         </div>
         <button id="prospectSearchBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-colors cursor-pointer">Buscar</button>
-        <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none"><input type="checkbox" id="prospectOnlyEmail" class="w-4 h-4 rounded accent-indigo-500" checked> Só com email</label>
+        <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none"><input type="checkbox" id="prospectOnlyEmail" class="w-4 h-4 rounded accent-indigo-500"> Só com email</label>
       </div>
 
       <div id="prospectActions" class="flex gap-3 hidden">
