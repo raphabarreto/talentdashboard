@@ -12,21 +12,6 @@ interface ProspectStream {
   language: string
 }
 
-const PT_TAGS = new Set(['portuguese', 'portugues', 'português', 'brazil', 'brasil'])
-const ES_TAGS = new Set(['spanish', 'espanol', 'español', 'latam', 'latino'])
-
-function normalize(s: string): string {
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-}
-
-function detectLanguage(stream: { language?: string; tags?: string[]; title?: string }): string {
-  if (stream.language === 'pt' || stream.language === 'es') return stream.language
-  const tags = (stream.tags || []).map(normalize)
-  if (tags.some(t => PT_TAGS.has(t))) return 'pt'
-  if (tags.some(t => ES_TAGS.has(t))) return 'es'
-  return stream.language || ''
-}
-
 let results: ProspectStream[] = []
 let selected = new Set<string>()
 let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')
@@ -232,7 +217,7 @@ export function setupProspecting() {
     try {
       const language = (document.getElementById('prospectLanguage') as HTMLSelectElement).value
       const minViewers = parseInt((document.getElementById('prospectMinViewers') as HTMLInputElement).value) || 0
-      const streams = await fetchStreamsByGame(selectedGameId, 200)
+      const streams = await fetchStreamsByGame(selectedGameId, 100, language)
       console.log('🔍 Raw streams from API:', streams.slice(0, 5).map(s => ({ user_name: s.user_name, language: s.language, tags: s.tags, title: s.title, viewers: s.viewer_count })))
       results = streams.map(s => ({
         user_login: s.user_login,
@@ -241,9 +226,8 @@ export function setupProspecting() {
         game_name: s.game_name,
         description: s.user_info?.description || '',
         email: extractEmail(s.user_info?.description || ''),
-        language: detectLanguage(s)
+        language: s.language || language
       })).filter(s => s.viewer_count >= minViewers && !streamers.some(st => st.name.toLowerCase() === s.user_name.toLowerCase()))
-      if (language) results = results.filter(s => s.language === language)
       selected.clear()
       page = 1
       renderResults()
