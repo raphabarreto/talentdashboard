@@ -261,6 +261,7 @@ export function setupProspecting() {
       shortlist = shortlist.filter(s => s.user_login !== removeBtn.dataset.login)
       saveShortlist()
       renderShortlist()
+      if (results.length) renderResults()
     }
     const markBtn = (e.target as HTMLElement).closest('.shortlist-mark-sent') as HTMLElement
     if (markBtn) {
