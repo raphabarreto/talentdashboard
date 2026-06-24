@@ -35,7 +35,7 @@ export interface Campaign {
   campaign_streamers?: CampaignStreamer[]
 }
 
-export type ContactStatus = 'pendente' | 'contatado' | 'confirmado' | 'recusado'
+export type ContactStatus = 'pendente' | 'contatado' | 'nao_respondeu' | 'confirmado' | 'recusado'
 
 export interface CampaignStreamer {
   id: string

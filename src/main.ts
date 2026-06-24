@@ -108,15 +108,15 @@ document.addEventListener('click', async (e) => {
     document.getElementById('detailsPaymentDate')!.textContent = c.payment_date ? fmtDate(c.payment_date) : 'Pendente'
     const tbody = document.getElementById('detailsStreamers')!
     tbody.innerHTML = ''
-    const statusColors: Record<string, string> = { pendente: 'bg-slate-500', contatado: 'bg-amber-500', confirmado: 'bg-emerald-500', recusado: 'bg-red-500' }
-    const selectColors: Record<string, string> = { pendente: 'bg-slate-700', contatado: 'bg-amber-700', confirmado: 'bg-emerald-700', recusado: 'bg-red-700' }
-    const statusOrder: Record<string, number> = { pendente: 0, contatado: 1, confirmado: 2, recusado: 3 }
-    const counts = { pendente: 0, contatado: 0, confirmado: 0, recusado: 0 }
+    const statusColors: Record<string, string> = { pendente: 'bg-slate-500', contatado: 'bg-amber-500', nao_respondeu: 'bg-orange-500', confirmado: 'bg-emerald-500', recusado: 'bg-red-500' }
+    const selectColors: Record<string, string> = { pendente: 'bg-slate-700', contatado: 'bg-amber-700', nao_respondeu: 'bg-orange-700', confirmado: 'bg-emerald-700', recusado: 'bg-red-700' }
+    const statusOrder: Record<string, number> = { pendente: 0, contatado: 1, nao_respondeu: 2, confirmado: 3, recusado: 4 }
+    const counts = { pendente: 0, contatado: 0, nao_respondeu: 0, confirmado: 0, recusado: 0 }
     const sorted = [...(c.campaign_streamers || [])].sort((a, b) => (statusOrder[a.contact_status || 'pendente'] || 0) - (statusOrder[b.contact_status || 'pendente'] || 0))
     sorted.forEach(s => {
       const st = s.contact_status || 'pendente'
       counts[st as keyof typeof counts]++
-      tbody.innerHTML += `<tr class="hover:bg-slate-700/50" data-status="${st}"><td class="p-2">${s.streamer_name}</td><td class="p-2 text-right whitespace-nowrap"><select class="contact-status-select ${selectColors[st]} text-white text-sm rounded px-3 py-1.5 border border-slate-600 cursor-pointer" data-id="${s.id}"><option value="pendente"${st === 'pendente' ? ' selected' : ''}>Pendente</option><option value="contatado"${st === 'contatado' ? ' selected' : ''}>Contatado</option><option value="confirmado"${st === 'confirmado' ? ' selected' : ''}>Confirmado</option><option value="recusado"${st === 'recusado' ? ' selected' : ''}>Recusado</option></select></td></tr>`
+      tbody.innerHTML += `<tr class="hover:bg-slate-700/50" data-status="${st}"><td class="p-2">${s.streamer_name}</td><td class="p-2 text-right whitespace-nowrap"><select class="contact-status-select ${selectColors[st]} text-white text-sm rounded px-3 py-1.5 border border-slate-600 cursor-pointer" data-id="${s.id}"><option value="pendente"${st === 'pendente' ? ' selected' : ''}>Pendente</option><option value="contatado"${st === 'contatado' ? ' selected' : ''}>Contatado</option><option value="nao_respondeu"${st === 'nao_respondeu' ? ' selected' : ''}>Não respondeu</option><option value="confirmado"${st === 'confirmado' ? ' selected' : ''}>Confirmado</option><option value="recusado"${st === 'recusado' ? ' selected' : ''}>Recusado</option></select></td></tr>`
     })
     const summary = document.getElementById('detailsStatusSummary')!
     summary.innerHTML = Object.entries(counts).filter(([,v]) => v > 0).map(([k,v]) => `<span class="${statusColors[k]} text-white px-2 py-1 rounded-full">${v} ${k}</span>`).join('')
