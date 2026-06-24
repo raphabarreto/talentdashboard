@@ -12,15 +12,14 @@ interface ProspectStream {
   language: string
 }
 
-const PT_TAGS = ['portuguese', 'português', 'portugues', 'brazil', 'brasil', 'brasileiro', 'br']
-const ES_TAGS = ['spanish', 'español', 'espanol', 'latam', 'latino', 'argentina', 'mexico', 'chile', 'colombia']
+const PT_KEYWORDS = ['portuguese', 'português', 'portugues', 'brazil', 'brasil', 'brasileiro', 'br']
+const ES_KEYWORDS = ['spanish', 'español', 'espanol', 'latam', 'latino', 'argentina', 'mexico', 'chile', 'colombia']
 
 function detectLanguage(stream: { language?: string; tags?: string[]; title?: string }): string {
   if (stream.language === 'pt' || stream.language === 'es') return stream.language
-  const tags = (stream.tags || []).map(t => t.toLowerCase())
-  const title = (stream.title || '').toLowerCase()
-  if (tags.some(t => PT_TAGS.includes(t)) || PT_TAGS.some(k => title.includes(k))) return 'pt'
-  if (tags.some(t => ES_TAGS.includes(t)) || ES_TAGS.some(k => title.includes(k))) return 'es'
+  const text = [...(stream.tags || []), stream.title || ''].join(' ').toLowerCase()
+  if (PT_KEYWORDS.some(k => text.includes(k))) return 'pt'
+  if (ES_KEYWORDS.some(k => text.includes(k))) return 'es'
   return stream.language || ''
 }
 
