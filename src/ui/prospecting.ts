@@ -12,6 +12,18 @@ interface ProspectStream {
   language: string
 }
 
+const PT_TAGS = ['português', 'portugues', 'brazil', 'brasil', 'brasileiro', 'br']
+const ES_TAGS = ['español', 'espanol', 'spanish', 'latam', 'latino']
+
+function detectLanguage(stream: { language?: string; tags?: string[]; title?: string }): string {
+  if (stream.language === 'pt' || stream.language === 'es') return stream.language
+  const tags = (stream.tags || []).map(t => t.toLowerCase())
+  const title = (stream.title || '').toLowerCase()
+  if (tags.some(t => PT_TAGS.includes(t)) || PT_TAGS.some(k => title.includes(k))) return 'pt'
+  if (tags.some(t => ES_TAGS.includes(t)) || ES_TAGS.some(k => title.includes(k))) return 'es'
+  return stream.language || ''
+}
+
 let results: ProspectStream[] = []
 let selected = new Set<string>()
 let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')
@@ -217,7 +229,7 @@ export function setupProspecting() {
     try {
       const language = (document.getElementById('prospectLanguage') as HTMLSelectElement).value
       const minViewers = parseInt((document.getElementById('prospectMinViewers') as HTMLInputElement).value) || 0
-      const streams = await fetchStreamsByGame(selectedGameId, 100, language)
+      const streams = await fetchStreamsByGame(selectedGameId, 100)
       results = streams.map(s => ({
         user_login: s.user_login,
         user_name: s.user_name,
@@ -225,8 +237,9 @@ export function setupProspecting() {
         game_name: s.game_name,
         description: s.user_info?.description || '',
         email: extractEmail(s.user_info?.description || ''),
-        language
+        language: detectLanguage(s as any)
       })).filter(s => s.viewer_count >= minViewers && !streamers.some(st => st.name.toLowerCase() === s.user_name.toLowerCase()))
+      if (language) results = results.filter(s => s.language === language)
       selected.clear()
       page = 1
       renderResults()

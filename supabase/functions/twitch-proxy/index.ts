@@ -85,24 +85,40 @@ Deno.serve(async (req) => {
       const gameId = url.searchParams.get("game_id")
       if (!gameId) return new Response("Missing game_id", { status: 400, headers: corsHeaders })
 
-      const first = url.searchParams.get("first") || "20"
-      const language = url.searchParams.get("language") || ""
-      const langParam = language ? `&language=${language}` : ""
-      const res = await fetch(`https://api.twitch.tv/helix/streams?game_id=${gameId}&first=${first}${langParam}`, {
-        headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
-      })
-      const data = await res.json()
-      const streams = data.data || []
+      const first = parseInt(url.searchParams.get("first") || "20")
 
-      // Buscar info dos users (description) em batch
-      if (streams.length) {
-        const ids = streams.map((s: { user_id: string }) => `id=${s.user_id}`).join("&")
-        const usersRes = await fetch(`https://api.twitch.tv/helix/users?${ids}`, {
+      // Buscar sem filtro de idioma — muitos BR/ES não configuram corretamente
+      const allStreams: Array<Record<string, unknown>> = []
+      let cursor = ""
+      const pagesToFetch = Math.ceil(first / 100)
+      for (let i = 0; i < pagesToFetch && allStreams.length < first; i++) {
+        const afterParam = cursor ? `&after=${cursor}` : ""
+        const res = await fetch(`https://api.twitch.tv/helix/streams?game_id=${gameId}&first=100${afterParam}`, {
           headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
         })
-        const usersData = await usersRes.json()
-        const usersMap = new Map((usersData.data || []).map((u: { id: string }) => [u.id, u]))
-        result = streams.map((s: { user_id: string }) => ({ ...s, user_info: usersMap.get(s.user_id) || null }))
+        const data = await res.json()
+        const streams = data.data || []
+        if (!streams.length) break
+        allStreams.push(...streams)
+        cursor = data.pagination?.cursor || ""
+        if (!cursor) break
+      }
+
+      const filtered = allStreams.slice(0, first)
+
+      // Buscar info dos users (description) em batch (max 100 por request)
+      if (filtered.length) {
+        const usersMap = new Map<string, unknown>()
+        for (let i = 0; i < filtered.length; i += 100) {
+          const batch = filtered.slice(i, i + 100)
+          const ids = batch.map((s) => `id=${s.user_id}`).join("&")
+          const usersRes = await fetch(`https://api.twitch.tv/helix/users?${ids}`, {
+            headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+          })
+          const usersData = await usersRes.json()
+          for (const u of (usersData.data || [])) usersMap.set(u.id, u)
+        }
+        result = filtered.map((s) => ({ ...s, user_info: usersMap.get(s.user_id as string) || null }))
       } else {
         result = []
       }
