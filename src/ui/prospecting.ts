@@ -233,6 +233,7 @@ export function setupProspecting() {
       const language = (document.getElementById('prospectLanguage') as HTMLSelectElement).value
       const minViewers = parseInt((document.getElementById('prospectMinViewers') as HTMLInputElement).value) || 0
       const streams = await fetchStreamsByGame(selectedGameId, 200)
+      console.log('🔍 Raw streams from API:', streams.slice(0, 5).map(s => ({ user_name: s.user_name, language: s.language, tags: s.tags, title: s.title, viewers: s.viewer_count })))
       results = streams.map(s => ({
         user_login: s.user_login,
         user_name: s.user_name,
