@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Streamer, StreamerHistory, Campaign, CampaignStreamer } from '../types'
+import type { Streamer, StreamerHistory, Campaign, CampaignStreamer, ContactStatus } from '../types'
 
 // --- STREAMERS ---
 export async function getStreamers() {
@@ -67,9 +67,11 @@ export async function updateCampaign(id: string, campaign: Partial<Campaign>, st
   const { error } = await supabase.from('campaigns').update(campaign).eq('id', id)
   if (error) throw error
   if (streamers) {
+    const { data: existing } = await supabase.from('campaign_streamers').select('streamer_name, contact_status').eq('campaign_id', id)
+    const statusMap = new Map((existing || []).map(e => [e.streamer_name.toLowerCase(), e.contact_status]))
     await supabase.from('campaign_streamers').delete().eq('campaign_id', id)
     if (streamers.length > 0) {
-      const rows = streamers.map(s => ({ ...s, campaign_id: id }))
+      const rows = streamers.map(s => ({ ...s, campaign_id: id, contact_status: statusMap.get(s.streamer_name.toLowerCase()) || 'pendente' }))
       await supabase.from('campaign_streamers').insert(rows)
     }
   }
@@ -77,5 +79,11 @@ export async function updateCampaign(id: string, campaign: Partial<Campaign>, st
 
 export async function deleteCampaign(id: string) {
   const { error } = await supabase.from('campaigns').delete().eq('id', id)
+  if (error) throw error
+}
+
+
+export async function updateContactStatus(id: string, status: ContactStatus) {
+  const { error } = await supabase.from('campaign_streamers').update({ contact_status: status }).eq('id', id)
   if (error) throw error
 }

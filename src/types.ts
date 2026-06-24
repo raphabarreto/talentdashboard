@@ -35,10 +35,13 @@ export interface Campaign {
   campaign_streamers?: CampaignStreamer[]
 }
 
+export type ContactStatus = 'pendente' | 'contatado' | 'confirmado' | 'recusado'
+
 export interface CampaignStreamer {
   id: string
   campaign_id: string
   streamer_name: string
   payment: number
   payment_date: string | null
+  contact_status?: ContactStatus
 }

@@ -59,7 +59,8 @@ create table campaign_streamers (
   campaign_id uuid references campaigns(id) on delete cascade,
   streamer_name text not null,
   payment numeric(10,2) default 0,
-  payment_date date
+  payment_date date,
+  contact_status text default 'pendente' check (contact_status in ('pendente', 'contatado', 'confirmado', 'recusado'))
 );
 
 -- Limpeza automática de snapshots antigos (> 6 meses)

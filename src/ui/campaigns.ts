@@ -18,6 +18,8 @@ export function renderCampaigns() {
   let grandTotal = 0
   filtered.forEach(c => {
     grandTotal += c.my_commission || 0
+    const total = c.campaign_streamers?.length || 0
+    const confirmed = c.campaign_streamers?.filter(s => s.contact_status === 'confirmado').length || 0
     const row = document.createElement('tr')
     row.className = 'hover:bg-slate-700/50 transition-colors'
     row.innerHTML = `
@@ -25,6 +27,7 @@ export function renderCampaigns() {
       <td class="p-4">${fmtDate(c.start_date)}</td>
       <td class="p-4">${fmtDate(c.end_date)}</td>
       <td class="p-4 font-semibold">${fmtCurrency(c.my_commission || 0)}</td>
+      <td class="p-4 text-xs">${total > 0 ? `<span class="text-emerald-400 font-semibold">${confirmed}/${total}</span> confirmados` : '—'}</td>
       <td class="p-4 flex gap-3">
         <button class="text-amber-500 hover:text-amber-400 text-sm font-semibold edit-campaign-btn" data-id="${c.id}">Editar</button>
         <button class="text-indigo-500 hover:text-indigo-400 text-sm font-semibold details-campaign-btn" data-id="${c.id}">Detalhes</button>

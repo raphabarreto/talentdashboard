@@ -1,6 +1,6 @@
 import { getSession, signOut, onAuthChange } from './lib/auth'
 import { supabase } from './lib/supabase'
-import { getStreamers, addStreamer, deleteStreamer, getCampaigns, addCampaign, updateCampaign, deleteCampaign } from './lib/data'
+import { getStreamers, addStreamer, deleteStreamer, getCampaigns, addCampaign, updateCampaign, deleteCampaign, updateContactStatus } from './lib/data'
 import { fetchTwitchUser, fetchInitialStats, fetchLastLiveDate } from './lib/twitch'
 import { streamers, campaigns, selectedStreamers, currentSort, editingCampaignId, setStreamers, setCampaigns, setOverviewPage, setTablePage, setEditingCampaignId } from './state'
 import { showToast, confirmAction, fmtDate, fmtCurrency, fmt, langToCountry } from './utils'
@@ -92,7 +92,7 @@ document.addEventListener('click', async (e) => {
     ;(document.getElementById('currencyInput') as HTMLSelectElement).value = c.currency || 'USD'
     ;(document.getElementById('myCommissionInput') as HTMLInputElement).value = c.my_commission ? String(c.my_commission) : ''
     ;(document.getElementById('paymentDateInput') as HTMLInputElement).value = c.payment_date || ''
-    ;(document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value = c.campaign_streamers?.map(s => `${s.streamer_name}${s.payment ? ':' + s.payment : ''}`).join('\n') || ''
+    ;(document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value = c.campaign_streamers?.map(s => s.streamer_name).join('\n') || ''
     document.getElementById('campaignModal')!.classList.remove('hidden')
   }
 
@@ -108,9 +108,21 @@ document.addEventListener('click', async (e) => {
     document.getElementById('detailsPaymentDate')!.textContent = c.payment_date ? fmtDate(c.payment_date) : 'Pendente'
     const tbody = document.getElementById('detailsStreamers')!
     tbody.innerHTML = ''
-    c.campaign_streamers?.forEach(s => {
-      tbody.innerHTML += `<tr class="hover:bg-slate-700/50"><td class="p-2">${s.streamer_name}</td><td class="p-2">${fmtCurrency(Number(s.payment || 0))}</td></tr>`
+    const statusColors: Record<string, string> = { pendente: 'bg-slate-500', contatado: 'bg-amber-500', confirmado: 'bg-emerald-500', recusado: 'bg-red-500' }
+    const selectColors: Record<string, string> = { pendente: 'bg-slate-700', contatado: 'bg-amber-700', confirmado: 'bg-emerald-700', recusado: 'bg-red-700' }
+    const statusOrder: Record<string, number> = { pendente: 0, contatado: 1, confirmado: 2, recusado: 3 }
+    const counts = { pendente: 0, contatado: 0, confirmado: 0, recusado: 0 }
+    const sorted = [...(c.campaign_streamers || [])].sort((a, b) => (statusOrder[a.contact_status || 'pendente'] || 0) - (statusOrder[b.contact_status || 'pendente'] || 0))
+    sorted.forEach(s => {
+      const st = s.contact_status || 'pendente'
+      counts[st as keyof typeof counts]++
+      tbody.innerHTML += `<tr class="hover:bg-slate-700/50" data-status="${st}"><td class="p-2">${s.streamer_name}</td><td class="p-2 text-right"><select class="contact-status-select ${selectColors[st]} text-white text-sm rounded px-3 py-1.5 border border-slate-600 cursor-pointer" data-id="${s.id}"><option value="pendente"${st === 'pendente' ? ' selected' : ''}>Pendente</option><option value="contatado"${st === 'contatado' ? ' selected' : ''}>Contatado</option><option value="confirmado"${st === 'confirmado' ? ' selected' : ''}>Confirmado</option><option value="recusado"${st === 'recusado' ? ' selected' : ''}>Recusado</option></select></td></tr>`
     })
+    const summary = document.getElementById('detailsStatusSummary')!
+    summary.innerHTML = Object.entries(counts).filter(([,v]) => v > 0).map(([k,v]) => `<span class="${statusColors[k]} text-white px-2 py-1 rounded-full">${v} ${k}</span>`).join('')
+    ;(document.getElementById('detailsSearch') as HTMLInputElement).value = ''
+    document.querySelectorAll('.status-filter-btn').forEach(b => { b.className = 'status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300' })
+    document.querySelector('.status-filter-btn[data-filter="all"]')!.className = 'status-filter-btn px-2 py-1 rounded bg-indigo-600 text-white'
     document.getElementById('campaignDetailsModal')!.classList.remove('hidden')
   }
 
@@ -252,28 +264,11 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
 
   const lines = (document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value.split('\n').map(n => n.trim()).filter(n => n)
   const streamerRows = lines.map(line => {
-    const [name, payment] = line.split(':')
-    return { streamer_name: name.trim(), payment: Number(payment) || 0, payment_date: null as string | null }
+    // Extrai só o nome (ignora valor se houver)
+    const dashMatch = line.match(/^(.+?)\s*[-–]\s*\$/)
+    const name = dashMatch ? dashMatch[1].trim() : line.split(':')[0].trim()
+    return { streamer_name: name, payment: 0, payment_date: null as string | null }
   })
-
-  // Auto-cadastrar streamers que não existem
-  for (const row of streamerRows) {
-    if (!streamers.some(s => s.name.toLowerCase() === row.streamer_name.toLowerCase())) {
-      try {
-        const user = await fetchTwitchUser(row.streamer_name)
-        if (user) {
-          const lang = user.broadcaster_language?.split('-')[0]
-          const stats = await fetchInitialStats(user.login)
-          await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
-          const lastLive = await fetchLastLiveDate(user.id)
-          if (lastLive) {
-            const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
-            if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)
-          }
-        }
-      } catch { /* ignora */ }
-    }
-  }
 
   if (editingCampaignId) {
     await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate, campaign_value: campaignValue, currency, my_commission: myCommission, payment_date: paymentDate }, streamerRows)
@@ -329,6 +324,82 @@ document.getElementById('generatePdfBtn')?.addEventListener('click', async () =>
 
 // Close modals
 document.getElementById('closeDetailsModal')?.addEventListener('click', () => document.getElementById('campaignDetailsModal')!.classList.add('hidden'))
+
+document.getElementById('campaignDetailsModal')?.addEventListener('click', (e) => {
+  const btn = (e.target as HTMLElement).closest('.status-filter-btn') as HTMLElement | null
+  if (!btn) return
+  document.querySelectorAll('.status-filter-btn').forEach(b => { b.className = 'status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300' })
+  btn.className = 'status-filter-btn px-2 py-1 rounded bg-indigo-600 text-white'
+  filterDetailsStreamers()
+})
+
+function filterDetailsStreamers() {
+  const activeBtn = document.querySelector('.status-filter-btn.bg-indigo-600') as HTMLElement | null
+  const filter = activeBtn?.dataset.filter || 'all'
+  const search = (document.getElementById('detailsSearch') as HTMLInputElement).value.toLowerCase()
+  document.querySelectorAll('#detailsStreamers tr').forEach(row => {
+    const name = row.querySelector('td')!.textContent!.toLowerCase()
+    const status = row.getAttribute('data-status')
+    const matchStatus = filter === 'all' || status === filter
+    const matchSearch = !search || name.includes(search)
+    ;(row as HTMLElement).style.display = matchStatus && matchSearch ? '' : 'none'
+  })
+}
+
+document.getElementById('detailsSearch')?.addEventListener('input', filterDetailsStreamers)
+
+document.getElementById('campaignDetailsModal')?.addEventListener('change', async (e) => {
+  const select = e.target as HTMLSelectElement
+  if (!select.classList.contains('contact-status-select')) return
+  const newStatus = select.value as any
+  const id = select.dataset.id!
+
+  // Update UI immediately
+  const selectColors: Record<string, string> = { pendente: 'bg-slate-700', contatado: 'bg-amber-700', confirmado: 'bg-emerald-700', recusado: 'bg-red-700' }
+  select.className = `contact-status-select ${selectColors[newStatus]} text-white text-sm rounded px-3 py-1.5 border border-slate-600 cursor-pointer`
+  select.closest('tr')!.setAttribute('data-status', newStatus)
+
+  // Update state
+  const idx = campaigns.findIndex(c => c.campaign_streamers?.some(s => s.id === id))
+  if (idx >= 0) {
+    const s = campaigns[idx].campaign_streamers!.find(s => s.id === id)!
+    s.contact_status = newStatus
+  }
+
+  // Update badges
+  const counts = { pendente: 0, contatado: 0, confirmado: 0, recusado: 0 }
+  const statusColors: Record<string, string> = { pendente: 'bg-slate-500', contatado: 'bg-amber-500', confirmado: 'bg-emerald-500', recusado: 'bg-red-500' }
+  if (idx >= 0) campaigns[idx].campaign_streamers?.forEach(s => { counts[(s.contact_status || 'pendente') as keyof typeof counts]++ })
+  document.getElementById('detailsStatusSummary')!.innerHTML = Object.entries(counts).filter(([,v]) => v > 0).map(([k,v]) => `<span class="${statusColors[k]} text-white px-2 py-1 rounded-full">${v} ${k}</span>`).join('')
+  renderCampaigns()
+
+  // Save to DB
+  try {
+    await updateContactStatus(id, newStatus)
+  } catch { showToast('Erro ao salvar status', 'error'); return }
+
+  // Auto-cadastrar no painel quando confirmar
+  if (newStatus === 'confirmado' && idx >= 0) {
+    const s = campaigns[idx].campaign_streamers!.find(s => s.id === id)!
+    if (!streamers.some(st => st.name.toLowerCase() === s.streamer_name.toLowerCase())) {
+      try {
+        const user = await fetchTwitchUser(s.streamer_name)
+        if (user) {
+          const lang = user.broadcaster_language?.split('-')[0]
+          const stats = await fetchInitialStats(user.login)
+          await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
+          const lastLive = await fetchLastLiveDate(user.id)
+          if (lastLive) {
+            const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
+            if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)
+          }
+          setStreamers(await getStreamers())
+        }
+      } catch { /* ignora */ }
+    }
+  }
+  showToast('Status atualizado!')
+})
 document.getElementById('closeHistoryModal')?.addEventListener('click', () => document.getElementById('historyModal')!.classList.add('hidden'))
 document.getElementById('logoutBtn')?.addEventListener('click', async () => {
   if (await confirmAction('Deseja sair?', 'Sair')) signOut()
