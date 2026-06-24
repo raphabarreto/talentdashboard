@@ -7,16 +7,6 @@ export async function getSession() {
   return data.session
 }
 
-export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw error
-  if (!ALLOWED_EMAILS.includes(data.user?.email || '')) {
-    await supabase.auth.signOut()
-    throw new Error('Email não autorizado.')
-  }
-  return data
-}
-
 export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
