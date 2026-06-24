@@ -33,6 +33,7 @@ export async function fetchStreamsByGame(gameId: string, first = 20) {
   const params: Record<string, string> = { action: 'streams_by_game', game_id: gameId, first: String(first) }
   return callProxy(params) as Promise<Array<{
     user_id: string; user_login: string; user_name: string; viewer_count: number; game_name: string
+    language: string; title: string; tags: string[]
     user_info: { description: string; profile_image_url: string } | null
   }>>
 }

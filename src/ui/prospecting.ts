@@ -12,8 +12,8 @@ interface ProspectStream {
   language: string
 }
 
-const PT_TAGS = ['português', 'portugues', 'brazil', 'brasil', 'brasileiro', 'br']
-const ES_TAGS = ['español', 'espanol', 'spanish', 'latam', 'latino']
+const PT_TAGS = ['portuguese', 'português', 'portugues', 'brazil', 'brasil', 'brasileiro', 'br']
+const ES_TAGS = ['spanish', 'español', 'espanol', 'latam', 'latino', 'argentina', 'mexico', 'chile', 'colombia']
 
 function detectLanguage(stream: { language?: string; tags?: string[]; title?: string }): string {
   if (stream.language === 'pt' || stream.language === 'es') return stream.language
@@ -237,7 +237,7 @@ export function setupProspecting() {
         game_name: s.game_name,
         description: s.user_info?.description || '',
         email: extractEmail(s.user_info?.description || ''),
-        language: detectLanguage(s as any)
+        language: detectLanguage(s)
       })).filter(s => s.viewer_count >= minViewers && !streamers.some(st => st.name.toLowerCase() === s.user_name.toLowerCase()))
       if (language) results = results.filter(s => s.language === language)
       selected.clear()
