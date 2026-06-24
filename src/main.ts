@@ -371,6 +371,7 @@ document.getElementById('campaignDetailsModal')?.addEventListener('change', asyn
   const statusColors: Record<string, string> = { pendente: 'bg-slate-500', contatado: 'bg-amber-500', confirmado: 'bg-emerald-500', recusado: 'bg-red-500' }
   if (idx >= 0) campaigns[idx].campaign_streamers?.forEach(s => { counts[(s.contact_status || 'pendente') as keyof typeof counts]++ })
   document.getElementById('detailsStatusSummary')!.innerHTML = Object.entries(counts).filter(([,v]) => v > 0).map(([k,v]) => `<span class="${statusColors[k]} text-white px-2 py-1 rounded-full">${v} ${k}</span>`).join('')
+  filterDetailsStreamers()
   renderCampaigns()
 
   // Save to DB
