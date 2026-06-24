@@ -128,7 +128,6 @@ export function setupProspecting() {
           <h3 class="text-white font-semibold text-base"><i class="fas fa-list mr-2"></i>Minha Lista (<span id="shortlistCount">0</span>)</h3>
           <div class="flex gap-3">
             <button id="copyListBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-copy mr-1"></i>Copiar Lista</button>
-            <button id="copyEmailsBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-envelope mr-1"></i>Copiar Emails</button>
             <button id="clearListBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-trash mr-1"></i>Limpar</button>
           </div>
         </div>
@@ -246,12 +245,6 @@ export function setupProspecting() {
     if (other.length) list += `🌐 Others\n${other.map(r => `• ${r.user_name} — https://www.twitch.tv/${r.user_login}`).join('\n')}\n`
     navigator.clipboard.writeText(list.trim())
     showToast(`Lista copiada! (${shortlist.length} streamers)`)
-  })
-
-  document.getElementById('copyEmailsBtn')!.addEventListener('click', () => {
-    const emails = shortlist.filter(r => r.email).map(r => r.email!)
-    navigator.clipboard.writeText(emails.join(', '))
-    showToast(`${emails.length} emails copiados!`)
   })
 
   document.getElementById('clearListBtn')!.addEventListener('click', () => {
