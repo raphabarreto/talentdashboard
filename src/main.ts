@@ -116,13 +116,15 @@ document.addEventListener('click', async (e) => {
     sorted.forEach(s => {
       const st = s.contact_status || 'pendente'
       counts[st as keyof typeof counts]++
-      tbody.innerHTML += `<tr class="hover:bg-slate-700/50" data-status="${st}"><td class="p-2">${s.streamer_name}</td><td class="p-2 text-right"><select class="contact-status-select ${selectColors[st]} text-white text-sm rounded px-3 py-1.5 border border-slate-600 cursor-pointer" data-id="${s.id}"><option value="pendente"${st === 'pendente' ? ' selected' : ''}>Pendente</option><option value="contatado"${st === 'contatado' ? ' selected' : ''}>Contatado</option><option value="confirmado"${st === 'confirmado' ? ' selected' : ''}>Confirmado</option><option value="recusado"${st === 'recusado' ? ' selected' : ''}>Recusado</option></select></td></tr>`
+      tbody.innerHTML += `<tr class="hover:bg-slate-700/50" data-status="${st}"><td class="p-2">${s.streamer_name}</td><td class="p-2 text-right whitespace-nowrap"><select class="contact-status-select ${selectColors[st]} text-white text-sm rounded px-3 py-1.5 border border-slate-600 cursor-pointer" data-id="${s.id}"><option value="pendente"${st === 'pendente' ? ' selected' : ''}>Pendente</option><option value="contatado"${st === 'contatado' ? ' selected' : ''}>Contatado</option><option value="confirmado"${st === 'confirmado' ? ' selected' : ''}>Confirmado</option><option value="recusado"${st === 'recusado' ? ' selected' : ''}>Recusado</option></select></td></tr>`
     })
     const summary = document.getElementById('detailsStatusSummary')!
     summary.innerHTML = Object.entries(counts).filter(([,v]) => v > 0).map(([k,v]) => `<span class="${statusColors[k]} text-white px-2 py-1 rounded-full">${v} ${k}</span>`).join('')
     ;(document.getElementById('detailsSearch') as HTMLInputElement).value = ''
-    document.querySelectorAll('.status-filter-btn').forEach(b => { b.className = 'status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300' })
-    document.querySelector('.status-filter-btn[data-filter="all"]')!.className = 'status-filter-btn px-2 py-1 rounded bg-indigo-600 text-white'
+    document.querySelectorAll('.status-filter-btn').forEach(b => { b.className = 'status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300'; b.removeAttribute('data-active') })
+    const allBtn = document.querySelector('.status-filter-btn[data-filter="all"]')!
+    allBtn.className = 'status-filter-btn px-2 py-1 rounded bg-indigo-600 text-white'
+    allBtn.setAttribute('data-active', 'true')
     document.getElementById('campaignDetailsModal')!.classList.remove('hidden')
   }
 
@@ -264,7 +266,6 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
 
   const lines = (document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value.split('\n').map(n => n.trim()).filter(n => n)
   const streamerRows = lines.map(line => {
-    // Extrai só o nome (ignora valor se houver)
     const dashMatch = line.match(/^(.+?)\s*[-–]\s*\$/)
     const name = dashMatch ? dashMatch[1].trim() : line.split(':')[0].trim()
     return { streamer_name: name, payment: 0, payment_date: null as string | null }
@@ -325,16 +326,23 @@ document.getElementById('generatePdfBtn')?.addEventListener('click', async () =>
 // Close modals
 document.getElementById('closeDetailsModal')?.addEventListener('click', () => document.getElementById('campaignDetailsModal')!.classList.add('hidden'))
 
-document.getElementById('campaignDetailsModal')?.addEventListener('click', (e) => {
-  const btn = (e.target as HTMLElement).closest('.status-filter-btn') as HTMLElement | null
-  if (!btn) return
-  document.querySelectorAll('.status-filter-btn').forEach(b => { b.className = 'status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300' })
-  btn.className = 'status-filter-btn px-2 py-1 rounded bg-indigo-600 text-white'
-  filterDetailsStreamers()
+document.getElementById('campaignDetailsModal')?.addEventListener('click', async (e) => {
+  const target = e.target as HTMLElement
+
+  // Filter buttons
+  const btn = target.closest('.status-filter-btn') as HTMLElement | null
+  if (btn) {
+    document.querySelectorAll('.status-filter-btn').forEach(b => { b.className = 'status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300'; b.removeAttribute('data-active') })
+    btn.className = 'status-filter-btn px-2 py-1 rounded bg-indigo-600 text-white'
+    btn.setAttribute('data-active', 'true')
+    filterDetailsStreamers()
+    return
+  }
+
 })
 
 function filterDetailsStreamers() {
-  const activeBtn = document.querySelector('.status-filter-btn.bg-indigo-600') as HTMLElement | null
+  const activeBtn = document.querySelector('.status-filter-btn[data-active="true"]') as HTMLElement | null
   const filter = activeBtn?.dataset.filter || 'all'
   const search = (document.getElementById('detailsSearch') as HTMLInputElement).value.toLowerCase()
   document.querySelectorAll('#detailsStreamers tr').forEach(row => {

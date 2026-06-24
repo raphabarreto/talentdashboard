@@ -60,12 +60,8 @@ function extractEmail(description: string): string | null {
 }
 
 function getTemplate(lang: string): string {
-  if (lang === 'es') {
-    const el = document.getElementById('emailTemplateEs') as HTMLTextAreaElement
-    return el?.value || DEFAULT_TEMPLATE_ES
-  }
-  const el = document.getElementById('emailTemplatePt') as HTMLTextAreaElement
-  return el?.value || DEFAULT_TEMPLATE_PT
+  if (lang === 'es') return DEFAULT_TEMPLATE_ES
+  return DEFAULT_TEMPLATE_PT
 }
 
 function getCompany(): string {
@@ -150,21 +146,6 @@ export function setupProspecting() {
           </table>
         </div>
       </div>
-
-      <details>
-        <summary class="text-sm text-slate-400 cursor-pointer hover:text-white">Templates de Email</summary>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-          <div>
-            <label class="text-xs font-semibold text-slate-300 block mb-1">🇧🇷 Português</label>
-            <textarea id="emailTemplatePt" rows="8" class="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">${DEFAULT_TEMPLATE_PT}</textarea>
-          </div>
-          <div>
-            <label class="text-xs font-semibold text-slate-300 block mb-1">🇪🇸 Español</label>
-            <textarea id="emailTemplateEs" rows="8" class="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">${DEFAULT_TEMPLATE_ES}</textarea>
-          </div>
-        </div>
-        <p class="text-xs text-slate-500 mt-1">Variáveis: {streamer}, {empresa}</p>
-      </details>
     </div>
   `
 

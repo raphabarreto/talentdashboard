@@ -60,7 +60,8 @@ create table campaign_streamers (
   streamer_name text not null,
   payment numeric(10,2) default 0,
   payment_date date,
-  contact_status text default 'pendente' check (contact_status in ('pendente', 'contatado', 'confirmado', 'recusado'))
+  contact_status text default 'pendente' check (contact_status in ('pendente', 'contatado', 'confirmado', 'recusado')),
+  email text default ''
 );
 
 -- Limpeza automática de snapshots antigos (> 6 meses)
