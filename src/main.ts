@@ -242,11 +242,6 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
       const lang = user.broadcaster_language?.split('-')[0]
       const stats = await fetchInitialStats(user.login)
       await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
-      const lastLive = await fetchLastLiveDate(user.id)
-      if (lastLive) {
-        const rec = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
-        if (rec) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', rec.id)
-      }
       return true
     }))
     for (const r of results) { if (r.status === 'fulfilled' && r.value) added++ }
