@@ -75,6 +75,7 @@ document.addEventListener('click', async (e) => {
     const id = deleteBtn.dataset.id!
     if (!await confirmAction('Você tem certeza que deseja remover este streamer?')) return
     await deleteStreamer(id)
+    selectedStreamers.delete(id)
     await loadData(); renderAll()
     showToast('Streamer removido!')
   }
@@ -519,5 +520,58 @@ document.getElementById('lookupAddBtn')?.addEventListener('click', async () => {
   } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
   finally { btn.disabled = false; btn.textContent = '+ Adicionar' }
 })
+
+// Manage Categories
+document.getElementById('manageCategoriesBtn')?.addEventListener('click', () => {
+  renderCategoriesList()
+  document.getElementById('manageCategoriesModal')!.classList.remove('hidden')
+})
+document.getElementById('closeManageCategories')?.addEventListener('click', () => document.getElementById('manageCategoriesModal')!.classList.add('hidden'))
+
+function renderCategoriesList() {
+  const categories = [...new Set(streamers.map(s => s.main_category).filter(Boolean))].sort()
+  const container = document.getElementById('categoriesList')!
+  if (!categories.length) { container.innerHTML = '<p class="text-slate-400 text-sm">Nenhuma categoria cadastrada.</p>'; return }
+  container.innerHTML = categories.map(c => {
+    const count = streamers.filter(s => s.main_category === c).length
+    return `<div class="flex items-center gap-2 bg-slate-700/50 rounded-lg px-4 py-3">
+      <span class="text-white text-sm font-medium truncate flex-1">${c}</span>
+      <span class="text-slate-400 text-xs">${count}</span>
+      <button class="rename-cat-btn text-indigo-400 hover:text-indigo-300 text-sm ml-2" data-cat="${c}"><i class="fas fa-pen"></i></button>
+      <button class="delete-cat-btn text-slate-400 hover:text-red-400 text-sm" data-cat="${c}"><i class="fas fa-trash"></i></button>
+    </div>`
+  }).join('')
+  container.querySelectorAll('.rename-cat-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const oldName = (btn as HTMLElement).dataset.cat!
+      const row = btn.closest('div')!
+      const nameEl = row.querySelector('span')!
+      const input = document.createElement('input')
+      input.type = 'text'; input.value = oldName
+      input.className = 'px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1'
+      nameEl.replaceWith(input)
+      input.focus(); input.select()
+      const save = async () => {
+        const newName = input.value.trim()
+        if (!newName || newName === oldName) { renderCategoriesList(); return }
+        await supabase.from('streamers').update({ main_category: newName }).eq('main_category', oldName)
+        await loadData(); renderAll(); renderCategoriesList()
+        showToast(`Categoria renomeada para "${newName}"`)
+      }
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') renderCategoriesList() })
+      input.addEventListener('blur', save)
+    })
+  })
+  container.querySelectorAll('.delete-cat-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const cat = (btn as HTMLElement).dataset.cat!
+      const count = streamers.filter(s => s.main_category === cat).length
+      if (!await confirmAction(`Remover a categoria "${cat}" de ${count} streamer${count > 1 ? 's' : ''}?`)) return
+      await supabase.from('streamers').update({ main_category: '' }).eq('main_category', cat)
+      await loadData(); renderAll(); renderCategoriesList()
+      showToast(`Categoria "${cat}" removida`)
+    })
+  })
+}
 
 init()

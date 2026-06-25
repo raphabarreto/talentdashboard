@@ -12,7 +12,7 @@ export function getFilteredStreamers(prefix: string): Streamer[] {
     .filter(s => !search || s.name.toLowerCase().includes(search))
     .filter(s => country === 'all' || s.country === country)
     .filter(s => status === 'all' || (status === 'active' ? isActive(s) : !isActive(s)))
-    .filter(s => category === 'all' || s.main_category?.toLowerCase() === category)
+    .filter(s => category === 'all' || s.main_category === category)
     .sort((a, b) => {
       const aVal = a[currentSort.key as keyof Streamer] as number
       const bVal = b[currentSort.key as keyof Streamer] as number
@@ -30,7 +30,7 @@ export function getExistingCompanies(): string[] {
 
 export function populateFilters() {
   const countries = [...new Set(streamers.map(s => s.country).filter(Boolean))].sort()
-  const categories = [...new Set(streamers.map(s => s.main_category?.toLowerCase()).filter(Boolean))].sort()
+  const categories = [...new Set(streamers.map(s => s.main_category).filter(Boolean))].sort()
 
   ;['country-filter', 'country-filter-table'].forEach(id => {
     const el = document.getElementById(id) as HTMLSelectElement
@@ -44,7 +44,7 @@ export function populateFilters() {
     if (!el) return
     const val = el.value
     el.innerHTML = '<option value="all">Todas Categorias</option>'
-    categories.forEach(c => { el.innerHTML += `<option value="${c}">${c.replace(/\b\w/g, l => l.toUpperCase())}</option>` })
+    categories.forEach(c => { el.innerHTML += `<option value="${c}">${c}</option>` })
     el.value = val || 'all'
   })
 }
