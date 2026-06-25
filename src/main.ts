@@ -67,20 +67,23 @@ function setupNav() {
 document.addEventListener('click', async (e) => {
   const target = e.target as HTMLElement
 
-  if (target.classList.contains('delete-btn')) {
-    const id = target.dataset.id!
+  const deleteBtn = target.closest('.delete-btn') as HTMLElement | null
+  if (deleteBtn) {
+    const id = deleteBtn.dataset.id!
     if (!await confirmAction('Você tem certeza que deseja remover este streamer?')) return
     await deleteStreamer(id)
     await loadData(); renderAll()
     showToast('Streamer removido!')
   }
 
-  if (target.classList.contains('history-btn')) {
-    await showHistory(target.dataset.id!, target.dataset.name!)
+  const historyBtn = target.closest('.history-btn') as HTMLElement | null
+  if (historyBtn) {
+    await showHistory(historyBtn.dataset.id!, historyBtn.dataset.name!)
   }
 
-  if (target.classList.contains('edit-campaign-btn')) {
-    const c = campaigns.find(cp => cp.id === target.dataset.id!)
+  const editBtn = target.closest('.edit-campaign-btn') as HTMLElement | null
+  if (editBtn) {
+    const c = campaigns.find(cp => cp.id === editBtn.dataset.id!)
     if (!c) return
     setEditingCampaignId(c.id)
     document.getElementById('campaignModalTitle')!.textContent = 'Editar Campanha'
@@ -96,8 +99,9 @@ document.addEventListener('click', async (e) => {
     document.getElementById('campaignModal')!.classList.remove('hidden')
   }
 
-  if (target.classList.contains('details-campaign-btn')) {
-    const c = campaigns.find(cp => cp.id === target.dataset.id!)
+  const detailsBtn = target.closest('.details-campaign-btn') as HTMLElement | null
+  if (detailsBtn) {
+    const c = campaigns.find(cp => cp.id === detailsBtn.dataset.id!)
     if (!c) return
     document.getElementById('detailsTitle')!.textContent = c.company
     document.getElementById('detailsCompany')!.textContent = c.company
@@ -128,9 +132,10 @@ document.addEventListener('click', async (e) => {
     document.getElementById('campaignDetailsModal')!.classList.remove('hidden')
   }
 
-  if (target.classList.contains('delete-campaign-btn')) {
+  const deleteCampaignBtn = target.closest('.delete-campaign-btn') as HTMLElement | null
+  if (deleteCampaignBtn) {
     if (!await confirmAction('Você tem certeza que deseja remover esta campanha?')) return
-    await deleteCampaign(target.dataset.id!)
+    await deleteCampaign(deleteCampaignBtn.dataset.id!)
     await loadData(); renderAll()
     showToast('Campanha removida!')
   }
