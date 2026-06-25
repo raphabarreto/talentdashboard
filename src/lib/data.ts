@@ -31,6 +31,19 @@ export async function deleteStreamer(id: string) {
   if (error) throw error
 }
 
+export async function updateLastLive(streamerId: string, lastLiveAt: string) {
+  const { data: { session } } = await supabase.auth.getSession()
+  const res = await fetch(`${supabase.supabaseUrl}/functions/v1/update-last-live`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token}`
+    },
+    body: JSON.stringify({ streamer_id: streamerId, last_live_at: lastLiveAt })
+  })
+  if (!res.ok) throw new Error('Failed to update last_live_at')
+}
+
 // --- HISTORY ---
 export async function getStreamerHistory(streamerId: string) {
   const { data, error } = await supabase

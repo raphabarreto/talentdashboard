@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { addStreamer, addCampaign, updateCampaign, deleteCampaign, updateContactStatus, getStreamers } from '../lib/data'
+import { addStreamer, addCampaign, updateCampaign, deleteCampaign, updateContactStatus, getStreamers, updateLastLive } from '../lib/data'
 import { fetchTwitchUser, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
 import { streamers, campaigns, editingCampaignId, setCampaigns, setEditingCampaignId, setStreamers } from '../state'
 import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry } from '../utils'
@@ -178,7 +178,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
             const lastLive = await fetchLastLiveDate(user.id, user.login)
             if (lastLive) {
               const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
-              if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)
+              if (added) await updateLastLive(added.id, lastLive)
             }
             setStreamers(await getStreamers())
           }

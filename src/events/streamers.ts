@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { addStreamer, addStreamers, deleteStreamer } from '../lib/data'
+import { addStreamer, addStreamers, deleteStreamer, updateLastLive } from '../lib/data'
 import { fetchTwitchUser, fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
 import { streamers, selectedStreamers, setStreamers } from '../state'
 import { showToast, confirmAction, fmt, langToCountry } from '../utils'
@@ -62,7 +62,7 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       const lastLive = await fetchLastLiveDate(user.id, user.login)
       if (lastLive) {
         const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
-        if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)
+        if (added) await updateLastLive(added.id, lastLive)
       }
       await loadData(); renderAll()
       input.value = ''; (document.getElementById('streamerCategoryInput') as HTMLInputElement).value = ''
@@ -111,8 +111,11 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
         const lastLive = liveResults[i].status === 'fulfilled' ? liveResults[i].value : null
         return lastLive ? { name: u.display_name, lastLive } : null
       }).filter(Boolean) as { name: string; lastLive: string }[]
+      
+      const inserted = (await supabase.from('streamers').select('id, name').in('name', newUsers.map(u => u.display_name))).data || []
       for (const { name, lastLive } of updates) {
-        await supabase.from('streamers').update({ last_live_at: lastLive }).eq('name', name)
+        const streamer = inserted.find(s => s.name === name)
+        if (streamer) await updateLastLive(streamer.id, lastLive)
       }
 
       await loadData(); renderAll()
@@ -257,7 +260,7 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       const lastLive = await fetchLastLiveDate(lookupUser.id, lookupUser.login)
       if (lastLive) {
         const added = (await supabase.from('streamers').select('id').eq('name', lookupUser.display_name).single()).data
-        if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)
+        if (added) await updateLastLive(added.id, lastLive)
       }
       await loadData(); renderAll()
       document.getElementById('lookupModal')!.classList.add('hidden')
