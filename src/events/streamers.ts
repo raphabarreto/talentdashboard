@@ -57,9 +57,11 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) throw new Error('Já cadastrado.')
       const lang = user.broadcaster_language?.split('-')[0]
       const category = (document.getElementById('streamerCategoryInput') as HTMLInputElement).value.trim()
-      const stats = await fetchInitialStats(user.login)
+      const [stats, lastLive] = await Promise.all([
+        fetchInitialStats(user.login),
+        fetchLastLiveDate(user.id, user.login)
+      ])
       await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: category })
-      const lastLive = await fetchLastLiveDate(user.id, user.login)
       if (lastLive) {
         const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
         if (added) await updateLastLive(added.id, lastLive)
@@ -256,8 +258,10 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     btn.disabled = true; btn.textContent = 'Adicionando...'
     try {
       const lang = lookupUser.broadcaster_language?.split('-')[0]
-      await addStreamer({ name: lookupUser.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: lookupStats?.avg_viewers || 0, peak_viewers: lookupStats?.peak_viewers || 0, hours_watched: lookupStats?.hours_watched || 0, hours_streamed: lookupStats?.hours_streamed || 0, main_category: '' })
-      const lastLive = await fetchLastLiveDate(lookupUser.id, lookupUser.login)
+      const [, lastLive] = await Promise.all([
+        addStreamer({ name: lookupUser.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: lookupStats?.avg_viewers || 0, peak_viewers: lookupStats?.peak_viewers || 0, hours_watched: lookupStats?.hours_watched || 0, hours_streamed: lookupStats?.hours_streamed || 0, main_category: '' }),
+        fetchLastLiveDate(lookupUser.id, lookupUser.login)
+      ])
       if (lastLive) {
         const added = (await supabase.from('streamers').select('id').eq('name', lookupUser.display_name).single()).data
         if (added) await updateLastLive(added.id, lastLive)
