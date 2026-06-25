@@ -15,7 +15,6 @@ interface ProspectStream {
 let results: ProspectStream[] = []
 let selected = new Set<string>()
 let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')
-let emailsSent: Set<string> = new Set(JSON.parse(localStorage.getItem('prospectEmailsSent') || '[]'))
 let page = 1
 const PAGE_SIZE = 10
 
@@ -23,7 +22,6 @@ const EMAIL_REGEX = /[\w.+-]+@[\w-]+\.[\w.-]+/g
 
 function saveShortlist() {
   localStorage.setItem('prospectShortlist', JSON.stringify(shortlist))
-  localStorage.setItem('prospectEmailsSent', JSON.stringify([...emailsSent]))
 }
 
 const DEFAULT_TEMPLATE_PT = `Fala {streamer}, tudo bem?
@@ -253,7 +251,6 @@ export function setupProspecting() {
 
   document.getElementById('clearListBtn')!.addEventListener('click', () => {
     shortlist = []
-    emailsSent.clear()
     saveShortlist()
     renderShortlist()
     showToast('Lista limpa!')
@@ -286,25 +283,6 @@ export function setupProspecting() {
       saveShortlist()
       renderShortlist()
       if (results.length) renderResults()
-    }
-    const markBtn = (e.target as HTMLElement).closest('.shortlist-mark-sent') as HTMLElement
-    if (markBtn) {
-      const login = markBtn.dataset.login!
-      if (emailsSent.has(login)) emailsSent.delete(login)
-      else emailsSent.add(login)
-      saveShortlist()
-      renderShortlist()
-    }
-    const link = (e.target as HTMLElement).closest('.shortlist-mail-link') as HTMLElement
-    if (link) {
-      e.preventDefault()
-      const r = shortlist.find(s => s.user_login === link.dataset.login)
-      if (!r || !r.email) return
-      const company = getCompany()
-      if (!company) { showToast('Preencha o campo Empresa', 'error'); return }
-      const body = getTemplate(r.language).replace(/{streamer}/g, r.user_name).replace(/{empresa}/g, company)
-      const subject = r.language === 'es' ? `Propuesta de Colaboración ${r.user_name} x ${company}` : `Proposta de colaboração ${r.user_name} x ${company}`
-      window.open(`https://mail.google.com/mail/?view=cm&to=${r.email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank')
     }
   })
 
@@ -407,22 +385,16 @@ function renderShortlist() {
   section.classList.toggle('hidden', shortlist.length === 0)
   document.getElementById('shortlistCount')!.textContent = String(shortlist.length)
 
-  body.innerHTML = shortlist.map(r => {
-    const sent = emailsSent.has(r.user_login)
-    return `
-    <tr class="hover:bg-slate-700/30 transition-colors ${sent ? 'opacity-60' : ''}">
+  body.innerHTML = shortlist.map(r => `
+    <tr class="hover:bg-slate-700/30 transition-colors">
       <td class="p-3">
-        <a href="https://twitch.tv/${r.user_login}" target="_blank" class="text-white hover:text-indigo-400 font-semibold">${r.user_name}</a>${sent ? ' <span class="text-xs text-emerald-500">✓ enviado</span>' : ''}
+        <a href="https://twitch.tv/${r.user_login}" target="_blank" class="text-white hover:text-indigo-400 font-semibold">${r.user_name}</a>
       </td>
       <td class="p-3 text-sm text-slate-400">${r.language === 'pt' ? '🇧🇷' : r.language === 'es' ? '🇪🇸' : '🌐'} ${r.game_name}</td>
       <td class="p-3 text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${r.email || '-'}</td>
       <td class="p-3">
-        <div class="flex items-center gap-4">
-          ${r.email ? `<a href="#" class="shortlist-mail-link text-indigo-400 hover:text-indigo-300 transition-colors" data-login="${r.user_login}" title="Enviar email"><i class="fas fa-paper-plane"></i></a>` : ''}
-          <button class="shortlist-mark-sent ${sent ? 'text-emerald-400' : 'text-slate-400 hover:text-emerald-400'} transition-colors cursor-pointer" data-login="${r.user_login}" title="${sent ? 'Enviado' : 'Marcar como enviado'}"><i class="fas fa-check-circle"></i></button>
-          <button class="shortlist-remove text-slate-400 hover:text-red-400 transition-colors cursor-pointer" data-login="${r.user_login}" title="Remover"><i class="fas fa-trash"></i></button>
-        </div>
+        <button class="shortlist-remove text-slate-400 hover:text-red-400 transition-colors cursor-pointer" data-login="${r.user_login}" title="Remover"><i class="fas fa-trash"></i></button>
       </td>
     </tr>
-  `}).join('')
+  `).join('')
 }
