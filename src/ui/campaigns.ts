@@ -31,7 +31,7 @@ export function renderCampaigns() {
       <td class="p-4 flex gap-3">
         <button class="text-amber-500 hover:text-amber-400 edit-campaign-btn" data-id="${c.id}" title="Editar"><i class="fas fa-pen"></i></button>
         <button class="text-indigo-500 hover:text-indigo-400 details-campaign-btn" data-id="${c.id}" title="Detalhes"><i class="fas fa-eye"></i></button>
-        <button class="text-red-500 hover:text-red-400 delete-campaign-btn" data-id="${c.id}" title="Remover"><i class="fas fa-trash"></i></button>
+        <button class="text-slate-400 hover:text-red-400 transition-colors delete-campaign-btn" data-id="${c.id}" title="Remover"><i class="fas fa-trash"></i></button>
       </td>
     `
     tbody.appendChild(row)
