@@ -140,9 +140,11 @@ document.addEventListener('click', async (e) => {
   const deleteCampaignBtn = target.closest('.delete-campaign-btn') as HTMLElement | null
   if (deleteCampaignBtn) {
     if (!await confirmAction('Você tem certeza que deseja remover esta campanha?')) return
-    await deleteCampaign(deleteCampaignBtn.dataset.id!)
-    await loadData(); renderAll()
+    const id = deleteCampaignBtn.dataset.id!
+    setCampaigns(campaigns.filter(c => c.id !== id))
+    renderAll()
     showToast('Campanha removida!')
+    deleteCampaign(id).catch(() => showToast('Erro ao remover do banco', 'error'))
   }
 })
 
@@ -314,10 +316,12 @@ document.getElementById('campaignForm')?.addEventListener('submit', async (e) =>
 // Remove selected
 document.getElementById('removeSelectedBtn')?.addEventListener('click', async () => {
   if (!await confirmAction(`Remover ${selectedStreamers.size} streamers?`)) return
-  await supabase.from('streamers').delete().in('id', [...selectedStreamers])
+  const ids = [...selectedStreamers]
   selectedStreamers.clear()
-  await loadData(); renderAll()
+  setStreamers(streamers.filter(s => !ids.includes(s.id)))
+  renderAll()
   showToast('Streamers removidos!')
+  supabase.from('streamers').delete().in('id', ids).then(({ error }) => { if (error) showToast('Erro ao remover do banco', 'error') })
 })
 
 // Generate PDF
