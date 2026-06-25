@@ -220,17 +220,25 @@ document.getElementById('addMultipleBtn')?.addEventListener('click', () => docum
 document.getElementById('closeMultipleModal')?.addEventListener('click', () => document.getElementById('addMultipleModal')!.classList.add('hidden'))
 document.getElementById('saveMultipleBtn')?.addEventListener('click', async () => {
   const textarea = document.getElementById('multipleNamesInput') as HTMLTextAreaElement
-  const names = textarea.value.split('\n').map(n => n.trim()).filter(n => n)
+  const names = textarea.value.split('\n').map(line => {
+    const l = line.trim()
+    const urlMatch = l.match(/twitch\.tv\/([^\s\/]+)/)
+    if (urlMatch) return urlMatch[1].replace(/[_\\]/g, m => m === '\\' ? '' : m)
+    return l.split('-')[0].trim()
+  }).filter(n => n)
   if (!names.length) return
   const progress = document.getElementById('multipleProgress')!
   progress.classList.remove('hidden')
   let added = 0
-  for (let i = 0; i < names.length; i++) {
-    progress.textContent = `Buscando ${i + 1}/${names.length}: ${names[i]}...`
-    try {
-      const user = await fetchTwitchUser(names[i])
-      if (!user) continue
-      if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) continue
+  let processed = 0
+  const BATCH_SIZE = 5
+  for (let i = 0; i < names.length; i += BATCH_SIZE) {
+    const batch = names.slice(i, i + BATCH_SIZE)
+    progress.textContent = `Buscando ${i + 1}-${Math.min(i + BATCH_SIZE, names.length)}/${names.length}...`
+    const results = await Promise.allSettled(batch.map(async (name) => {
+      const user = await fetchTwitchUser(name)
+      if (!user) return false
+      if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) return false
       const lang = user.broadcaster_language?.split('-')[0]
       const stats = await fetchInitialStats(user.login)
       await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
@@ -239,8 +247,10 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
         const rec = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
         if (rec) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', rec.id)
       }
-      added++
-    } catch { /* skip */ }
+      return true
+    }))
+    for (const r of results) { if (r.status === 'fulfilled' && r.value) added++ }
+    processed += batch.length
   }
   progress.classList.add('hidden')
   document.getElementById('addMultipleModal')!.classList.add('hidden')
