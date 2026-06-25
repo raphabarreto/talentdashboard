@@ -253,6 +253,7 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
     processed += batch.length
   }
   progress.classList.add('hidden')
+  textarea.value = ''
   document.getElementById('addMultipleModal')!.classList.add('hidden')
   await loadData(); renderAll()
   showToast(`${added}/${names.length} streamers adicionados!`)
