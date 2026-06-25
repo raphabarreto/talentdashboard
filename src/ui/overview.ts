@@ -24,6 +24,7 @@ export function renderOverview() {
         <div class="w-12 h-12 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold text-xl mr-4">${s.name.charAt(0).toUpperCase()}</div>
         <div class="flex-1">
           <a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors">${s.name}</a>
+          ${s.is_live ? '<span class="ml-2 px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded uppercase animate-pulse">• AO VIVO</span>' : ''}
         </div>
       </div>
       <div class="space-y-2 text-sm">

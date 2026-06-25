@@ -5,7 +5,22 @@ import type { Streamer, StreamerHistory, Campaign, CampaignStreamer, ContactStat
 export async function getStreamers() {
   const { data, error } = await supabase.from('streamers').select('*').order('avg_viewers', { ascending: false })
   if (error) throw error
-  return data as Streamer[]
+  
+  const streamers = data as Streamer[]
+  
+  // Buscar último snapshot de cada streamer para saber se está ao vivo
+  const { data: snapshots } = await supabase
+    .from('stream_snapshots')
+    .select('streamer_id, is_live')
+    .in('streamer_id', streamers.map(s => s.id))
+    .order('created_at', { ascending: false })
+  
+  const liveMap = new Map<string, boolean>()
+  snapshots?.forEach(snap => {
+    if (!liveMap.has(snap.streamer_id)) liveMap.set(snap.streamer_id, snap.is_live)
+  })
+  
+  return streamers.map(s => ({ ...s, is_live: liveMap.get(s.id) || false }))
 }
 
 export async function addStreamer(streamer: Omit<Streamer, 'id' | 'created_at' | 'last_live_at'>) {

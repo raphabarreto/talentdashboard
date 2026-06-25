@@ -95,8 +95,16 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
         const users = await fetchTwitchUsers(names.slice(i, i + 100))
         allUsers.push(...users)
       }
+      
+      const notFound = names.filter(n => !allUsers.some(u => u.login.toLowerCase() === n.toLowerCase()))
       const newUsers = allUsers.filter(u => !streamers.some(s => s.name.toLowerCase() === u.display_name.toLowerCase()))
-      if (!newUsers.length) { showToast('Nenhum streamer novo encontrado.', 'error'); return }
+      const alreadyAdded = allUsers.filter(u => streamers.some(s => s.name.toLowerCase() === u.display_name.toLowerCase()))
+      
+      if (!newUsers.length) { 
+        showToast('Nenhum streamer novo encontrado.', 'error')
+        if (notFound.length) showToast(`Não encontrados: ${notFound.join(', ')}`, 'error')
+        return 
+      }
 
       progress.textContent = `Buscando estatísticas de ${newUsers.length} streamers...`
       const statsResults = await Promise.allSettled(newUsers.map(u => fetchInitialStats(u.login)))
@@ -123,7 +131,11 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       await loadData(); renderAll()
       textarea.value = ''
       document.getElementById('addMultipleModal')!.classList.add('hidden')
-      showToast(`${toInsert.length}/${names.length} streamers adicionados!`)
+      
+      let msg = `${toInsert.length} adicionados`
+      if (alreadyAdded.length) msg += `, ${alreadyAdded.length} já existiam`
+      if (notFound.length) msg += `, ${notFound.length} não encontrados`
+      showToast(msg)
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
     finally { progress.classList.add('hidden') }
   })

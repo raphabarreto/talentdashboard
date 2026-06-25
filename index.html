@@ -13,10 +13,124 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous"/>
 </head>
 <body class="min-h-screen bg-slate-900 text-slate-200 font-[Inter]">
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm flex items-center justify-center flex-col z-50">
-        <div class="w-10 h-10 border-3 border-slate-600 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-white text-lg font-semibold">Carregando...</p>
+    <!-- Loading Skeleton -->
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+      <div class="max-w-[1600px] w-full">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 animate-pulse">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-slate-700 mr-4"></div>
+              <div class="flex-1">
+                <div class="h-5 bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-slate-700 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-2/5"></div><div class="h-3 bg-slate-700 rounded w-1/5"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+            </div>
+          </div>
+          <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 animate-pulse">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-slate-700 mr-4"></div>
+              <div class="flex-1">
+                <div class="h-5 bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-slate-700 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-2/5"></div><div class="h-3 bg-slate-700 rounded w-1/5"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+            </div>
+          </div>
+          <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 animate-pulse">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-slate-700 mr-4"></div>
+              <div class="flex-1">
+                <div class="h-5 bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-slate-700 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-2/5"></div><div class="h-3 bg-slate-700 rounded w-1/5"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+            </div>
+          </div>
+          <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 animate-pulse">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-slate-700 mr-4"></div>
+              <div class="flex-1">
+                <div class="h-5 bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-slate-700 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-2/5"></div><div class="h-3 bg-slate-700 rounded w-1/5"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+            </div>
+          </div>
+          <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 animate-pulse hidden xl:block">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-slate-700 mr-4"></div>
+              <div class="flex-1">
+                <div class="h-5 bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-slate-700 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-2/5"></div><div class="h-3 bg-slate-700 rounded w-1/5"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+            </div>
+          </div>
+          <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 animate-pulse hidden xl:block">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-slate-700 mr-4"></div>
+              <div class="flex-1">
+                <div class="h-5 bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-slate-700 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-2/5"></div><div class="h-3 bg-slate-700 rounded w-1/5"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+            </div>
+          </div>
+          <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 animate-pulse hidden xl:block">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-slate-700 mr-4"></div>
+              <div class="flex-1">
+                <div class="h-5 bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-slate-700 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-2/5"></div><div class="h-3 bg-slate-700 rounded w-1/5"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+            </div>
+          </div>
+          <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 animate-pulse hidden xl:block">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 rounded-full bg-slate-700 mr-4"></div>
+              <div class="flex-1">
+                <div class="h-5 bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-slate-700 rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-2/5"></div><div class="h-3 bg-slate-700 rounded w-1/5"></div></div>
+              <div class="flex justify-between"><div class="h-3 bg-slate-700 rounded w-1/3"></div><div class="h-3 bg-slate-700 rounded w-1/4"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="max-w-[1600px] mx-auto p-3 sm:p-4 lg:p-6">

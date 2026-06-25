@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase'
 import { addStreamer, addCampaign, updateCampaign, deleteCampaign, updateContactStatus, getStreamers, updateLastLive } from '../lib/data'
 import { fetchTwitchUser, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
 import { streamers, campaigns, editingCampaignId, setCampaigns, setEditingCampaignId, setStreamers } from '../state'
-import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry } from '../utils'
+import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry, statusColors, selectColors } from '../utils'
 import { renderCampaigns } from '../ui/campaigns'
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void }
@@ -45,8 +45,6 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       document.getElementById('detailsPaymentDate')!.textContent = c.payment_date ? fmtDate(c.payment_date) : 'Pendente'
       const tbody = document.getElementById('detailsStreamers')!
       tbody.innerHTML = ''
-      const statusColors: Record<string, string> = { pendente: 'bg-slate-500', contatado: 'bg-amber-500', nao_respondeu: 'bg-orange-500', confirmado: 'bg-emerald-500', recusado: 'bg-red-500' }
-      const selectColors: Record<string, string> = { pendente: 'bg-slate-700', contatado: 'bg-amber-700', nao_respondeu: 'bg-orange-700', confirmado: 'bg-emerald-700', recusado: 'bg-red-700' }
       const statusOrder: Record<string, number> = { pendente: 0, contatado: 1, nao_respondeu: 2, confirmado: 3, recusado: 4 }
       const counts = { pendente: 0, contatado: 0, nao_respondeu: 0, confirmado: 0, recusado: 0 }
       const sorted = [...(c.campaign_streamers || [])].sort((a, b) => (statusOrder[a.contact_status || 'pendente'] || 0) - (statusOrder[b.contact_status || 'pendente'] || 0))
@@ -145,7 +143,6 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     const newStatus = select.value as any
     const id = select.dataset.id!
 
-    const selectColors: Record<string, string> = { pendente: 'bg-slate-700', contatado: 'bg-amber-700', confirmado: 'bg-emerald-700', recusado: 'bg-red-700' }
     select.className = `contact-status-select ${selectColors[newStatus]} text-white text-sm rounded px-3 py-1.5 border border-slate-600 cursor-pointer`
     select.closest('tr')!.setAttribute('data-status', newStatus)
 

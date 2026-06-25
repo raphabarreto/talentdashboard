@@ -15,7 +15,10 @@ export function renderTable() {
     row.className = 'hover:bg-slate-700/50 transition-colors'
     row.innerHTML = `
       <td class="p-4"><input type="checkbox" class="streamer-checkbox w-4 h-4 rounded" data-id="${s.id}" ${selectedStreamers.has(s.id) ? 'checked' : ''}></td>
-      <td class="p-4 font-medium"><button class="history-btn text-left hover:text-indigo-400 transition-colors" data-id="${s.id}" data-name="${s.name}">${s.name}</button></td>
+      <td class="p-4 font-medium">
+        <button class="history-btn text-left hover:text-indigo-400 transition-colors" data-id="${s.id}" data-name="${s.name}">${s.name}</button>
+        ${s.is_live ? '<span class="ml-2 px-1.5 py-0.5 bg-red-600 text-white text-xs font-bold rounded uppercase">• LIVE</span>' : ''}
+      </td>
       <td class="p-4">${fmt(s.avg_viewers)}</td>
       <td class="p-4"><a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-indigo-400 hover:underline">twitch.tv/${s.name.toLowerCase()}</a></td>
       <td class="p-4"><a href="https://sullygnome.com/channel/${s.name.toLowerCase()}/30" target="_blank" class="text-indigo-400 hover:underline">Ver no SullyGnome</a></td>

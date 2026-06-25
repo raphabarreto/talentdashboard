@@ -9,6 +9,7 @@ export interface Streamer {
   last_live_at: string | null
   main_category: string
   created_at: string
+  is_live?: boolean
 }
 
 export interface StreamerHistory {
