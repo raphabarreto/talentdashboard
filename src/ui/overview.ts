@@ -18,7 +18,7 @@ export function renderOverview() {
   paged.forEach(s => {
     const flagHtml = s.country ? `<span class="fi fi-${s.country} w-5 h-5 rounded-full shadow-md"></span> ${countryNames[s.country] || s.country}` : '-'
     const card = document.createElement('div')
-    card.className = 'bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700 hover:scale-105 transition-transform'
+    card.className = 'bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700 hover:border-slate-600 transition-colors'
     card.innerHTML = `
       <div class="flex items-center mb-4">
         <div class="w-12 h-12 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold text-xl mr-4">${s.name.charAt(0).toUpperCase()}</div>

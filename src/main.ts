@@ -1,7 +1,7 @@
 import { getSession, signOut, onAuthChange } from './lib/auth'
 import { supabase } from './lib/supabase'
-import { getStreamers, addStreamer, deleteStreamer, getCampaigns, addCampaign, updateCampaign, deleteCampaign, updateContactStatus } from './lib/data'
-import { fetchTwitchUser, fetchInitialStats, fetchLastLiveDate } from './lib/twitch'
+import { getStreamers, addStreamer, addStreamers, deleteStreamer, getCampaigns, addCampaign, updateCampaign, deleteCampaign, updateContactStatus } from './lib/data'
+import { fetchTwitchUser, fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate } from './lib/twitch'
 import { streamers, campaigns, selectedStreamers, currentSort, editingCampaignId, setStreamers, setCampaigns, setOverviewPage, setTablePage, setEditingCampaignId } from './state'
 import { showToast, confirmAction, fmtDate, fmtCurrency, fmt, langToCountry } from './utils'
 import { renderOverview } from './ui/overview'
@@ -74,10 +74,11 @@ document.addEventListener('click', async (e) => {
   if (deleteBtn) {
     const id = deleteBtn.dataset.id!
     if (!await confirmAction('Você tem certeza que deseja remover este streamer?')) return
-    await deleteStreamer(id)
     selectedStreamers.delete(id)
-    await loadData(); renderAll()
+    setStreamers(streamers.filter(s => s.id !== id))
+    renderAll()
     showToast('Streamer removido!')
+    deleteStreamer(id).catch(() => showToast('Erro ao remover do banco', 'error'))
   }
 
   const historyBtn = target.closest('.history-btn') as HTMLElement | null
@@ -163,12 +164,14 @@ document.getElementById('selectAll')?.addEventListener('change', (e) => {
 
 // Filter listeners
 ;['search-overview', 'country-filter', 'status-filter-overview', 'category-filter-overview'].forEach(id => {
-  document.getElementById(id)?.addEventListener('input', () => { setOverviewPage(1); renderOverview() })
-  document.getElementById(id)?.addEventListener('change', () => { setOverviewPage(1); renderOverview() })
+  const el = document.getElementById(id)
+  el?.addEventListener('input', () => { setOverviewPage(1); renderOverview() })
+  if (el?.tagName === 'SELECT') el.addEventListener('change', () => { setOverviewPage(1); renderOverview() })
 })
 ;['search-table', 'country-filter-table', 'status-filter-table', 'category-filter-table'].forEach(id => {
-  document.getElementById(id)?.addEventListener('input', () => { setTablePage(1); renderTable() })
-  document.getElementById(id)?.addEventListener('change', () => { setTablePage(1); renderTable() })
+  const el = document.getElementById(id)
+  el?.addEventListener('input', () => { setTablePage(1); renderTable() })
+  if (el?.tagName === 'SELECT') el.addEventListener('change', () => { setTablePage(1); renderTable() })
 })
 ;['month-filter', 'year-filter'].forEach(id => {
   document.getElementById(id)?.addEventListener('change', renderCampaigns)
@@ -229,29 +232,38 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
   if (!names.length) return
   const progress = document.getElementById('multipleProgress')!
   progress.classList.remove('hidden')
-  let added = 0
-  let processed = 0
-  const BATCH_SIZE = 5
-  for (let i = 0; i < names.length; i += BATCH_SIZE) {
-    const batch = names.slice(i, i + BATCH_SIZE)
-    progress.textContent = `Buscando ${i + 1}-${Math.min(i + BATCH_SIZE, names.length)}/${names.length}...`
-    const results = await Promise.allSettled(batch.map(async (name) => {
-      const user = await fetchTwitchUser(name)
-      if (!user) return false
-      if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) return false
-      const lang = user.broadcaster_language?.split('-')[0]
-      const stats = await fetchInitialStats(user.login)
-      await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
-      return true
-    }))
-    for (const r of results) { if (r.status === 'fulfilled' && r.value) added++ }
-    processed += batch.length
-  }
-  progress.classList.add('hidden')
-  textarea.value = ''
-  document.getElementById('addMultipleModal')!.classList.add('hidden')
-  await loadData(); renderAll()
-  showToast(`${added}/${names.length} streamers adicionados!`)
+  progress.textContent = `Buscando ${names.length} streamers...`
+  try {
+    // Batch fetch from Twitch (up to 100 per call)
+    const allUsers = []
+    for (let i = 0; i < names.length; i += 100) {
+      const batch = names.slice(i, i + 100)
+      const users = await fetchTwitchUsers(batch)
+      allUsers.push(...users)
+    }
+    // Filter already registered
+    const newUsers = allUsers.filter(u => !streamers.some(s => s.name.toLowerCase() === u.display_name.toLowerCase()))
+    if (!newUsers.length) { showToast('Nenhum streamer novo encontrado.', 'error'); return }
+
+    // Fetch stats in parallel (TwitchTracker is per-user only)
+    progress.textContent = `Buscando estatísticas de ${newUsers.length} streamers...`
+    const statsResults = await Promise.allSettled(newUsers.map(u => fetchInitialStats(u.login)))
+
+    // Build insert payload
+    const toInsert = newUsers.map((u, i) => {
+      const stats = statsResults[i].status === 'fulfilled' ? statsResults[i].value : null
+      const lang = u.broadcaster_language?.split('-')[0]
+      return { name: u.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' }
+    })
+
+    // Batch insert
+    await addStreamers(toInsert)
+    await loadData(); renderAll()
+    textarea.value = ''
+    document.getElementById('addMultipleModal')!.classList.add('hidden')
+    showToast(`${toInsert.length}/${names.length} streamers adicionados!`)
+  } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
+  finally { progress.classList.add('hidden') }
 })
 
 // Campaigns

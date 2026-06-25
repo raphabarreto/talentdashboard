@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-// v10 - com language filter e paginação
+// v11 - batch users support
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,7 +43,32 @@ Deno.serve(async (req) => {
 
     let result: unknown
 
-    if (action === "user") {
+    if (action === "users") {
+      const logins = url.searchParams.get("logins")?.split(",").filter(Boolean) || []
+      if (!logins.length) return new Response("[]", { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } })
+
+      const params = logins.map(l => `login=${encodeURIComponent(l.toLowerCase())}`).join("&")
+      const res = await fetch(`https://api.twitch.tv/helix/users?${params}`, {
+        headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+      })
+      const data = await res.json()
+      const users = data.data || []
+
+      // Fetch channel info (broadcaster_language) in batch
+      if (users.length) {
+        const ids = users.map((u: { id: string }) => `broadcaster_id=${u.id}`).join("&")
+        const chRes = await fetch(`https://api.twitch.tv/helix/channels?${ids}`, {
+          headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+        })
+        const chData = await chRes.json()
+        const chMap = new Map<string, { broadcaster_language: string; game_name: string }>()
+        for (const ch of (chData.data || [])) chMap.set(ch.broadcaster_id, ch)
+        result = users.map((u: { id: string }) => ({ ...u, broadcaster_language: chMap.get(u.id)?.broadcaster_language || "", game_name: chMap.get(u.id)?.game_name || "" }))
+      } else {
+        result = []
+      }
+
+    } else if (action === "user") {
       const username = url.searchParams.get("username")
       if (!username) return new Response("Missing username", { status: 400, headers: corsHeaders })
 

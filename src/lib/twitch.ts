@@ -18,6 +18,14 @@ export async function fetchTwitchUser(username: string) {
   return callProxy({ action: 'user', username })
 }
 
+export async function fetchTwitchUsers(logins: string[]) {
+  if (!logins.length) return []
+  return callProxy({ action: 'users', logins: logins.join(',') }) as Promise<Array<{
+    id: string; login: string; display_name: string; profile_image_url: string
+    broadcaster_language: string; game_name: string
+  }>>
+}
+
 export async function fetchLastLiveDate(userId: string): Promise<string | null> {
   try {
     const video = await callProxy({ action: 'last_video', user_id: userId })
