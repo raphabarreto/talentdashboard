@@ -1,4 +1,4 @@
-import { searchCategories, fetchStreamsByGame } from '../lib/twitch'
+import { searchCategories, fetchStreamsByGame, fetchTwitchUser } from '../lib/twitch'
 import { showToast } from '../utils'
 import { streamers } from '../state'
 
@@ -127,6 +127,10 @@ export function setupProspecting() {
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-white font-semibold text-base"><i class="fas fa-list mr-2"></i>Minha Lista (<span id="shortlistCount">0</span>)</h3>
           <div class="flex gap-3">
+            <div class="flex">
+              <input id="manualAddInput" type="text" placeholder="Adicionar streamer..." class="bg-slate-700 border border-slate-600 text-white text-sm rounded-l-lg px-3 py-2 w-44 placeholder-slate-400 focus:outline-none focus:border-indigo-500">
+              <button id="manualAddBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-2 rounded-r-lg text-sm transition-colors cursor-pointer"><i class="fas fa-plus"></i></button>
+            </div>
             <button id="copyListBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-copy mr-1"></i>Copiar Lista</button>
             <button id="clearListBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-trash mr-1"></i>Limpar</button>
           </div>
@@ -254,6 +258,26 @@ export function setupProspecting() {
     renderShortlist()
     showToast('Lista limpa!')
   })
+
+  async function addManualStreamer() {
+    const input = document.getElementById('manualAddInput') as HTMLInputElement
+    const login = input.value.trim().replace(/.*twitch\.tv\//, '').replace(/\/$/, '').toLowerCase()
+    if (!login) return
+    if (shortlist.some(s => s.user_login === login)) { showToast('Já está na lista!'); return }
+    input.value = ''
+    try {
+      const u = await fetchTwitchUser(login)
+      if (!u) { showToast('Streamer não encontrado'); return }
+      shortlist.push({ user_login: u.login, user_name: u.display_name, viewer_count: 0, game_name: u.game_name || '', email: extractEmail(u.description || ''), description: u.description || '', language: u.broadcaster_language || '' })
+      saveShortlist()
+      renderShortlist()
+      if (results.length) renderResults()
+      showToast(`${u.display_name} adicionado!`)
+    } catch { showToast('Erro ao buscar streamer') }
+  }
+
+  document.getElementById('manualAddBtn')!.addEventListener('click', addManualStreamer)
+  document.getElementById('manualAddInput')!.addEventListener('keydown', (e) => { if (e.key === 'Enter') addManualStreamer() })
 
   document.getElementById('shortlistBody')!.addEventListener('click', (e) => {
     const removeBtn = (e.target as HTMLElement).closest('.shortlist-remove') as HTMLElement
