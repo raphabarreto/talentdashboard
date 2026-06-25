@@ -35,7 +35,7 @@ export function renderOverview() {
       </div>
       <div class="mt-4 flex justify-between">
         <button class="text-xs text-emerald-500 hover:text-emerald-400 font-semibold cursor-pointer history-btn" data-id="${s.id}" data-name="${s.name}">Histórico</button>
-        <button class="text-xs text-red-500 hover:text-red-400 font-semibold cursor-pointer delete-btn" data-id="${s.id}">Remover</button>
+        <button class="text-xs text-red-500 hover:text-red-400 cursor-pointer delete-btn" data-id="${s.id}" title="Remover"><i class="fas fa-trash"></i></button>
       </div>
     `
     grid.appendChild(card)

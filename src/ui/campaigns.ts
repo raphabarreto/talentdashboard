@@ -29,9 +29,9 @@ export function renderCampaigns() {
       <td class="p-4 font-semibold">${fmtCurrency(c.my_commission || 0)}</td>
       <td class="p-4 text-xs">${total > 0 ? `<span class="text-emerald-400 font-semibold">${confirmed}/${total}</span> confirmados` : '—'}</td>
       <td class="p-4 flex gap-3">
-        <button class="text-amber-500 hover:text-amber-400 text-sm font-semibold edit-campaign-btn" data-id="${c.id}">Editar</button>
-        <button class="text-indigo-500 hover:text-indigo-400 text-sm font-semibold details-campaign-btn" data-id="${c.id}">Detalhes</button>
-        <button class="text-red-500 hover:text-red-400 text-sm font-semibold delete-campaign-btn" data-id="${c.id}">Remover</button>
+        <button class="text-amber-500 hover:text-amber-400 edit-campaign-btn" data-id="${c.id}" title="Editar"><i class="fas fa-pen"></i></button>
+        <button class="text-indigo-500 hover:text-indigo-400 details-campaign-btn" data-id="${c.id}" title="Detalhes"><i class="fas fa-eye"></i></button>
+        <button class="text-red-500 hover:text-red-400 delete-campaign-btn" data-id="${c.id}" title="Remover"><i class="fas fa-trash"></i></button>
       </td>
     `
     tbody.appendChild(row)

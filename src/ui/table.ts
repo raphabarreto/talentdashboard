@@ -19,7 +19,7 @@ export function renderTable() {
       <td class="p-4">${fmt(s.avg_viewers)}</td>
       <td class="p-4"><a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-indigo-400 hover:underline">twitch.tv/${s.name.toLowerCase()}</a></td>
       <td class="p-4"><a href="https://sullygnome.com/channel/${s.name.toLowerCase()}/30" target="_blank" class="text-indigo-400 hover:underline">Ver no SullyGnome</a></td>
-      <td class="p-4"><button class="text-sm text-red-500 hover:text-red-400 font-semibold delete-btn" data-id="${s.id}">Remover</button></td>
+      <td class="p-4"><button class="text-red-500 hover:text-red-400 delete-btn" data-id="${s.id}" title="Remover"><i class="fas fa-trash"></i></button></td>
     `
     tbody.appendChild(row)
   })
