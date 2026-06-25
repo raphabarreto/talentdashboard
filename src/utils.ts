@@ -17,7 +17,7 @@ export const fmtCurrency = (n: number) => `R$ ${n.toFixed(2).replace('.', ',').r
 export const fmtDate = (d: string) => { if (!d) return '-'; const [y, m, day] = d.split('-'); return `${day}/${m}/${y}` }
 
 export function isActive(s: Streamer): boolean {
-  if (!s.last_live_at) return true
+  if (!s.last_live_at) return false
   return Date.now() - new Date(s.last_live_at).getTime() < 15 * 24 * 60 * 60 * 1000
 }
 

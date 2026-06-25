@@ -207,7 +207,7 @@ document.getElementById('addStreamerForm')?.addEventListener('submit', async (e)
     const category = (document.getElementById('streamerCategoryInput') as HTMLInputElement).value.trim()
     const stats = await fetchInitialStats(user.login)
     await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: category })
-    const lastLive = await fetchLastLiveDate(user.id)
+    const lastLive = await fetchLastLiveDate(user.id, user.login)
     if (lastLive) {
       const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
       if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)
@@ -260,6 +260,20 @@ document.getElementById('saveMultipleBtn')?.addEventListener('click', async () =
 
     // Batch insert
     await addStreamers(toInsert)
+
+    // Fetch last live dates in parallel
+    progress.textContent = `Verificando atividade...`
+    const liveResults = await Promise.allSettled(newUsers.map(u => fetchLastLiveDate(u.id, u.login)))
+    const updates = newUsers.map((u, i) => {
+      const lastLive = liveResults[i].status === 'fulfilled' ? liveResults[i].value : null
+      return lastLive ? { name: u.display_name, lastLive } : null
+    }).filter(Boolean) as { name: string; lastLive: string }[]
+    if (updates.length) {
+      for (const { name, lastLive } of updates) {
+        await supabase.from('streamers').update({ last_live_at: lastLive }).eq('name', name)
+      }
+    }
+
     await loadData(); renderAll()
     textarea.value = ''
     document.getElementById('addMultipleModal')!.classList.add('hidden')
@@ -428,7 +442,7 @@ document.getElementById('campaignDetailsModal')?.addEventListener('change', asyn
           const lang = user.broadcaster_language?.split('-')[0]
           const stats = await fetchInitialStats(user.login)
           await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
-          const lastLive = await fetchLastLiveDate(user.id)
+          const lastLive = await fetchLastLiveDate(user.id, user.login)
           if (lastLive) {
             const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
             if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)
@@ -531,7 +545,7 @@ document.getElementById('lookupAddBtn')?.addEventListener('click', async () => {
   try {
     const lang = lookupUser.broadcaster_language?.split('-')[0]
     await addStreamer({ name: lookupUser.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: lookupStats?.avg_viewers || 0, peak_viewers: lookupStats?.peak_viewers || 0, hours_watched: lookupStats?.hours_watched || 0, hours_streamed: lookupStats?.hours_streamed || 0, main_category: '' })
-    const lastLive = await fetchLastLiveDate(lookupUser.id)
+    const lastLive = await fetchLastLiveDate(lookupUser.id, lookupUser.login)
     if (lastLive) {
       const added = (await supabase.from('streamers').select('id').eq('name', lookupUser.display_name).single()).data
       if (added) await supabase.from('streamers').update({ last_live_at: lastLive }).eq('id', added.id)

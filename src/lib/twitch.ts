@@ -26,10 +26,14 @@ export async function fetchTwitchUsers(logins: string[]) {
   }>>
 }
 
-export async function fetchLastLiveDate(userId: string): Promise<string | null> {
+export async function fetchLastLiveDate(userId: string, login: string): Promise<string | null> {
   try {
     const video = await callProxy({ action: 'last_video', user_id: userId })
-    return video?.created_at || null
+    if (video?.created_at) return video.created_at
+    // Fallback: check if channel is live now
+    const streams = await callProxy({ action: 'streams', usernames: login })
+    if (Array.isArray(streams) && streams.length > 0) return new Date().toISOString()
+    return null
   } catch { return null }
 }
 
