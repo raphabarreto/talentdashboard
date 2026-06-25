@@ -45,6 +45,7 @@ function setupNav() {
   document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
       const viewId = (link as HTMLElement).dataset.view!
+      sessionStorage.setItem('activeTab', viewId)
       document.querySelectorAll('.view').forEach(v => v.classList.toggle('hidden', v.id !== `view-${viewId}`))
       document.querySelectorAll('.nav-link').forEach(l => {
         const active = (l as HTMLElement).dataset.view === viewId
@@ -60,7 +61,9 @@ function setupNav() {
       document.getElementById('openAddCampaign')!.classList.toggle('hidden', !campaignBtn)
     })
   })
-  document.querySelector('.nav-link')?.dispatchEvent(new Event('click'))
+  const saved = sessionStorage.getItem('activeTab')
+  const target = saved ? document.querySelector(`.nav-link[data-view="${saved}"]`) : document.querySelector('.nav-link')
+  target?.dispatchEvent(new Event('click'))
 }
 
 // --- Event Listeners ---
