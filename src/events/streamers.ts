@@ -147,9 +147,16 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       const newUsers = allUsers.filter(u => !streamers.some(s => s.name.toLowerCase() === u.display_name.toLowerCase()))
       const alreadyAdded = allUsers.filter(u => streamers.some(s => s.name.toLowerCase() === u.display_name.toLowerCase()))
       
-      if (!newUsers.length) { 
-        showToast('Nenhum streamer novo encontrado.', 'error')
-        if (notFound.length) showToast(`Não encontrados: ${notFound.join(', ')}`, 'error')
+      if (!newUsers.length) {
+        progress.classList.add('hidden')
+        textarea.value = ''
+        if (notFound.length && alreadyAdded.length) {
+          showToast(`${notFound.length} não encontrados, ${alreadyAdded.length} já cadastrados`, 'error')
+        } else if (notFound.length) {
+          showToast(`Não encontrados na Twitch: ${notFound.join(', ')}`, 'error')
+        } else {
+          showToast(`Todos os ${alreadyAdded.length} streamers já estão cadastrados`, 'error')
+        }
         return 
       }
 
