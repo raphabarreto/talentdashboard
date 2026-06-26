@@ -5,6 +5,8 @@ import { streamers, selectedStreamers, setStreamers } from '../state'
 import { showToast, confirmAction, fmt, langToCountry } from '../utils'
 import { showHistory } from '../ui/history'
 import { getFilteredStreamers } from '../ui/filters'
+import { streamerSchema } from '../lib/validators'
+import { logError } from '../lib/logger'
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void; renderTable: () => void }
 
@@ -49,19 +51,48 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     const input = document.getElementById('streamerNameInput') as HTMLInputElement
     const submitBtn = (e.target as HTMLFormElement).querySelector('button[type="submit"]') as HTMLButtonElement
     const name = input.value.trim()
-    if (!name) return
+    const category = (document.getElementById('streamerCategoryInput') as HTMLInputElement).value.trim()
+    
+    // Validação básica
+    if (!name) {
+      showToast('Nome do streamer é obrigatório', 'error')
+      return
+    }
+    
     submitBtn.disabled = true; submitBtn.textContent = 'Buscando...'
     try {
       const user = await fetchTwitchUser(name)
       if (!user) throw new Error('Streamer não encontrado.')
       if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) throw new Error('Já cadastrado.')
+      
       const lang = user.broadcaster_language?.split('-')[0]
-      const category = (document.getElementById('streamerCategoryInput') as HTMLInputElement).value.trim()
       const [stats, lastLive] = await Promise.all([
         fetchInitialStats(user.login),
         fetchLastLiveDate(user.id, user.login)
       ])
-      await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: category })
+      
+      // Preparar dados
+      const streamerData = {
+        name: user.display_name,
+        country: (lang && langToCountry[lang]) || '',
+        avg_viewers: stats?.avg_viewers || 0,
+        peak_viewers: stats?.peak_viewers || 0,
+        hours_watched: stats?.hours_watched || 0,
+        hours_streamed: stats?.hours_streamed || 0,
+        main_category: category
+      }
+      
+      // Validar com Zod
+      const validation = streamerSchema.safeParse(streamerData)
+      if (!validation.success) {
+        const firstError = validation.error.errors[0]
+        showToast(firstError.message, 'error')
+        logError(validation.error, 'Streamer validation failed')
+        return
+      }
+      
+      await addStreamer(streamerData)
+      
       if (lastLive) {
         const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
         if (added) await updateLastLive(added.id, lastLive)
@@ -70,8 +101,14 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       input.value = ''; (document.getElementById('streamerCategoryInput') as HTMLInputElement).value = ''
       document.getElementById('addStreamerModal')!.classList.add('hidden')
       showToast('Streamer adicionado!')
-    } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
-    finally { submitBtn.disabled = false; submitBtn.textContent = 'Buscar e Salvar' }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao adicionar streamer'
+      showToast(message, 'error')
+      logError(err, 'Failed to add streamer', { name })
+    } finally {
+      submitBtn.disabled = false
+      submitBtn.textContent = 'Buscar e Salvar'
+    }
   })
 
   // Add Multiple
@@ -79,13 +116,23 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
   document.getElementById('closeMultipleModal')?.addEventListener('click', () => document.getElementById('addMultipleModal')!.classList.add('hidden'))
   document.getElementById('saveMultipleBtn')?.addEventListener('click', async () => {
     const textarea = document.getElementById('multipleNamesInput') as HTMLTextAreaElement
+    const btn = document.getElementById('saveMultipleBtn') as HTMLButtonElement
     const names = textarea.value.split('\n').map(line => {
       const l = line.trim()
       const urlMatch = l.match(/twitch\.tv\/([^\s\/]+)/)
       if (urlMatch) return urlMatch[1].replace(/[_\\]/g, m => m === '\\' ? '' : m)
       return l.split('-')[0].trim()
     }).filter(n => n)
-    if (!names.length) return
+    
+    if (!names.length) {
+      showToast('Digite pelo menos um nome de streamer', 'error')
+      return
+    }
+    
+    if (names.length > 50) {
+      showToast('Máximo de 50 streamers por vez', 'error')
+      return
+    }
     const progress = document.getElementById('multipleProgress')!
     progress.classList.remove('hidden')
     progress.textContent = `Buscando ${names.length} streamers...`

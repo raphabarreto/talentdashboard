@@ -270,7 +270,8 @@
     <div id="addMultipleModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-sm">
             <h3 class="text-lg font-bold text-white mb-4">Adicionar Vários Streamers</h3>
-            <textarea id="multipleNamesInput" rows="8" placeholder="Um por linha: nome ou nome - URL&#10;Ex: turunpug - https://twitch.tv/turunpug" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></textarea>
+            <textarea id="multipleNamesInput" rows="8" placeholder="Um por linha: nome ou nome - URL&#10;Ex: gaules&#10;alanzoka&#10;https://twitch.tv/yoda" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></textarea>
+            <p class="text-xs text-slate-500 mt-1">Máximo de 50 streamers por vez</p>
             <p id="multipleProgress" class="text-sm text-slate-400 mt-2 hidden"></p>
             <div class="flex gap-3 mt-4">
                 <button id="saveMultipleBtn" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">Buscar e Salvar</button>
@@ -301,7 +302,7 @@
                 <div class="grid grid-cols-[1fr_auto] gap-3">
                     <div>
                         <label for="totalReceivedInput" class="text-sm text-slate-400 block mb-1">Valor Total Recebido (após conversão)</label>
-                        <input id="totalReceivedInput" type="text" placeholder="0,00" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input id="totalReceivedInput" type="text" placeholder="0,00" pattern="[0-9.,]+" title="Digite apenas números" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
                         <label for="currencyInput" class="text-sm text-slate-400 block mb-1">Moeda</label>
@@ -313,7 +314,7 @@
                 </div>
                 <div>
                     <label for="totalPaidInput" class="text-sm text-slate-400 block mb-1">Pagamento Total aos Streamers</label>
-                    <input id="totalPaidInput" type="text" placeholder="0,00" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input id="totalPaidInput" type="text" placeholder="0,00" pattern="[0-9.,]+" title="Digite apenas números" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
                     <label for="paymentDateInput" class="text-sm text-slate-400 block mb-1">Data de Pagamento <span class="text-slate-500">(opcional)</span></label>
