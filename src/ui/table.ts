@@ -56,9 +56,11 @@ export function renderTable() {
 export function updateSelectionButtons() {
   const count = selectedStreamers.size
   document.getElementById('generatePdfBtn')!.classList.toggle('hidden', count === 0)
+  document.getElementById('exportCsvBtn')!.classList.toggle('hidden', count === 0)
   document.getElementById('setCategoryBtn')!.classList.toggle('hidden', count === 0)
   document.getElementById('removeSelectedBtn')!.classList.toggle('hidden', count === 0)
   document.getElementById('selectedCount')!.textContent = String(count)
+  document.getElementById('selectedCountCsv')!.textContent = String(count)
   document.getElementById('selectedCountCategory')!.textContent = String(count)
   document.getElementById('selectedCountRemove')!.textContent = String(count)
 }

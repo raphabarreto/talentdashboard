@@ -30,16 +30,17 @@ Deno.serve(async (req) => {
     })
     const { access_token } = await tokenRes.json()
 
-    // 3. Consultar streams ao vivo (batches de 100)
+    // 3. Consultar streams ao vivo (batches de 10 - limite conservador da Twitch)
     const liveMap = new Map<string, { viewers: number; game: string }>()
 
-    for (let i = 0; i < streamers.length; i += 100) {
-      const batch = streamers.slice(i, i + 100)
+    for (let i = 0; i < streamers.length; i += 10) {
+      const batch = streamers.slice(i, i + 10)
       const params = batch.map(s => `user_login=${encodeURIComponent(s.name.toLowerCase())}`).join("&")
-      const res = await fetch(`https://api.twitch.tv/helix/streams?${params}&first=100`, {
+      const res = await fetch(`https://api.twitch.tv/helix/streams?${params}`, {
         headers: { "Client-ID": twitchClientId, "Authorization": `Bearer ${access_token}` }
       })
       const { data: streams } = await res.json()
+      
       for (const s of streams || []) {
         liveMap.set(s.user_login.toLowerCase(), { viewers: s.viewer_count, game: s.game_name })
       }

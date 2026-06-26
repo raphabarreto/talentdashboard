@@ -1,6 +1,6 @@
 import { signOut } from '../lib/auth'
 import { currentSort, setOverviewPage, setTablePage } from '../state'
-import { confirmAction } from '../utils'
+import { confirmAction, debounce } from '../utils'
 import { renderOverview } from '../ui/overview'
 import { renderTable } from '../ui/table'
 import { renderCampaigns } from '../ui/campaigns'
@@ -31,22 +31,29 @@ export function setupNav() {
 }
 
 export function setupFiltersAndSort() {
+  // Debounced render functions
+  const debouncedRenderOverview = debounce(() => { setOverviewPage(1); renderOverview() }, 300)
+  const debouncedRenderTable = debounce(() => { setTablePage(1); renderTable() }, 300)
+
   // Overview filters
-  ;['search-overview', 'country-filter', 'status-filter-overview', 'category-filter-overview'].forEach(id => {
+  document.getElementById('search-overview')?.addEventListener('input', debouncedRenderOverview)
+  ;['country-filter', 'status-filter-overview', 'category-filter-overview'].forEach(id => {
     const el = document.getElementById(id)
-    el?.addEventListener('input', () => { setOverviewPage(1); renderOverview() })
-    if (el?.tagName === 'SELECT') el.addEventListener('change', () => { setOverviewPage(1); renderOverview() })
+    el?.addEventListener('change', () => { setOverviewPage(1); renderOverview() })
   })
+  
   // Table filters
-  ;['search-table', 'country-filter-table', 'status-filter-table', 'category-filter-table'].forEach(id => {
+  document.getElementById('search-table')?.addEventListener('input', debouncedRenderTable)
+  ;['country-filter-table', 'status-filter-table', 'category-filter-table'].forEach(id => {
     const el = document.getElementById(id)
-    el?.addEventListener('input', () => { setTablePage(1); renderTable() })
-    if (el?.tagName === 'SELECT') el.addEventListener('change', () => { setTablePage(1); renderTable() })
+    el?.addEventListener('change', () => { setTablePage(1); renderTable() })
   })
+  
   // Campaign filters
   ;['month-filter', 'year-filter'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', renderCampaigns)
   })
+  
   // Sort headers
   document.querySelectorAll('[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
@@ -62,6 +69,14 @@ export function setupGlobalEvents() {
   // Close modals on Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'))
+    
+    // Ctrl/Cmd + K para focar busca
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault()
+      const activeView = document.querySelector('.view:not(.hidden)')
+      const searchInput = activeView?.querySelector('input[type="text"]') as HTMLInputElement
+      searchInput?.focus()
+    }
   })
   // Close history modal
   document.getElementById('closeHistoryModal')?.addEventListener('click', () => document.getElementById('historyModal')!.classList.add('hidden'))

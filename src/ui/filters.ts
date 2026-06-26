@@ -1,4 +1,4 @@
-import { streamers, campaigns, currentSort } from '../state'
+import { streamers, campaigns, currentSort, getCachedCountries, getCachedCategories } from '../state'
 import { isActive, countryNames } from '../utils'
 import type { Streamer } from '../types'
 
@@ -16,7 +16,11 @@ export function getFilteredStreamers(prefix: string): Streamer[] {
       if (status === 'live') return s.is_live
       return status === 'active' ? isActive(s) : !isActive(s)
     })
-    .filter(s => category === 'all' || s.main_category === category)
+    .filter(s => {
+      if (category === 'all') return true
+      if (category === 'none') return !s.main_category
+      return s.main_category === category
+    })
     .sort((a, b) => {
       const aVal = a[currentSort.key as keyof Streamer] as number
       const bVal = b[currentSort.key as keyof Streamer] as number
@@ -25,7 +29,7 @@ export function getFilteredStreamers(prefix: string): Streamer[] {
 }
 
 export function getExistingCategories(): string[] {
-  return [...new Set(streamers.map(s => s.main_category).filter(Boolean))].sort()
+  return getCachedCategories()
 }
 
 export function getExistingCompanies(): string[] {
@@ -33,8 +37,8 @@ export function getExistingCompanies(): string[] {
 }
 
 export function populateFilters() {
-  const countries = [...new Set(streamers.map(s => s.country).filter(Boolean))].sort()
-  const categories = [...new Set(streamers.map(s => s.main_category).filter(Boolean))].sort()
+  const countries = getCachedCountries()
+  const categories = getCachedCategories()
 
   ;['country-filter', 'country-filter-table'].forEach(id => {
     const el = document.getElementById(id) as HTMLSelectElement
@@ -47,7 +51,7 @@ export function populateFilters() {
     const el = document.getElementById(id) as HTMLSelectElement
     if (!el) return
     const val = el.value
-    el.innerHTML = '<option value="all">Todas Categorias</option>'
+    el.innerHTML = '<option value="all">Todas Categorias</option><option value="none">Sem Categoria</option>'
     categories.forEach(c => { el.innerHTML += `<option value="${c}">${c}</option>` })
     el.value = val || 'all'
   })

@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import { addStreamer, addStreamers, deleteStreamer, updateLastLive } from '../lib/data'
 import { fetchTwitchUser, fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
+import { exportStreamersToCSV } from '../lib/export'
 import { streamers, selectedStreamers, setStreamers } from '../state'
 import { showToast, confirmAction, fmt, langToCountry } from '../utils'
 import { showHistory } from '../ui/history'
@@ -233,6 +234,13 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       }
     })
     doc.save('streamers.pdf')
+  })
+
+  // Export CSV
+  document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
+    const selected = streamers.filter(s => selectedStreamers.has(s.id))
+    exportStreamersToCSV(selected)
+    showToast(`${selected.length} streamers exportados!`)
   })
 
   // Set Category

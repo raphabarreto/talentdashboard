@@ -32,6 +32,14 @@ export const fmt = (n: number) => n.toLocaleString('pt-BR')
 export const fmtCurrency = (n: number) => `R$ ${n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
 export const fmtDate = (d: string) => { if (!d) return '-'; const [y, m, day] = d.split('-'); return `${day}/${m}/${y}` }
 
+export function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
+  let timeout: number
+  return ((...args: any[]) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => fn(...args), delay)
+  }) as T
+}
+
 export function isActive(s: Streamer): boolean {
   if (!s.last_live_at) return false
   return Date.now() - new Date(s.last_live_at).getTime() < 15 * 24 * 60 * 60 * 1000
