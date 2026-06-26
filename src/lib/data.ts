@@ -13,7 +13,7 @@ export async function getStreamers() {
     .from('stream_snapshots')
     .select('streamer_id, is_live')
     .in('streamer_id', streamers.map(s => s.id))
-    .order('created_at', { ascending: false })
+    .order('captured_at', { ascending: false })
   
   const liveMap = new Map<string, boolean>()
   snapshots?.forEach(snap => {
