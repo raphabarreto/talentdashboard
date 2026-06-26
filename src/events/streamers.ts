@@ -8,6 +8,8 @@ import { showHistory } from '../ui/history'
 import { getFilteredStreamers } from '../ui/filters'
 import { streamerSchema } from '../lib/validators'
 import { logError } from '../lib/logger'
+import { setupAddStreamerModal } from './streamers/addStreamer'
+import { setupLookupModal } from './streamers/lookup'
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void; renderTable: () => void }
 
@@ -36,6 +38,9 @@ async function prepareStreamerData(name: string, category = '') {
 }
 
 export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callbacks) {
+  // Configurar modais (extraídos para arquivos separados)
+  setupAddStreamerModal(prepareStreamerData, { loadData, renderAll })
+  setupLookupModal(prepareStreamerData, { loadData, renderAll })
   // Delete streamer + history (delegated click)
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement
@@ -66,58 +71,6 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     if (checked) { getFilteredStreamers('table').forEach(s => selectedStreamers.add(s.id)) }
     else { selectedStreamers.clear() }
     renderTable()
-  })
-
-  // Add Streamer modal
-  document.getElementById('openAddStreamer')?.addEventListener('click', () => document.getElementById('addStreamerModal')!.classList.remove('hidden'))
-  document.getElementById('closeAddStreamer')?.addEventListener('click', () => document.getElementById('addStreamerModal')!.classList.add('hidden'))
-  document.getElementById('addStreamerForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault()
-    const input = document.getElementById('streamerNameInput') as HTMLInputElement
-    const submitBtn = (e.target as HTMLFormElement).querySelector('button[type="submit"]') as HTMLButtonElement
-    const name = input.value.trim()
-    const category = (document.getElementById('streamerCategoryInput') as HTMLInputElement).value.trim()
-    
-    if (!name) {
-      showToast('Nome do streamer é obrigatório', 'error')
-      return
-    }
-    
-    submitBtn.disabled = true; submitBtn.textContent = 'Buscando...'
-    try {
-      const { user, streamerData, lastLive } = await prepareStreamerData(name, category)
-      
-      if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) {
-        throw new Error('Já cadastrado.')
-      }
-      
-      // Validar com Zod
-      const validation = streamerSchema.safeParse(streamerData)
-      if (!validation.success) {
-        const firstError = validation.error.errors[0]
-        showToast(firstError.message, 'error')
-        logError(validation.error, 'Streamer validation failed')
-        return
-      }
-      
-      await addStreamer(streamerData)
-      
-      if (lastLive) {
-        const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
-        if (added) await updateLastLive(added.id, lastLive)
-      }
-      await loadData(); renderAll()
-      input.value = ''; (document.getElementById('streamerCategoryInput') as HTMLInputElement).value = ''
-      document.getElementById('addStreamerModal')!.classList.add('hidden')
-      showToast('Streamer adicionado!')
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro ao adicionar streamer'
-      showToast(message, 'error')
-      logError(err, 'Failed to add streamer', { name })
-    } finally {
-      submitBtn.disabled = false
-      submitBtn.textContent = 'Buscar e Salvar'
-    }
   })
 
   // Add Multiple
@@ -274,81 +227,6 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     document.getElementById('manageCategoriesModal')!.classList.remove('hidden')
   })
   document.getElementById('closeManageCategories')?.addEventListener('click', () => document.getElementById('manageCategoriesModal')!.classList.add('hidden'))
-
-  // Lookup
-  let lookupData: Awaited<ReturnType<typeof prepareStreamerData>> | null = null
-
-  document.getElementById('openLookup')?.addEventListener('click', () => {
-    document.getElementById('lookupResult')!.classList.add('hidden')
-    document.getElementById('lookupError')!.classList.add('hidden')
-    document.getElementById('lookupActions')!.classList.add('hidden')
-    document.getElementById('closeLookupModalAlt')!.classList.remove('hidden')
-    ;(document.getElementById('lookupInput') as HTMLInputElement).value = ''
-    document.getElementById('lookupModal')!.classList.remove('hidden')
-  })
-  document.getElementById('closeLookupModal')?.addEventListener('click', () => document.getElementById('lookupModal')!.classList.add('hidden'))
-  document.getElementById('closeLookupModalAlt')?.addEventListener('click', () => document.getElementById('lookupModal')!.classList.add('hidden'))
-
-  async function doLookup() {
-    const input = document.getElementById('lookupInput') as HTMLInputElement
-    const name = input.value.trim()
-    if (!name) return
-    const btn = document.getElementById('lookupSearchBtn') as HTMLButtonElement
-    btn.disabled = true; btn.textContent = 'Buscando...'
-    document.getElementById('lookupResult')!.classList.add('hidden')
-    document.getElementById('lookupError')!.classList.add('hidden')
-    document.getElementById('lookupActions')!.classList.add('hidden')
-    document.getElementById('closeLookupModalAlt')!.classList.remove('hidden')
-    lookupData = null
-    try {
-      lookupData = await prepareStreamerData(name)
-      const { user, streamerData } = lookupData
-      
-      document.getElementById('lookupAvatar')!.setAttribute('src', user.profile_image_url || '')
-      document.getElementById('lookupName')!.textContent = user.display_name
-      const link = document.getElementById('lookupTwitchLink') as HTMLAnchorElement
-      link.href = `https://twitch.tv/${user.login}`
-      link.textContent = `twitch.tv/${user.login}`
-      document.getElementById('lookupAvgViewers')!.textContent = fmt(streamerData.avg_viewers)
-      document.getElementById('lookupPeakViewers')!.textContent = fmt(streamerData.peak_viewers)
-      document.getElementById('lookupHoursWatched')!.textContent = fmt(streamerData.hours_watched)
-      document.getElementById('lookupHoursStreamed')!.textContent = fmt(streamerData.hours_streamed)
-      document.getElementById('lookupResult')!.classList.remove('hidden')
-      
-      const alreadyAdded = streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())
-      if (alreadyAdded) {
-        document.getElementById('lookupActions')!.classList.add('hidden')
-        document.getElementById('closeLookupModalAlt')!.classList.remove('hidden')
-      } else {
-        document.getElementById('lookupActions')!.classList.remove('hidden')
-        document.getElementById('closeLookupModalAlt')!.classList.add('hidden')
-      }
-    } catch (err: unknown) {
-      const el = document.getElementById('lookupError')!
-      el.textContent = err instanceof Error ? err.message : 'Erro ao buscar'
-      el.classList.remove('hidden')
-    } finally { btn.disabled = false; btn.textContent = 'Buscar' }
-  }
-  document.getElementById('lookupSearchBtn')?.addEventListener('click', doLookup)
-  document.getElementById('lookupInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLookup() })
-
-  document.getElementById('lookupAddBtn')?.addEventListener('click', async () => {
-    if (!lookupData) return
-    const btn = document.getElementById('lookupAddBtn') as HTMLButtonElement
-    btn.disabled = true; btn.textContent = 'Adicionando...'
-    try {
-      const { streamerData, lastLive } = lookupData
-      await addStreamer(streamerData)
-      if (lastLive) {
-        const added = (await supabase.from('streamers').select('id').eq('name', lookupUser.display_name).single()).data
-        if (added) await updateLastLive(added.id, lastLive)
-      }
-      await loadData(); renderAll()
-      document.getElementById('lookupModal')!.classList.add('hidden')
-      showToast('Streamer adicionado!')
-    } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
-    finally { btn.disabled = false; btn.textContent = '+ Adicionar' }
-  })
 }
 
 function renderCategoriesList(loadData: () => Promise<void>, renderAll: () => void) {
