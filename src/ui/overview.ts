@@ -22,10 +22,10 @@ export function renderOverview() {
     card.innerHTML = `
       <div class="flex items-center mb-4">
         <div class="w-12 h-12 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold text-xl mr-4">${s.name.charAt(0).toUpperCase()}</div>
-        <div class="flex-1">
-          <a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors">${s.name}</a>
-          ${s.is_live ? '<span class="ml-2 px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded uppercase animate-pulse">• AO VIVO</span>' : ''}
+        <div class="flex-1 min-w-0">
+          <a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors truncate block">${s.name}</a>
         </div>
+        ${s.is_live ? '<span class="px-2 py-1 bg-red-600 text-white text-[10px] font-bold rounded uppercase animate-pulse whitespace-nowrap flex-shrink-0 leading-none">• AO VIVO</span>' : ''}
       </div>
       <div class="space-y-2 text-sm">
         <p class="flex justify-between"><span class="text-slate-400">País:</span><span class="font-semibold text-indigo-400 flex items-center gap-2">${flagHtml}</span></p>

@@ -11,7 +11,11 @@ export function getFilteredStreamers(prefix: string): Streamer[] {
   return streamers
     .filter(s => !search || s.name.toLowerCase().includes(search))
     .filter(s => country === 'all' || s.country === country)
-    .filter(s => status === 'all' || (status === 'active' ? isActive(s) : !isActive(s)))
+    .filter(s => {
+      if (status === 'all') return true
+      if (status === 'live') return s.is_live
+      return status === 'active' ? isActive(s) : !isActive(s)
+    })
     .filter(s => category === 'all' || s.main_category === category)
     .sort((a, b) => {
       const aVal = a[currentSort.key as keyof Streamer] as number
