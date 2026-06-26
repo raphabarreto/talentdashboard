@@ -1,6 +1,7 @@
 import { signOut } from '../lib/auth'
 import { currentSort, setOverviewPage, setTablePage } from '../state'
 import { confirmAction, debounce } from '../utils'
+import { DEBOUNCE_SEARCH_MS } from '../constants'
 import { renderOverview } from '../ui/overview'
 import { renderTable } from '../ui/table'
 import { renderCampaigns } from '../ui/campaigns'
@@ -32,8 +33,8 @@ export function setupNav() {
 
 export function setupFiltersAndSort() {
   // Debounced render functions
-  const debouncedRenderOverview = debounce(() => { setOverviewPage(1); renderOverview() }, 300)
-  const debouncedRenderTable = debounce(() => { setTablePage(1); renderTable() }, 300)
+  const debouncedRenderOverview = debounce(() => { setOverviewPage(1); renderOverview() }, DEBOUNCE_SEARCH_MS)
+  const debouncedRenderTable = debounce(() => { setTablePage(1); renderTable() }, DEBOUNCE_SEARCH_MS)
 
   // Overview filters
   document.getElementById('search-overview')?.addEventListener('input', debouncedRenderOverview)

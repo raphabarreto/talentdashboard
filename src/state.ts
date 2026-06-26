@@ -1,10 +1,11 @@
 import type { Streamer, Campaign } from './types'
+import { PAGE_SIZE } from './constants'
 
 export let streamers: Streamer[] = []
 export let campaigns: Campaign[] = []
 export let currentSort = { key: 'avg_viewers', order: 'desc' as 'asc' | 'desc' }
 export const selectedStreamers = new Set<string>()
-export const PAGE_SIZE = 12
+export { PAGE_SIZE }
 export let overviewPage = 1
 export let tablePage = 1
 export let editingCampaignId: string | null = null

@@ -10,6 +10,7 @@ import { streamerSchema } from '../lib/validators'
 import { logError } from '../lib/logger'
 import { setupAddStreamerModal } from './streamers/addStreamer'
 import { setupLookupModal } from './streamers/lookup'
+import { MAX_STREAMERS_BATCH, TWITCH_API_BATCH_SIZE } from '../constants'
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void; renderTable: () => void }
 
@@ -91,8 +92,8 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       return
     }
     
-    if (names.length > 50) {
-      showToast('Máximo de 50 streamers por vez', 'error')
+    if (names.length > MAX_STREAMERS_BATCH) {
+      showToast(`Máximo de ${MAX_STREAMERS_BATCH} streamers por vez`, 'error')
       return
     }
     const progress = document.getElementById('multipleProgress')!
@@ -100,8 +101,8 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     progress.textContent = `Buscando ${names.length} streamers...`
     try {
       const allUsers = []
-      for (let i = 0; i < names.length; i += 100) {
-        const users = await fetchTwitchUsers(names.slice(i, i + 100))
+      for (let i = 0; i < names.length; i += TWITCH_API_BATCH_SIZE) {
+        const users = await fetchTwitchUsers(names.slice(i, i + TWITCH_API_BATCH_SIZE))
         allUsers.push(...users)
       }
       

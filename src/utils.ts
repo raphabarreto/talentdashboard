@@ -1,4 +1,5 @@
 import type { Streamer } from './types'
+import { DEBOUNCE_SEARCH_MS, ACTIVE_STREAMER_DAYS } from './constants'
 
 export const langToCountry: Record<string, string> = {
   pt: 'br', en: 'us', es: 'es', fr: 'fr', de: 'de', it: 'it', ja: 'jp', ko: 'kr', ru: 'ru', zh: 'cn', pl: 'pl', nl: 'nl', sv: 'se'
@@ -42,7 +43,7 @@ export function debounce<T extends (...args: any[]) => void>(fn: T, delay: numbe
 
 export function isActive(s: Streamer): boolean {
   if (!s.last_live_at) return false
-  return Date.now() - new Date(s.last_live_at).getTime() < 15 * 24 * 60 * 60 * 1000
+  return Date.now() - new Date(s.last_live_at).getTime() < ACTIVE_STREAMER_DAYS * 24 * 60 * 60 * 1000
 }
 
 export function showToast(msg: string, type: 'success' | 'error' = 'success') {
