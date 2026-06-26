@@ -4,6 +4,8 @@ import { fetchTwitchUser, fetchInitialStats, fetchLastLiveDate } from '../lib/tw
 import { streamers, campaigns, editingCampaignId, setCampaigns, setEditingCampaignId, setStreamers } from '../state'
 import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry, statusColors, selectColors } from '../utils'
 import { renderCampaigns } from '../ui/campaigns'
+import { campaignSchema } from '../lib/validators'
+import { logError } from '../lib/logger'
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void }
 
@@ -108,11 +110,23 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     const currency = (document.getElementById('currencyInput') as HTMLSelectElement).value as 'BRL' | 'USD'
     const paymentDate = (document.getElementById('paymentDateInput') as HTMLInputElement).value || null
 
-    const start = new Date(startDate), end = new Date(endDate)
-    if (isNaN(start.getTime()) || start.getFullYear() < 2020 || start.getFullYear() > 2030) { showToast('Data de início inválida', 'error'); return }
-    if (isNaN(end.getTime()) || end.getFullYear() < 2020 || end.getFullYear() > 2030) { showToast('Data de fim inválida', 'error'); return }
-    if (end < start) { showToast('Data de fim não pode ser antes da data de início', 'error'); return }
-    if (paymentDate && new Date(paymentDate) < start) { showToast('Data de pagamento não pode ser antes da data de início', 'error'); return }
+    // Validação com Zod
+    const validation = campaignSchema.safeParse({
+      company,
+      start_date: startDate,
+      end_date: endDate,
+      total_received: totalReceived,
+      total_paid: totalPaid,
+      currency,
+      payment_date: paymentDate,
+    })
+
+    if (!validation.success) {
+      const firstError = validation.error.errors[0]
+      showToast(firstError.message, 'error')
+      logError(validation.error, 'Campaign validation failed')
+      return
+    }
 
     const lines = (document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value.split('\n').map(n => n.trim()).filter(n => n)
     const streamerRows = lines.map(line => {
@@ -121,17 +135,22 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       return { streamer_name: name, payment: 0, payment_date: null as string | null }
     })
 
-    if (editingCampaignId) {
-      await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, currency, payment_date: paymentDate }, streamerRows)
-      showToast('Campanha atualizada!')
-    } else {
-      await addCampaign({ company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, currency, payment_date: paymentDate }, streamerRows)
-      showToast('Campanha adicionada!')
-    }
+    try {
+      if (editingCampaignId) {
+        await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, currency, payment_date: paymentDate }, streamerRows)
+        showToast('Campanha atualizada!')
+      } else {
+        await addCampaign({ company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, currency, payment_date: paymentDate }, streamerRows)
+        showToast('Campanha adicionada!')
+      }
 
-    setEditingCampaignId(null)
-    await loadData(); renderAll()
-    document.getElementById('campaignModal')!.classList.add('hidden')
+      setEditingCampaignId(null)
+      await loadData(); renderAll()
+      document.getElementById('campaignModal')!.classList.add('hidden')
+    } catch (error) {
+      logError(error, 'Failed to save campaign', { company, editingCampaignId })
+      showToast('Erro ao salvar campanha', 'error')
+    }
   })
 
   // Details modal interactions

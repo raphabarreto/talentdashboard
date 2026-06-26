@@ -13,7 +13,8 @@ create table streamers (
   hours_watched int default 0,
   hours_streamed int default 0,
   is_active boolean default true,
-  game_name text default '',
+  main_category text default '',
+  last_live_at timestamptz,
   created_at timestamptz default now()
 );
 
@@ -50,6 +51,11 @@ create table campaigns (
   company text not null,
   start_date date not null,
   end_date date not null,
+  total_received numeric default 0,
+  total_paid numeric default 0,
+  currency text default 'BRL' check (currency in ('BRL', 'USD')),
+  commission_percentage numeric default 20,
+  payment_date date,
   created_at timestamptz default now()
 );
 
@@ -73,3 +79,35 @@ create table campaign_streamers (
 --   '0 3 1 * *',  -- dia 1 de cada mês às 3h
 --   $$delete from stream_snapshots where captured_at < now() - interval '6 months'$$
 -- );
+
+-- =============================================
+-- Row Level Security (RLS)
+-- =============================================
+
+-- Habilitar RLS nas tabelas principais
+alter table streamers enable row level security;
+alter table campaigns enable row level security;
+alter table campaign_streamers enable row level security;
+alter table streamer_history enable row level security;
+alter table stream_snapshots enable row level security;
+
+-- Policies: permitir tudo para usuários autenticados
+create policy "Allow all for authenticated users"
+  on streamers for all
+  using (auth.role() = 'authenticated');
+
+create policy "Allow all for authenticated users"
+  on campaigns for all
+  using (auth.role() = 'authenticated');
+
+create policy "Allow all for authenticated users"
+  on campaign_streamers for all
+  using (auth.role() = 'authenticated');
+
+create policy "Allow all for authenticated users"
+  on streamer_history for all
+  using (auth.role() = 'authenticated');
+
+create policy "Allow all for authenticated users"
+  on stream_snapshots for all
+  using (auth.role() = 'authenticated');
