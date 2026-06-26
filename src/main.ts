@@ -9,7 +9,17 @@ import { setupProspecting } from './ui/prospecting'
 import { setupNav, setupFiltersAndSort, setupGlobalEvents } from './events/navigation'
 import { setupStreamersEvents } from './events/streamers'
 import { setupCampaignsEvents } from './events/campaigns'
+import * as Sentry from '@sentry/browser'
 import './style.css'
+
+// Inicializar Sentry em produção
+if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: 'production',
+    tracesSampleRate: 0.1, // 10% das transações
+  })
+}
 
 async function loadData() {
   const [s, c] = await Promise.all([getStreamers(), getCampaigns()])

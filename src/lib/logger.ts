@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/browser'
+
 type LogLevel = 'info' | 'warn' | 'error'
 
 interface LogContext {
@@ -10,16 +12,15 @@ export function log(level: LogLevel, message: string, context?: LogContext) {
   
   if (level === 'error') {
     console.error(prefix, message, context || '')
+    // Enviar para Sentry em produção
+    if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+      Sentry.captureException(new Error(message), { extra: context })
+    }
   } else if (level === 'warn') {
     console.warn(prefix, message, context || '')
   } else {
     console.log(prefix, message, context || '')
   }
-  
-  // Futuro: enviar para Sentry ou similar
-  // if (level === 'error' && import.meta.env.PROD) {
-  //   Sentry.captureException(new Error(message), { extra: context })
-  // }
 }
 
 export function logError(error: unknown, context: string, extra?: LogContext) {
