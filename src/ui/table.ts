@@ -8,7 +8,9 @@ export function renderTable() {
   const totalPages = Math.ceil(data.length / PAGE_SIZE)
   if (tablePage > totalPages) setTablePage(Math.max(1, totalPages))
   const paged = data.slice((tablePage - 1) * PAGE_SIZE, tablePage * PAGE_SIZE)
-  tbody.innerHTML = ''
+  
+  // Usar DocumentFragment para evitar múltiplos reflows
+  const fragment = document.createDocumentFragment()
 
   paged.forEach(s => {
     const row = document.createElement('tr')
@@ -26,8 +28,11 @@ export function renderTable() {
       <td class="p-4"><a href="https://sullygnome.com/channel/${s.name.toLowerCase()}/30" target="_blank" class="text-indigo-400 hover:underline">Ver no SullyGnome</a></td>
       <td class="p-4"><button class="text-slate-400 hover:text-red-400 transition-colors delete-btn" data-id="${s.id}" title="Remover"><i class="fas fa-trash"></i></button></td>
     `
-    tbody.appendChild(row)
+    fragment.appendChild(row)
   })
+
+  tbody.innerHTML = ''
+  tbody.appendChild(fragment)
 
   const tableContainer = tbody.closest('.overflow-x-auto')!.parentElement!
   const existingPag = tableContainer.querySelector('.table-pagination')

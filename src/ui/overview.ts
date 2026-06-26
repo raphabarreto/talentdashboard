@@ -8,12 +8,16 @@ export function renderOverview() {
   const totalPages = Math.ceil(data.length / PAGE_SIZE)
   if (overviewPage > totalPages) setOverviewPage(Math.max(1, totalPages))
   const paged = data.slice((overviewPage - 1) * PAGE_SIZE, overviewPage * PAGE_SIZE)
+  
   grid.innerHTML = ''
 
   if (data.length === 0) {
     grid.innerHTML = '<p class="text-slate-400 text-sm col-span-full text-center py-8">Nenhum streamer encontrado.</p>'
     return
   }
+
+  // Usar DocumentFragment para evitar múltiplos reflows
+  const fragment = document.createDocumentFragment()
 
   paged.forEach(s => {
     const flagHtml = s.country ? `<span class="fi fi-${s.country} w-5 h-5 rounded-full shadow-md"></span> ${countryNames[s.country] || s.country}` : '-'
@@ -39,8 +43,10 @@ export function renderOverview() {
         <button class="text-slate-400 hover:text-red-400 transition-colors cursor-pointer delete-btn" data-id="${s.id}" title="Remover"><i class="fas fa-trash"></i></button>
       </div>
     `
-    grid.appendChild(card)
+    fragment.appendChild(card)
   })
+
+  grid.appendChild(fragment)
 
   const existingPag = grid.parentElement!.querySelector('.pagination')
   if (existingPag) existingPag.remove()

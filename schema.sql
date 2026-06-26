@@ -45,6 +45,16 @@ create table stream_snapshots (
 create index idx_snapshots_streamer_captured on stream_snapshots(streamer_id, captured_at);
 create index idx_snapshots_live on stream_snapshots(is_live, captured_at);
 
+-- Função otimizada para buscar último snapshot de cada streamer
+-- Muito mais rápido que buscar tudo e filtrar no client
+create or replace function get_latest_snapshots(streamer_ids uuid[])
+returns table (streamer_id uuid, is_live boolean) as $$
+  select distinct on (streamer_id) streamer_id, is_live
+  from stream_snapshots
+  where streamer_id = any(streamer_ids)
+  order by streamer_id, captured_at desc
+$$ language sql stable;
+
 -- Campanhas
 create table campaigns (
   id uuid primary key default gen_random_uuid(),

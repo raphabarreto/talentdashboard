@@ -9,15 +9,14 @@ export async function getStreamers() {
   const streamers = data as Streamer[]
   
   // Buscar último snapshot de cada streamer para saber se está ao vivo
-  const { data: snapshots } = await supabase
-    .from('stream_snapshots')
-    .select('streamer_id, is_live')
-    .in('streamer_id', streamers.map(s => s.id))
-    .order('captured_at', { ascending: false })
+  // Usar RPC para DISTINCT ON (mais eficiente que buscar tudo)
+  const { data: snapshots } = await supabase.rpc('get_latest_snapshots', { 
+    streamer_ids: streamers.map(s => s.id) 
+  })
   
   const liveMap = new Map<string, boolean>()
-  snapshots?.forEach(snap => {
-    if (!liveMap.has(snap.streamer_id)) liveMap.set(snap.streamer_id, snap.is_live)
+  snapshots?.forEach((snap: { streamer_id: string; is_live: boolean }) => {
+    liveMap.set(snap.streamer_id, snap.is_live)
   })
   
   return streamers.map(s => ({ ...s, is_live: liveMap.get(s.id) || false }))
