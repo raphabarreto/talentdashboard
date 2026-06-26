@@ -23,9 +23,9 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       ;(document.getElementById('companyInput') as HTMLInputElement).value = c.company
       ;(document.getElementById('startDateInput') as HTMLInputElement).value = c.start_date
       ;(document.getElementById('endDateInput') as HTMLInputElement).value = c.end_date
-      ;(document.getElementById('campaignValueInput') as HTMLInputElement).value = c.campaign_value ? String(c.campaign_value) : ''
-      ;(document.getElementById('currencyInput') as HTMLSelectElement).value = c.currency || 'USD'
-      ;(document.getElementById('myCommissionInput') as HTMLInputElement).value = c.my_commission ? String(c.my_commission) : ''
+      ;(document.getElementById('totalReceivedInput') as HTMLInputElement).value = c.total_received ? String(c.total_received) : ''
+      ;(document.getElementById('totalPaidInput') as HTMLInputElement).value = c.total_paid ? String(c.total_paid) : ''
+      ;(document.getElementById('currencyInput') as HTMLSelectElement).value = c.currency || 'BRL'
       ;(document.getElementById('paymentDateInput') as HTMLInputElement).value = c.payment_date || ''
       ;(document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value = c.campaign_streamers?.map(s => s.streamer_name).join('\n') || ''
       document.getElementById('campaignModal')!.classList.remove('hidden')
@@ -39,9 +39,12 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       document.getElementById('detailsTitle')!.textContent = c.company
       document.getElementById('detailsCompany')!.textContent = c.company
       document.getElementById('detailsPeriod')!.textContent = `${fmtDate(c.start_date)} a ${fmtDate(c.end_date)}`
-      const valueTxt = c.currency === 'USD' ? `US$ ${(c.campaign_value || 0).toFixed(2)}` : fmtCurrency(c.campaign_value || 0)
+      const totalReceived = c.total_received || 0
+      const totalPaid = c.total_paid || 0
+      const myCommission = totalReceived - totalPaid
+      const valueTxt = c.currency === 'USD' ? `US$ ${totalReceived.toFixed(2)}` : fmtCurrency(totalReceived)
       document.getElementById('detailsCampaignValue')!.textContent = valueTxt
-      document.getElementById('detailsCommission')!.textContent = fmtCurrency(c.my_commission || 0)
+      document.getElementById('detailsCommission')!.textContent = fmtCurrency(myCommission)
       document.getElementById('detailsPaymentDate')!.textContent = c.payment_date ? fmtDate(c.payment_date) : 'Pendente'
       const tbody = document.getElementById('detailsStreamers')!
       tbody.innerHTML = ''
@@ -75,6 +78,15 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     }
   })
 
+  // Auto-calculate 80% for streamers when typing total received
+  document.getElementById('totalReceivedInput')?.addEventListener('input', (e) => {
+    const input = e.target as HTMLInputElement
+    const raw = input.value.replace(/\./g, '').replace(/,/g, '.')
+    const total = Number(raw) || 0
+    const streamersPart = Math.round(total * 0.8 * 100) / 100
+    ;(document.getElementById('totalPaidInput') as HTMLInputElement).value = streamersPart > 0 ? String(streamersPart) : ''
+  })
+
   // Campaign form
   document.getElementById('openAddCampaign')?.addEventListener('click', () => {
     setEditingCampaignId(null)
@@ -89,9 +101,11 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     const company = (document.getElementById('companyInput') as HTMLInputElement).value
     const startDate = (document.getElementById('startDateInput') as HTMLInputElement).value
     const endDate = (document.getElementById('endDateInput') as HTMLInputElement).value
-    const campaignValue = Number((document.getElementById('campaignValueInput') as HTMLInputElement).value) || 0
+    const totalReceivedRaw = (document.getElementById('totalReceivedInput') as HTMLInputElement).value.replace(/\./g, '').replace(/,/g, '.')
+    const totalReceived = Number(totalReceivedRaw) || 0
+    const totalPaidRaw = (document.getElementById('totalPaidInput') as HTMLInputElement).value.replace(/\./g, '').replace(/,/g, '.')
+    const totalPaid = Number(totalPaidRaw) || 0
     const currency = (document.getElementById('currencyInput') as HTMLSelectElement).value as 'BRL' | 'USD'
-    const myCommission = Number((document.getElementById('myCommissionInput') as HTMLInputElement).value) || 0
     const paymentDate = (document.getElementById('paymentDateInput') as HTMLInputElement).value || null
 
     const start = new Date(startDate), end = new Date(endDate)
@@ -108,10 +122,10 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     })
 
     if (editingCampaignId) {
-      await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate, campaign_value: campaignValue, currency, my_commission: myCommission, payment_date: paymentDate }, streamerRows)
+      await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, currency, payment_date: paymentDate }, streamerRows)
       showToast('Campanha atualizada!')
     } else {
-      await addCampaign({ company, start_date: startDate, end_date: endDate, campaign_value: campaignValue, currency, my_commission: myCommission, payment_date: paymentDate }, streamerRows)
+      await addCampaign({ company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, currency, payment_date: paymentDate }, streamerRows)
       showToast('Campanha adicionada!')
     }
 

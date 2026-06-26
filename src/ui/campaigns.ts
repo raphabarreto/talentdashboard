@@ -17,7 +17,10 @@ export function renderCampaigns() {
 
   let grandTotal = 0
   filtered.forEach(c => {
-    grandTotal += c.my_commission || 0
+    const totalReceived = c.total_received || 0
+    const totalPaid = c.total_paid || 0
+    const myCommission = totalReceived - totalPaid
+    grandTotal += myCommission
     const total = c.campaign_streamers?.length || 0
     const confirmed = c.campaign_streamers?.filter(s => s.contact_status === 'confirmado').length || 0
     const row = document.createElement('tr')
@@ -26,7 +29,7 @@ export function renderCampaigns() {
       <td class="p-4">${c.company}</td>
       <td class="p-4">${fmtDate(c.start_date)}</td>
       <td class="p-4">${fmtDate(c.end_date)}</td>
-      <td class="p-4 font-semibold">${fmtCurrency(c.my_commission || 0)}</td>
+      <td class="p-4 font-semibold">${fmtCurrency(myCommission)}</td>
       <td class="p-4">${total > 0 ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-emerald-500/20 text-emerald-400">${confirmed} confirmado${confirmed !== 1 ? 's' : ''}</span>` : '—'}</td>
       <td class="p-4 flex gap-3">
         <button class="text-amber-500 hover:text-amber-400 edit-campaign-btn" data-id="${c.id}" title="Editar"><i class="fas fa-pen"></i></button>

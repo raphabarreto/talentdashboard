@@ -28,12 +28,16 @@ export interface Campaign {
   company: string
   start_date: string
   end_date: string
-  campaign_value: number
+  total_received: number
+  total_paid: number
   currency: 'BRL' | 'USD'
-  my_commission: number
+  commission_percentage: number
   payment_date: string | null
   created_at: string
   campaign_streamers?: CampaignStreamer[]
+  // Campos antigos mantidos para compatibilidade (deprecated)
+  campaign_value?: number
+  my_commission?: number
 }
 
 export type ContactStatus = 'pendente' | 'contatado' | 'nao_respondeu' | 'confirmado' | 'recusado'
