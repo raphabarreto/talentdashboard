@@ -11,6 +11,30 @@ import { logError } from '../lib/logger'
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void; renderTable: () => void }
 
+// Helper: buscar e preparar dados de um streamer
+async function prepareStreamerData(name: string, category = '') {
+  const user = await fetchTwitchUser(name)
+  if (!user) throw new Error('Streamer não encontrado.')
+  
+  const lang = user.broadcaster_language?.split('-')[0]
+  const [stats, lastLive] = await Promise.all([
+    fetchInitialStats(user.login),
+    fetchLastLiveDate(user.id, user.login)
+  ])
+  
+  const streamerData = {
+    name: user.display_name,
+    country: (lang && langToCountry[lang]) || '',
+    avg_viewers: stats?.avg_viewers || 0,
+    peak_viewers: stats?.peak_viewers || 0,
+    hours_watched: stats?.hours_watched || 0,
+    hours_streamed: stats?.hours_streamed || 0,
+    main_category: category
+  }
+  
+  return { user, streamerData, lastLive }
+}
+
 export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callbacks) {
   // Delete streamer + history (delegated click)
   document.addEventListener('click', async (e) => {
@@ -54,7 +78,6 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     const name = input.value.trim()
     const category = (document.getElementById('streamerCategoryInput') as HTMLInputElement).value.trim()
     
-    // Validação básica
     if (!name) {
       showToast('Nome do streamer é obrigatório', 'error')
       return
@@ -62,25 +85,10 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     
     submitBtn.disabled = true; submitBtn.textContent = 'Buscando...'
     try {
-      const user = await fetchTwitchUser(name)
-      if (!user) throw new Error('Streamer não encontrado.')
-      if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) throw new Error('Já cadastrado.')
+      const { user, streamerData, lastLive } = await prepareStreamerData(name, category)
       
-      const lang = user.broadcaster_language?.split('-')[0]
-      const [stats, lastLive] = await Promise.all([
-        fetchInitialStats(user.login),
-        fetchLastLiveDate(user.id, user.login)
-      ])
-      
-      // Preparar dados
-      const streamerData = {
-        name: user.display_name,
-        country: (lang && langToCountry[lang]) || '',
-        avg_viewers: stats?.avg_viewers || 0,
-        peak_viewers: stats?.peak_viewers || 0,
-        hours_watched: stats?.hours_watched || 0,
-        hours_streamed: stats?.hours_streamed || 0,
-        main_category: category
+      if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) {
+        throw new Error('Já cadastrado.')
       }
       
       // Validar com Zod
@@ -268,8 +276,7 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
   document.getElementById('closeManageCategories')?.addEventListener('click', () => document.getElementById('manageCategoriesModal')!.classList.add('hidden'))
 
   // Lookup
-  let lookupUser: any = null
-  let lookupStats: any = null
+  let lookupData: Awaited<ReturnType<typeof prepareStreamerData>> | null = null
 
   document.getElementById('openLookup')?.addEventListener('click', () => {
     document.getElementById('lookupResult')!.classList.add('hidden')
@@ -292,23 +299,22 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     document.getElementById('lookupError')!.classList.add('hidden')
     document.getElementById('lookupActions')!.classList.add('hidden')
     document.getElementById('closeLookupModalAlt')!.classList.remove('hidden')
-    lookupUser = null; lookupStats = null
+    lookupData = null
     try {
-      const user = await fetchTwitchUser(name)
-      if (!user) throw new Error('Streamer não encontrado.')
-      lookupUser = user
+      lookupData = await prepareStreamerData(name)
+      const { user, streamerData } = lookupData
+      
       document.getElementById('lookupAvatar')!.setAttribute('src', user.profile_image_url || '')
       document.getElementById('lookupName')!.textContent = user.display_name
       const link = document.getElementById('lookupTwitchLink') as HTMLAnchorElement
       link.href = `https://twitch.tv/${user.login}`
       link.textContent = `twitch.tv/${user.login}`
-      const stats = await fetchInitialStats(user.login)
-      lookupStats = stats
-      document.getElementById('lookupAvgViewers')!.textContent = fmt(stats?.avg_viewers || 0)
-      document.getElementById('lookupPeakViewers')!.textContent = fmt(stats?.peak_viewers || 0)
-      document.getElementById('lookupHoursWatched')!.textContent = fmt(stats?.hours_watched || 0)
-      document.getElementById('lookupHoursStreamed')!.textContent = fmt(stats?.hours_streamed || 0)
+      document.getElementById('lookupAvgViewers')!.textContent = fmt(streamerData.avg_viewers)
+      document.getElementById('lookupPeakViewers')!.textContent = fmt(streamerData.peak_viewers)
+      document.getElementById('lookupHoursWatched')!.textContent = fmt(streamerData.hours_watched)
+      document.getElementById('lookupHoursStreamed')!.textContent = fmt(streamerData.hours_streamed)
       document.getElementById('lookupResult')!.classList.remove('hidden')
+      
       const alreadyAdded = streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())
       if (alreadyAdded) {
         document.getElementById('lookupActions')!.classList.add('hidden')
@@ -327,15 +333,12 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
   document.getElementById('lookupInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLookup() })
 
   document.getElementById('lookupAddBtn')?.addEventListener('click', async () => {
-    if (!lookupUser) return
+    if (!lookupData) return
     const btn = document.getElementById('lookupAddBtn') as HTMLButtonElement
     btn.disabled = true; btn.textContent = 'Adicionando...'
     try {
-      const lang = lookupUser.broadcaster_language?.split('-')[0]
-      const [, lastLive] = await Promise.all([
-        addStreamer({ name: lookupUser.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: lookupStats?.avg_viewers || 0, peak_viewers: lookupStats?.peak_viewers || 0, hours_watched: lookupStats?.hours_watched || 0, hours_streamed: lookupStats?.hours_streamed || 0, main_category: '' }),
-        fetchLastLiveDate(lookupUser.id, lookupUser.login)
-      ])
+      const { streamerData, lastLive } = lookupData
+      await addStreamer(streamerData)
       if (lastLive) {
         const added = (await supabase.from('streamers').select('id').eq('name', lookupUser.display_name).single()).data
         if (added) await updateLastLive(added.id, lastLive)
