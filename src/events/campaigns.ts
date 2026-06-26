@@ -5,11 +5,22 @@ import { streamers, campaigns, editingCampaignId, setCampaigns, setEditingCampai
 import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry, statusColors, selectColors } from '../utils'
 import { renderCampaigns } from '../ui/campaigns'
 import { campaignSchema } from '../lib/validators'
-import { logError } from '../lib/logger'
+import { logError, setButtonLoading } from '../lib/logger'
+import { exportCampaignsToCSV } from '../lib/export'
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void }
 
 export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
+  // Export campaigns to CSV
+  document.getElementById('exportCampaignsBtn')?.addEventListener('click', () => {
+    if (campaigns.length === 0) {
+      showToast('Nenhuma campanha para exportar', 'error')
+      return
+    }
+    exportCampaignsToCSV(campaigns)
+    showToast('Campanhas exportadas!')
+  })
+
   // Delegated clicks for campaign buttons
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement
@@ -135,6 +146,9 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       return { streamer_name: name, payment: 0, payment_date: null as string | null }
     })
 
+    const saveBtn = document.getElementById('saveCampaignBtn') as HTMLButtonElement
+    setButtonLoading(saveBtn, true)
+
     try {
       if (editingCampaignId) {
         await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, currency, payment_date: paymentDate }, streamerRows)
@@ -150,6 +164,8 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     } catch (error) {
       logError(error, 'Failed to save campaign', { company, editingCampaignId })
       showToast('Erro ao salvar campanha', 'error')
+    } finally {
+      setButtonLoading(saveBtn, false, editingCampaignId ? 'Atualizar' : 'Salvar')
     }
   })
 

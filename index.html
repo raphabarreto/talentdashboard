@@ -206,15 +206,20 @@
 
         <!-- View: Campaigns -->
         <section id="view-campaigns" class="view hidden">
-            <div class="flex flex-wrap gap-4 mb-6 items-end">
-                <div>
-                    <label class="text-sm font-semibold text-white block mb-1">Filtrar por Mês:</label>
-                    <select id="month-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-[220px]"><option value="all">Todos os Meses</option></select>
+            <div class="flex flex-wrap gap-4 mb-6 items-end justify-between">
+                <div class="flex flex-wrap gap-4">
+                    <div>
+                        <label class="text-sm font-semibold text-white block mb-1">Filtrar por Mês:</label>
+                        <select id="month-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-[220px]"><option value="all">Todos os Meses</option></select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-white block mb-1">Filtrar por Ano:</label>
+                        <select id="year-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-[160px]"><option value="all">Todos os Anos</option></select>
+                    </div>
                 </div>
-                <div>
-                    <label class="text-sm font-semibold text-white block mb-1">Filtrar por Ano:</label>
-                    <select id="year-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-[160px]"><option value="all">Todos os Anos</option></select>
-                </div>
+                <button id="exportCampaignsBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">
+                    <i class="fas fa-file-csv mr-2"></i>Exportar CSV
+                </button>
             </div>
             <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-6">
                 <p class="text-slate-400 text-sm">Meu Valor Total do Mês</p>

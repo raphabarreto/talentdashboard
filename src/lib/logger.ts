@@ -35,3 +35,16 @@ export function logInfo(message: string, context?: LogContext) {
 export function logWarn(message: string, context?: LogContext) {
   log('warn', message, context)
 }
+
+// Loading state helper
+export function setButtonLoading(button: HTMLButtonElement, loading: boolean, originalText?: string) {
+  if (loading) {
+    button.disabled = true
+    button.dataset.originalText = button.textContent || ''
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...'
+  } else {
+    button.disabled = false
+    button.textContent = originalText || button.dataset.originalText || 'Salvar'
+    delete button.dataset.originalText
+  }
+}

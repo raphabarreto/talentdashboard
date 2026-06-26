@@ -2,6 +2,17 @@
 
 Dashboard para acompanhamento de streamers da Twitch. Monitora métricas como viewers, horas assistidas e horas transmitidas, com coleta automática de dados via Edge Functions.
 
+## ✨ Features
+
+- 📊 **Dashboard de Streamers**: Visualização em cards e tabelas
+- 💰 **Gestão de Campanhas**: Cálculo automático de comissão (80/20)
+- 📥 **Exportação CSV**: Exporte campanhas para planilhas
+- 🔐 **Autenticação**: Google OAuth com emails permitidos
+- 📈 **Coleta Automática**: Snapshots a cada 5 minutos
+- 🛡️ **Segurança**: Row Level Security no banco
+- 📊 **Monitoramento**: Sentry integrado para erros
+- ✅ **Testes Automatizados**: Vitest para validações e cálculos
+
 ## Stack
 
 - **Front-end:** Vite + TypeScript + Tailwind CSS v4
