@@ -1,5 +1,7 @@
 # Talent Dashboard
 
+[![Tests](https://github.com/raphabarreto/talentdashboard/actions/workflows/test.yml/badge.svg)](https://github.com/raphabarreto/talentdashboard/actions/workflows/test.yml)
+
 Dashboard para acompanhamento de streamers da Twitch. Monitora métricas como viewers, horas assistidas e horas transmitidas, com coleta automática de dados via Edge Functions.
 
 ## ✨ Features
