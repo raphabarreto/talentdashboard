@@ -8,16 +8,19 @@ Dashboard para acompanhamento de streamers da Twitch. Monitora métricas como vi
 
 - 📊 **Dashboard de Streamers**: Visualização em cards e tabelas
 - 💰 **Gestão de Campanhas**: Cálculo automático de comissão (80/20)
-- 📥 **Exportação CSV**: Exporte campanhas para planilhas
+- 📥 **Exportação CSV**: Exporte campanhas e streamers para planilhas
 - 🔐 **Autenticação**: Google OAuth com emails permitidos
 - 📈 **Coleta Automática**: Snapshots a cada 15 minutos
 - 🔴 **Badge AO VIVO**: Indicador em tempo real de streamers online
 - 🛡️ **Segurança**: Row Level Security no banco
 - 📊 **Monitoramento**: Sentry integrado para erros em produção
-- ✅ **Testes Automatizados**: 13 testes com Vitest
+- ✅ **Testes Automatizados**: 24 testes com Vitest
 - 🚀 **CI/CD**: GitHub Actions roda testes automaticamente
 - 🔄 **Loading States**: Feedback visual durante operações
 - ✏️ **Validação**: Zod para validação de dados consistente
+- ⚡ **Performance**: Debounce, cache e queries otimizadas
+- 📱 **PWA**: Instale como app nativo no desktop/mobile
+- ⌨️ **Atalhos**: Ctrl+K para busca, Esc para fechar modais
 
 ## Stack
 
@@ -41,12 +44,16 @@ src/
     export.ts         # Exportação CSV
   events/
     campaigns.ts      # Eventos de campanhas
-    streamers.ts      # Eventos de streamers
+    streamers.ts      # Eventos de streamers (modular)
+    streamers/
+      addStreamer.ts  # Modal de adicionar streamer
+      lookup.ts       # Modal de lookup
     navigation.ts     # Eventos de navegação
   ui/
     campaigns.ts      # Renderização de campanhas
     overview.ts       # Renderização de cards
     table.ts          # Renderização de tabela
+    filters.ts        # Filtros com cache
   __tests__/          # Testes automatizados
   types.ts            # Interfaces TypeScript
   main.ts             # Lógica principal do dashboard
@@ -86,9 +93,11 @@ npm run test:run     # Roda testes uma vez
 
 ## Testes
 
-O projeto possui 13 testes automatizados que cobrem:
+O projeto possui 24 testes automatizados que cobrem:
 - ✅ Validação de dados (Zod schemas)
 - ✅ Cálculos de comissão (80/20)
+- ✅ Debounce e cache de filtros
+- ✅ Exportação CSV
 - ✅ Regras de negócio críticas
 
 Os testes rodam automaticamente via GitHub Actions em todo push/PR.
@@ -123,4 +132,5 @@ O schema está em `schema.sql`. As tabelas principais são:
 - [`docs/SETUP.md`](docs/SETUP.md) - Guia completo de configuração do projeto
 - [`docs/DATABASE.md`](docs/DATABASE.md) - Schema do banco e explicação das tabelas
 - [`docs/SENTRY.md`](docs/SENTRY.md) - Configuração do Sentry para monitoramento
+- [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) - Otimizações de performance aplicadas
 - [`docs/MELHORIAS_FUTURAS.md`](docs/MELHORIAS_FUTURAS.md) - Roadmap de melhorias opcionais
