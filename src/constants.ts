@@ -9,7 +9,8 @@ export const DEBOUNCE_SEARCH_MS = 300
 export const ACTIVE_STREAMER_DAYS = 15
 
 // Paginação
-export const PAGE_SIZE = 12
+export const PAGE_SIZE = 12 // Overview e Tabela
+export const PROSPECT_PAGE_SIZE = 5 // Prospecção
 
 // URLs
 export const PRODUCTION_URL = 'https://dashlugs.vercel.app'

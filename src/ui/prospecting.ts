@@ -1,6 +1,7 @@
 import { searchCategories, fetchStreamsByGame, fetchTwitchUser } from '../lib/twitch'
 import { showToast } from '../utils'
 import { streamers } from '../state'
+import { PROSPECT_PAGE_SIZE } from '../constants'
 
 interface ProspectStream {
   user_login: string
@@ -16,7 +17,6 @@ let results: ProspectStream[] = []
 let selected = new Set<string>()
 let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')
 let page = 1
-const PAGE_SIZE = 5
 
 const EMAIL_REGEX = /[\w.+-]+@[\w-]+\.[\w.-]+/g
 
@@ -153,39 +153,56 @@ export function setupProspecting() {
 
   let selectedGameId = ''
 
-  const input = document.getElementById('prospectCategoryInput') as HTMLInputElement
-  const suggestions = document.getElementById('prospectCategorySuggestions')!
+  // Cache DOM elements
+  const els = {
+    input: document.getElementById('prospectCategoryInput') as HTMLInputElement,
+    suggestions: document.getElementById('prospectCategorySuggestions')!,
+    searchBtn: document.getElementById('prospectSearchBtn') as HTMLButtonElement,
+    language: document.getElementById('prospectLanguage') as HTMLSelectElement,
+    minViewers: document.getElementById('prospectMinViewers') as HTMLInputElement,
+    onlyEmail: document.getElementById('prospectOnlyEmail') as HTMLInputElement,
+    company: document.getElementById('prospectCompany') as HTMLInputElement,
+    selectAll: document.getElementById('prospectSelectAll') as HTMLInputElement,
+    addToListBtn: document.getElementById('addToListBtn')!,
+    copyListBtn: document.getElementById('copyListBtn')!,
+    clearListBtn: document.getElementById('clearListBtn')!,
+    manualAddBtn: document.getElementById('manualAddBtn')!,
+    manualAddInput: document.getElementById('manualAddInput') as HTMLInputElement,
+    prospectBody: document.getElementById('prospectBody')!,
+    shortlistBody: document.getElementById('shortlistBody')!
+  }
+
   let debounce: ReturnType<typeof setTimeout>
 
-  input.addEventListener('input', () => {
+  els.input.addEventListener('input', () => {
     selectedGameId = ''
     clearTimeout(debounce)
     debounce = setTimeout(async () => {
-      const q = input.value.trim()
-      if (q.length < 2) { suggestions.classList.add('hidden'); return }
+      const q = els.input.value.trim()
+      if (q.length < 2) { els.suggestions.classList.add('hidden'); return }
       try {
         const cats = await searchCategories(q)
-        if (!cats.length) { suggestions.classList.add('hidden'); return }
-        suggestions.innerHTML = cats.map(c => `<div class="px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm text-white" data-id="${c.id}" data-name="${c.name}">${c.name}</div>`).join('')
-        suggestions.classList.remove('hidden')
-      } catch { suggestions.classList.add('hidden') }
+        if (!cats.length) { els.suggestions.classList.add('hidden'); return }
+        els.suggestions.innerHTML = cats.map(c => `<div class="px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm text-white" data-id="${c.id}" data-name="${c.name}">${c.name}</div>`).join('')
+        els.suggestions.classList.remove('hidden')
+      } catch { els.suggestions.classList.add('hidden') }
     }, 300)
   })
 
-  suggestions.addEventListener('click', (e) => {
+  els.suggestions.addEventListener('click', (e) => {
     const el = (e.target as HTMLElement).closest('[data-id]') as HTMLElement
     if (!el) return
     selectedGameId = el.dataset.id!
-    input.value = el.dataset.name!
-    suggestions.classList.add('hidden')
+    els.input.value = el.dataset.name!
+    els.suggestions.classList.add('hidden')
   })
 
   document.addEventListener('click', (e) => {
-    if (!(e.target as HTMLElement).closest('#prospectCategoryInput')) suggestions.classList.add('hidden')
+    if (!(e.target as HTMLElement).closest('#prospectCategoryInput')) els.suggestions.classList.add('hidden')
   })
 
-  document.getElementById('prospectSearchBtn')!.addEventListener('click', async () => {
-    const q = input.value.trim()
+  els.searchBtn.addEventListener('click', async () => {
+    const q = els.input.value.trim()
     
     // Se digitou algo, busca a categoria
     if (q && !selectedGameId) {
@@ -193,16 +210,16 @@ export function setupProspecting() {
       if (!cats.length) { showToast('Categoria não encontrada', 'error'); return }
       const exact = cats.find(c => c.name.toLowerCase() === q.toLowerCase()) || cats[0]
       selectedGameId = exact.id
-      input.value = exact.name
-      suggestions.classList.add('hidden')
+      els.input.value = exact.name
+      els.suggestions.classList.add('hidden')
     }
     
     // Se não digitou nada, busca top streams globais (selectedGameId fica vazio)
-    const btn = document.getElementById('prospectSearchBtn') as HTMLButtonElement
-    btn.disabled = true; btn.textContent = 'Buscando...'
+    els.searchBtn.disabled = true
+    els.searchBtn.textContent = 'Buscando...'
     try {
-      const language = (document.getElementById('prospectLanguage') as HTMLSelectElement).value
-      const minViewers = parseInt((document.getElementById('prospectMinViewers') as HTMLInputElement).value) || 0
+      const language = els.language.value
+      const minViewers = parseInt(els.minViewers.value) || 0
       const streams = await fetchStreamsByGame(selectedGameId, 100, language)
       results = streams.map(s => ({
         user_login: s.user_login,
@@ -217,13 +234,13 @@ export function setupProspecting() {
       page = 1
       renderResults()
     } catch { showToast('Erro ao buscar streams', 'error') }
-    finally { btn.disabled = false; btn.textContent = 'Buscar' }
+    finally { els.searchBtn.disabled = false; els.searchBtn.textContent = 'Buscar' }
   })
 
-  document.getElementById('prospectOnlyEmail')!.addEventListener('change', () => { page = 1; renderResults() })
-  document.getElementById('prospectCompany')!.addEventListener('input', (e) => { localStorage.setItem('prospectCompany', (e.target as HTMLInputElement).value) })
+  els.onlyEmail.addEventListener('change', () => { page = 1; renderResults() })
+  els.company.addEventListener('input', (e) => { localStorage.setItem('prospectCompany', (e.target as HTMLInputElement).value) })
 
-  document.getElementById('prospectSelectAll')!.addEventListener('change', (e) => {
+  els.selectAll.addEventListener('change', (e) => {
     const checked = (e.target as HTMLInputElement).checked
     const visible = getVisibleResults()
     if (checked) visible.forEach(r => selected.add(r.user_login))
@@ -231,7 +248,7 @@ export function setupProspecting() {
     renderResults()
   })
 
-  document.getElementById('addToListBtn')!.addEventListener('click', () => {
+  els.addToListBtn.addEventListener('click', () => {
     const toAdd = results.filter(r => selected.has(r.user_login) && !shortlist.some(s => s.user_login === r.user_login))
     shortlist.push(...toAdd)
     saveShortlist()
@@ -241,7 +258,7 @@ export function setupProspecting() {
     showToast(`${toAdd.length} adicionados à lista!`)
   })
 
-  document.getElementById('copyListBtn')!.addEventListener('click', () => {
+  els.copyListBtn.addEventListener('click', () => {
     const br = shortlist.filter(r => r.language === 'pt')
     const es = shortlist.filter(r => r.language === 'es')
     const other = shortlist.filter(r => r.language !== 'pt' && r.language !== 'es')
@@ -253,7 +270,7 @@ export function setupProspecting() {
     showToast(`Lista copiada! (${shortlist.length} streamers)`)
   })
 
-  document.getElementById('clearListBtn')!.addEventListener('click', () => {
+  els.clearListBtn.addEventListener('click', () => {
     shortlist = []
     saveShortlist()
     renderShortlist()
@@ -261,11 +278,10 @@ export function setupProspecting() {
   })
 
   async function addManualStreamer() {
-    const input = document.getElementById('manualAddInput') as HTMLInputElement
-    const login = input.value.trim().replace(/.*twitch\.tv\//, '').replace(/\/$/, '').toLowerCase()
+    const login = els.manualAddInput.value.trim().replace(/.*twitch\.tv\//, '').replace(/\/$/, '').toLowerCase()
     if (!login) return
     if (shortlist.some(s => s.user_login === login)) { showToast('Já está na lista!'); return }
-    input.value = ''
+    els.manualAddInput.value = ''
     try {
       const u = await fetchTwitchUser(login)
       if (!u) { showToast('Streamer não encontrado'); return }
@@ -277,10 +293,10 @@ export function setupProspecting() {
     } catch { showToast('Erro ao buscar streamer') }
   }
 
-  document.getElementById('manualAddBtn')!.addEventListener('click', addManualStreamer)
-  document.getElementById('manualAddInput')!.addEventListener('keydown', (e) => { if (e.key === 'Enter') addManualStreamer() })
+  els.manualAddBtn.addEventListener('click', addManualStreamer)
+  els.manualAddInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addManualStreamer() })
 
-  document.getElementById('shortlistBody')!.addEventListener('click', (e) => {
+  els.shortlistBody.addEventListener('click', (e) => {
     const removeBtn = (e.target as HTMLElement).closest('.shortlist-remove') as HTMLElement
     if (removeBtn) {
       shortlist = shortlist.filter(s => s.user_login !== removeBtn.dataset.login)
@@ -290,7 +306,7 @@ export function setupProspecting() {
     }
   })
 
-  document.getElementById('prospectBody')!.addEventListener('click', (e) => {
+  els.prospectBody.addEventListener('click', (e) => {
     const link = (e.target as HTMLElement).closest('.prospect-mail-link') as HTMLElement
     if (link) {
       e.preventDefault()
@@ -306,7 +322,7 @@ export function setupProspecting() {
     }
   })
 
-  document.getElementById('prospectBody')!.addEventListener('change', (e) => {
+  els.prospectBody.addEventListener('change', (e) => {
     const target = e.target as HTMLInputElement
     if (target.classList.contains('prospect-check')) {
       if (target.checked) selected.add(target.dataset.login!)
@@ -330,9 +346,9 @@ function renderResults() {
   const visible = getVisibleResults()
   const withEmail = results.filter(r => r.email).length
   document.getElementById('prospectCounter')!.textContent = `${results.length} encontrados • ${withEmail} com email`
-  const totalPages = Math.ceil(visible.length / PAGE_SIZE)
+  const totalPages = Math.ceil(visible.length / PROSPECT_PAGE_SIZE)
   if (page > totalPages) page = Math.max(1, totalPages)
-  const paged = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const paged = visible.slice((page - 1) * PROSPECT_PAGE_SIZE, page * PROSPECT_PAGE_SIZE)
 
   if (!visible.length) {
     body.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400">Nenhum streamer encontrado.</td></tr>'
