@@ -151,8 +151,4 @@ O schema está em `schema.sql`. As tabelas principais são:
 
 ## Documentação
 
-- [`docs/SETUP.md`](docs/SETUP.md) - Guia completo de configuração do projeto
 - [`docs/DATABASE.md`](docs/DATABASE.md) - Schema do banco e explicação das tabelas
-- [`docs/SENTRY.md`](docs/SENTRY.md) - Configuração do Sentry para monitoramento
-- [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) - Otimizações de performance aplicadas
-- [`docs/MELHORIAS_FUTURAS.md`](docs/MELHORIAS_FUTURAS.md) - Roadmap de melhorias opcionais
