@@ -16,7 +16,7 @@ let results: ProspectStream[] = []
 let selected = new Set<string>()
 let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')
 let page = 1
-const PAGE_SIZE = 10
+const PAGE_SIZE = 5
 
 const EMAIL_REGEX = /[\w.+-]+@[\w-]+\.[\w.-]+/g
 
@@ -109,9 +109,10 @@ export function setupProspecting() {
             <thead class="border-b border-slate-700 text-sm text-slate-400">
               <tr>
                 <th class="p-4 w-10"><input type="checkbox" id="prospectSelectAll" class="w-4 h-4 rounded"></th>
-                <th class="p-4 w-[35%]">Streamer</th>
+                <th class="p-4 w-[25%]">Streamer</th>
+                <th class="p-4 w-[20%]">Categoria</th>
                 <th class="p-4 w-[80px] text-center">Viewers</th>
-                <th class="p-4 w-[35%]">Email</th>
+                <th class="p-4 w-[25%]">Email</th>
                 <th class="p-4 w-[80px]">Ações</th>
               </tr>
             </thead>
@@ -184,9 +185,10 @@ export function setupProspecting() {
   })
 
   document.getElementById('prospectSearchBtn')!.addEventListener('click', async () => {
-    if (!selectedGameId) {
-      const q = input.value.trim()
-      if (!q) { showToast('Digite uma categoria', 'error'); return }
+    const q = input.value.trim()
+    
+    // Se digitou algo, busca a categoria
+    if (q && !selectedGameId) {
       const cats = await searchCategories(q)
       if (!cats.length) { showToast('Categoria não encontrada', 'error'); return }
       const exact = cats.find(c => c.name.toLowerCase() === q.toLowerCase()) || cats[0]
@@ -194,6 +196,8 @@ export function setupProspecting() {
       input.value = exact.name
       suggestions.classList.add('hidden')
     }
+    
+    // Se não digitou nada, busca top streams globais (selectedGameId fica vazio)
     const btn = document.getElementById('prospectSearchBtn') as HTMLButtonElement
     btn.disabled = true; btn.textContent = 'Buscando...'
     try {
@@ -311,44 +315,7 @@ export function setupProspecting() {
     }
   })
 
-  if (shortlist.length) renderShortlist()
-  
-  // Load initial streams automatically
-  loadInitialStreams()
-}
-
-async function loadInitialStreams() {
-  const btn = document.getElementById('prospectSearchBtn') as HTMLButtonElement
-  const input = document.getElementById('prospectCategoryInput') as HTMLInputElement
-  btn.disabled = true
-  btn.textContent = 'Carregando...'
-  
-  try {
-    const language = (document.getElementById('prospectLanguage') as HTMLSelectElement).value
-    const minViewers = parseInt((document.getElementById('prospectMinViewers') as HTMLInputElement).value) || 0
-    
-    // Fetch top streams without category filter
-    const streams = await fetchStreamsByGame('', 100, language)
-    results = streams.map(s => ({
-      user_login: s.user_login,
-      user_name: s.user_name,
-      viewer_count: s.viewer_count,
-      game_name: s.game_name,
-      description: s.user_info?.description || '',
-      email: extractEmail(s.user_info?.description || ''),
-      language: s.language || language
-    })).filter(s => s.viewer_count >= minViewers && !streamers.some(st => st.name.toLowerCase() === s.user_name.toLowerCase()))
-    
-    selected.clear()
-    page = 1
-    renderResults()
-  } catch (err) {
-    console.error('Failed to load initial streams:', err)
-    // Silently fail - user can still search manually
-  } finally {
-    btn.disabled = false
-    btn.textContent = 'Buscar'
-  }
+  renderShortlist() // Always show
 }
 
 function getVisibleResults(): ProspectStream[] {
@@ -368,7 +335,7 @@ function renderResults() {
   const paged = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   if (!visible.length) {
-    body.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">Nenhum streamer encontrado.</td></tr>'
+    body.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400">Nenhum streamer encontrado.</td></tr>'
     renderPagination(0)
     return
   }
@@ -381,6 +348,7 @@ function renderResults() {
       <td class="p-4">
         <a href="https://twitch.tv/${r.user_login}" target="_blank" class="text-white hover:text-indigo-400 font-semibold text-base">${r.user_name}</a>${inList ? ' <span class="text-xs text-slate-500">✓ na lista</span>' : ''}
       </td>
+      <td class="p-4 text-sm text-slate-400">${r.game_name || '-'}</td>
       <td class="p-4 text-center">
         <span class="text-sm font-medium text-slate-300">${r.viewer_count.toLocaleString()}</span>
       </td>
@@ -419,7 +387,7 @@ function updateActions() {
 function renderShortlist() {
   const section = document.getElementById('shortlistSection')!
   const body = document.getElementById('shortlistBody')!
-  section.classList.toggle('hidden', shortlist.length === 0)
+  section.classList.remove('hidden') // Always visible
   document.getElementById('shortlistCount')!.textContent = String(shortlist.length)
 
   body.innerHTML = shortlist.map(r => `
