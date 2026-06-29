@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-// v11 - batch users support
+// v12 - support top streams without game_id
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -108,12 +108,11 @@ Deno.serve(async (req) => {
       result = data.data || []
 
     } else if (action === "streams_by_game") {
-      const gameId = url.searchParams.get("game_id")
-      if (!gameId) return new Response("Missing game_id", { status: 400, headers: corsHeaders })
-
+      const gameId = url.searchParams.get("game_id") || ""
       const first = url.searchParams.get("first") || "100"
       const language = url.searchParams.get("language") || ""
       const langParam = language ? `&language=${language}` : ""
+      const gameParam = gameId ? `&game_id=${gameId}` : ""
 
       const allStreams: Array<Record<string, unknown>> = []
       let cursor = ""
@@ -121,7 +120,7 @@ Deno.serve(async (req) => {
       // Buscar até 2 páginas
       for (let i = 0; i < 2; i++) {
         const afterParam = cursor ? `&after=${cursor}` : ""
-        const res = await fetch(`https://api.twitch.tv/helix/streams?game_id=${gameId}&first=100${langParam}${afterParam}`, {
+        const res = await fetch(`https://api.twitch.tv/helix/streams?first=100${gameParam}${langParam}${afterParam}`, {
           headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
         })
         const data = await res.json()

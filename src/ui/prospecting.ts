@@ -312,6 +312,43 @@ export function setupProspecting() {
   })
 
   if (shortlist.length) renderShortlist()
+  
+  // Load initial streams automatically
+  loadInitialStreams()
+}
+
+async function loadInitialStreams() {
+  const btn = document.getElementById('prospectSearchBtn') as HTMLButtonElement
+  const input = document.getElementById('prospectCategoryInput') as HTMLInputElement
+  btn.disabled = true
+  btn.textContent = 'Carregando...'
+  
+  try {
+    const language = (document.getElementById('prospectLanguage') as HTMLSelectElement).value
+    const minViewers = parseInt((document.getElementById('prospectMinViewers') as HTMLInputElement).value) || 0
+    
+    // Fetch top streams without category filter
+    const streams = await fetchStreamsByGame('', 100, language)
+    results = streams.map(s => ({
+      user_login: s.user_login,
+      user_name: s.user_name,
+      viewer_count: s.viewer_count,
+      game_name: s.game_name,
+      description: s.user_info?.description || '',
+      email: extractEmail(s.user_info?.description || ''),
+      language: s.language || language
+    })).filter(s => s.viewer_count >= minViewers && !streamers.some(st => st.name.toLowerCase() === s.user_name.toLowerCase()))
+    
+    selected.clear()
+    page = 1
+    renderResults()
+  } catch (err) {
+    console.error('Failed to load initial streams:', err)
+    // Silently fail - user can still search manually
+  } finally {
+    btn.disabled = false
+    btn.textContent = 'Buscar'
+  }
 }
 
 function getVisibleResults(): ProspectStream[] {
