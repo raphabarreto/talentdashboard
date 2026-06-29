@@ -115,9 +115,31 @@ As credenciais da Twitch (Client ID e Secret) ficam apenas nos secrets das Edge 
 
 ## Deploy
 
-O deploy é automático via Vercel — cada push no `main` gera um novo build.
+### Front-end (Vercel)
+O deploy é automático — cada push no `main` gera um novo build.
 
 URL de produção: https://dashlugs.vercel.app
+
+### Edge Functions (Supabase)
+Deploy automático via GitHub Actions quando houver mudanças em `supabase/functions/`.
+
+**Configuração inicial (uma vez):**
+1. Gerar Access Token no Supabase:
+   - Acesse: https://supabase.com/dashboard/account/tokens
+   - Clique em "Generate new token"
+   - Copie o token
+
+2. Pegar o Project ID:
+   - Acesse seu projeto no Supabase
+   - Settings → General → Project ID
+
+3. Adicionar secrets no GitHub:
+   - Vá em: Settings → Secrets and variables → Actions → New repository secret
+   - Adicione:
+     - `SUPABASE_ACCESS_TOKEN` = token gerado no passo 1
+     - `SUPABASE_PROJECT_ID` = ID do passo 2
+
+Após configurado, todo push em `main` que modificar `supabase/functions/` vai deployar automaticamente.
 
 ## Banco de dados
 
