@@ -69,7 +69,11 @@ export function setupFiltersAndSort() {
 export function setupGlobalEvents() {
   // Close modals on Escape
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'))
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'))
+      // Fechar dropdowns também
+      document.querySelectorAll('.dropdown-menu:not(.hidden)').forEach(d => d.classList.add('hidden'))
+    }
     
     // Ctrl/Cmd + K para focar busca
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -79,6 +83,15 @@ export function setupGlobalEvents() {
       searchInput?.focus()
     }
   })
+  
+  // Close dropdown menus when clicking outside
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement
+    if (!target.closest('.dropdown-menu') && !target.closest('button')) {
+      document.querySelectorAll('.dropdown-menu:not(.hidden)').forEach(d => d.classList.add('hidden'))
+    }
+  })
+  
   // Logout
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     if (await confirmAction('Deseja sair?', 'Sair')) signOut()
