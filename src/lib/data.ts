@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Streamer, StreamerHistory, Campaign, CampaignStreamer, ContactStatus } from '../types'
+import type { Streamer, Campaign, CampaignStreamer, ContactStatus } from '../types'
 
 // --- STREAMERS ---
 export async function getStreamers() {
@@ -45,24 +45,6 @@ export async function updateLastLive(streamerId: string, lastLiveAt: string) {
     body: JSON.stringify({ streamer_id: streamerId, last_live_at: lastLiveAt })
   })
   if (!res.ok) throw new Error('Failed to update last_live_at')
-}
-
-// --- HISTORY ---
-export async function getStreamerHistory(streamerId: string) {
-  const { data, error } = await supabase
-    .from('streamer_history')
-    .select('*')
-    .eq('streamer_id', streamerId)
-    .order('month', { ascending: false })
-  if (error) throw error
-  return data as StreamerHistory[]
-}
-
-export async function upsertHistory(entry: Omit<StreamerHistory, 'id' | 'created_at'>) {
-  const { error } = await supabase
-    .from('streamer_history')
-    .upsert(entry, { onConflict: 'streamer_id,month' })
-  if (error) throw error
 }
 
 // --- CAMPAIGNS ---

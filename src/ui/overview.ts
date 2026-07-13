@@ -38,8 +38,7 @@ export function renderOverview() {
         <p class="flex justify-between"><span class="text-slate-400">Horas Assistidas:</span><span class="font-semibold">${fmt(s.hours_watched)}</span></p>
         <p class="flex justify-between"><span class="text-slate-400">Horas Transmitidas:</span><span class="font-semibold">${fmt(s.hours_streamed)}</span></p>
       </div>
-      <div class="mt-4 flex justify-between">
-        <button class="text-emerald-500 hover:text-emerald-400 cursor-pointer history-btn" data-id="${s.id}" data-name="${s.name}" title="Histórico"><i class="fas fa-chart-line"></i></button>
+      <div class="mt-4 flex justify-end">
         <button class="text-slate-400 hover:text-red-400 transition-colors cursor-pointer delete-btn" data-id="${s.id}" title="Remover"><i class="fas fa-trash"></i></button>
       </div>
     `

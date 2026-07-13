@@ -12,14 +12,3 @@ export interface Streamer {
   created_at: string
   is_live?: boolean
 }
-
-export interface StreamerHistory {
-  id: string
-  streamer_id: string
-  month: string
-  avg_viewers: number
-  peak_viewers: number
-  hours_watched: number
-  hours_streamed: number
-  created_at: string
-}

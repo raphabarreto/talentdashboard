@@ -4,7 +4,6 @@ import { fetchTwitchUser, fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate
 import { exportStreamersToCSV } from '../lib/export'
 import { streamers, selectedStreamers, setStreamers } from '../state'
 import { showToast, confirmAction, fmt, langToCountry } from '../utils'
-import { showHistory } from '../ui/history'
 import { getFilteredStreamers } from '../ui/filters'
 import { streamerSchema } from '../lib/validators'
 import { logError } from '../lib/logger'
@@ -55,8 +54,6 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       showToast('Streamer removido!')
       deleteStreamer(id).catch(() => showToast('Erro ao remover do banco', 'error'))
     }
-    const historyBtn = target.closest('.history-btn') as HTMLElement | null
-    if (historyBtn) await showHistory(historyBtn.dataset.id!, historyBtn.dataset.name!)
   })
 
   // Checkboxes

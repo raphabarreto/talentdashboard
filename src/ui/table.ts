@@ -18,8 +18,8 @@ export function renderTable() {
     row.innerHTML = `
       <td class="p-4"><input type="checkbox" class="streamer-checkbox w-4 h-4 rounded" data-id="${s.id}" ${selectedStreamers.has(s.id) ? 'checked' : ''}></td>
       <td class="p-4 font-medium">
-        <div class="flex items-center justify-between gap-2">
-          <button class="history-btn text-left hover:text-indigo-400 transition-colors" data-id="${s.id}" data-name="${s.name}">${s.name}</button>
+        <div class="flex items-center gap-2">
+          <span class="text-white">${s.name}</span>
           ${s.is_live ? '<span class="px-1.5 py-0.5 bg-red-600 text-white text-xs font-bold rounded uppercase leading-none">• AO VIVO</span>' : ''}
         </div>
       </td>

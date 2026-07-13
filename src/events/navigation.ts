@@ -79,8 +79,6 @@ export function setupGlobalEvents() {
       searchInput?.focus()
     }
   })
-  // Close history modal
-  document.getElementById('closeHistoryModal')?.addEventListener('click', () => document.getElementById('historyModal')!.classList.add('hidden'))
   // Logout
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     if (await confirmAction('Deseja sair?', 'Sair')) signOut()

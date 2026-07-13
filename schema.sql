@@ -18,20 +18,7 @@ create table streamers (
   created_at timestamptz default now()
 );
 
--- Histórico mensal (métricas consolidadas)
-create table streamer_history (
-  id uuid primary key default gen_random_uuid(),
-  streamer_id uuid references streamers(id) on delete cascade,
-  month text not null, -- formato: '2026-06'
-  avg_viewers int default 0,
-  peak_viewers int default 0,
-  hours_watched int default 0,
-  hours_streamed int default 0,
-  created_at timestamptz default now(),
-  unique(streamer_id, month)
-);
-
--- Snapshots de coleta (a cada 5 min)
+-- Snapshots de coleta (a cada 15 min)
 create table stream_snapshots (
   id uuid primary key default gen_random_uuid(),
   streamer_id uuid references streamers(id) on delete cascade,
