@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-// v12 - support top streams without game_id
+// v13 - action "lookup" combina user + channel + last_video/streams numa única invocação
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -157,6 +157,45 @@ Deno.serve(async (req) => {
       })
       const data = await res.json()
       result = data.data?.[0] || null
+
+    } else if (action === "lookup") {
+      // Combina user + channel + last_video/streams numa única invocação (evita 3 round-trips serializados)
+      const username = url.searchParams.get("username")
+      if (!username) return new Response("Missing username", { status: 400, headers: corsHeaders })
+
+      const userRes = await fetch(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(username)}`, {
+        headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+      })
+      const userData = await userRes.json()
+      const u = userData.data?.[0]
+      if (!u) {
+        result = { user: null, lastLive: null }
+      } else {
+        const [chData, videoData, streamsData] = await Promise.all([
+          fetch(`https://api.twitch.tv/helix/channels?broadcaster_id=${u.id}`, {
+            headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+          }).then(r => r.json()),
+          fetch(`https://api.twitch.tv/helix/videos?user_id=${u.id}&first=1&type=archive`, {
+            headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+          }).then(r => r.json()),
+          fetch(`https://api.twitch.tv/helix/streams?user_login=${encodeURIComponent(u.login.toLowerCase())}&first=100`, {
+            headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
+          }).then(r => r.json())
+        ])
+
+        const channel = chData.data?.[0]
+        const user = { ...u, broadcaster_language: channel?.broadcaster_language || "", game_name: channel?.game_name || "" }
+
+        const lastVideo = videoData.data?.[0]
+        let lastLive: string | null = null
+        if (lastVideo?.created_at) {
+          lastLive = lastVideo.created_at
+        } else if (Array.isArray(streamsData.data) && streamsData.data.length > 0) {
+          lastLive = new Date().toISOString()
+        }
+
+        result = { user, lastLive }
+      }
 
     } else {
       return new Response("Invalid action", { status: 400, headers: corsHeaders })

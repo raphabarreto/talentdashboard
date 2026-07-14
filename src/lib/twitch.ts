@@ -37,6 +37,16 @@ export async function fetchLastLiveDate(userId: string, login: string): Promise<
   } catch { return null }
 }
 
+export async function fetchStreamerLookup(username: string): Promise<{
+  user: {
+    id: string; login: string; display_name: string; profile_image_url: string
+    broadcaster_language: string; game_name: string
+  } | null
+  lastLive: string | null
+}> {
+  return callProxy({ action: 'lookup', username })
+}
+
 export async function searchCategories(query: string) {
   return callProxy({ action: 'search_categories', query }) as Promise<Array<{ id: string; name: string; box_art_url: string }>>
 }

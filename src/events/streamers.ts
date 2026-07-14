@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { addStreamer, addStreamers, deleteStreamer, updateLastLive } from '../lib/data'
-import { fetchTwitchUser, fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
+import { fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate, fetchStreamerLookup } from '../lib/twitch'
 import { exportStreamersToCSV } from '../lib/export'
 import { streamers, selectedStreamers, setStreamers } from '../state'
 import { showToast, confirmAction, fmt, langToCountry } from '../utils'
@@ -15,14 +15,15 @@ type Callbacks = { loadData: () => Promise<void>; renderAll: () => void; renderT
 
 // Helper: buscar e preparar dados de um streamer
 async function prepareStreamerData(name: string, category = '') {
-  const user = await fetchTwitchUser(name)
+  // lookup combinado (user + channel + last_video/streams em 1 invocação) e stats do twitchtracker
+  // disparam juntos, pois não dependem um do outro.
+  const [{ user, lastLive }, stats] = await Promise.all([
+    fetchStreamerLookup(name),
+    fetchInitialStats(name)
+  ])
   if (!user) throw new Error('Streamer não encontrado.')
   
   const lang = user.broadcaster_language?.split('-')[0]
-  const [stats, lastLive] = await Promise.all([
-    fetchInitialStats(user.login),
-    fetchLastLiveDate(user.id, user.login)
-  ])
   
   const streamerData = {
     name: user.display_name,
