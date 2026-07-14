@@ -18,6 +18,17 @@ let selected = new Set<string>()
 let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')
 let page = 1
 
+// Cache em memória de buscas de categoria já feitas na sessão (evita rechamar a API pro mesmo termo)
+const categorySearchCache = new Map<string, Array<{ id: string; name: string; box_art_url: string }>>()
+
+async function searchCategoriesCached(query: string) {
+  const key = query.toLowerCase()
+  if (categorySearchCache.has(key)) return categorySearchCache.get(key)!
+  const cats = await searchCategories(query)
+  categorySearchCache.set(key, cats)
+  return cats
+}
+
 const EMAIL_REGEX = /[\w.+-]+@[\w-]+\.[\w.-]+/g
 
 function saveShortlist() {
@@ -181,7 +192,7 @@ export function setupProspecting() {
       const q = els.input.value.trim()
       if (q.length < 2) { els.suggestions.classList.add('hidden'); return }
       try {
-        const cats = await searchCategories(q)
+        const cats = await searchCategoriesCached(q)
         if (!cats.length) { els.suggestions.classList.add('hidden'); return }
         els.suggestions.innerHTML = cats.map(c => `<div class="px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm text-white" data-id="${c.id}" data-name="${c.name}">${c.name}</div>`).join('')
         els.suggestions.classList.remove('hidden')
@@ -206,7 +217,7 @@ export function setupProspecting() {
     
     // Se digitou algo, busca a categoria
     if (q && !selectedGameId) {
-      const cats = await searchCategories(q)
+      const cats = await searchCategoriesCached(q)
       if (!cats.length) { showToast('Categoria não encontrada', 'error'); return }
       const exact = cats.find(c => c.name.toLowerCase() === q.toLowerCase()) || cats[0]
       selectedGameId = exact.id
