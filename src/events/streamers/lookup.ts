@@ -39,8 +39,11 @@ export function setupLookupModal(
     if (!name) return
 
     const btn = document.getElementById('lookupSearchBtn') as HTMLButtonElement
+    const spinner = document.getElementById('lookupSearchSpinner')!
+    const btnText = document.getElementById('lookupSearchBtnText')!
     btn.disabled = true
-    btn.textContent = 'Buscando...'
+    spinner.classList.remove('hidden')
+    btnText.textContent = 'Buscando...'
     
     document.getElementById('lookupResult')!.classList.add('hidden')
     document.getElementById('lookupError')!.classList.add('hidden')
@@ -77,7 +80,8 @@ export function setupLookupModal(
       el.classList.remove('hidden')
     } finally {
       btn.disabled = false
-      btn.textContent = 'Buscar'
+      spinner.classList.add('hidden')
+      btnText.textContent = 'Buscar'
     }
   }
 
