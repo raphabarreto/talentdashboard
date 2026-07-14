@@ -216,10 +216,13 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       const s = campaigns[idx].campaign_streamers!.find(s => s.id === id)!
       if (!streamers.some(st => st.name.toLowerCase() === s.streamer_name.toLowerCase())) {
         try {
-          const user = await fetchTwitchUser(s.streamer_name)
+          // fetchInitialStats não depende do resultado de fetchTwitchUser, dispara em paralelo
+          const [user, stats] = await Promise.all([
+            fetchTwitchUser(s.streamer_name),
+            fetchInitialStats(s.streamer_name)
+          ])
           if (user) {
             const lang = user.broadcaster_language?.split('-')[0]
-            const stats = await fetchInitialStats(user.login)
             await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
             const lastLive = await fetchLastLiveDate(user.id, user.login)
             if (lastLive) {
