@@ -19,8 +19,8 @@ export function renderTable() {
       <td class="p-4"><input type="checkbox" class="streamer-checkbox w-4 h-4 rounded" data-id="${s.id}" ${selectedStreamers.has(s.id) ? 'checked' : ''}></td>
       <td class="p-4 font-medium">
         <div class="flex items-center gap-2">
+          ${s.is_live ? '<span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>' : ''}
           <span class="text-white">${s.name}</span>
-          ${s.is_live ? '<span class="px-1.5 py-0.5 bg-red-600 text-white text-xs font-bold rounded uppercase leading-none">• AO VIVO</span>' : ''}
         </div>
       </td>
       <td class="p-4">${fmt(s.avg_viewers)}</td>
