@@ -1,12 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-// v2 - exige JWT valido do usuario logado (evita update de last_live_at por request nao autenticada)
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-}
+import { buildCorsHeaders } from "../_shared/cors.ts"
+import { updateLastLiveSchema } from "../_shared/validators.ts"
+// v3 - exige JWT valido do usuario logado, CORS restrito e valida input com Zod
 
 Deno.serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req)
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
 
   try {
@@ -17,13 +15,15 @@ Deno.serve(async (req) => {
     const { data: { user } } = await authClient.auth.getUser(authHeader.replace("Bearer ", ""))
     if (!user) return new Response("Unauthorized", { status: 401, headers: corsHeaders })
 
-    const { streamer_id, last_live_at } = await req.json()
-    if (!streamer_id || !last_live_at) {
-      return new Response(JSON.stringify({ error: "streamer_id and last_live_at required" }), { 
-        status: 400, 
+    const body = await req.json().catch(() => null)
+    const parsed = updateLastLiveSchema.safeParse(body)
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: "Invalid input", details: parsed.error.flatten() }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       })
     }
+    const { streamer_id, last_live_at } = parsed.data
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,

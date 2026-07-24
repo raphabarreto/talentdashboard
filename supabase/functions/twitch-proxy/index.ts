@@ -1,10 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-// v13 - action "lookup" combina user + channel + last_video/streams numa única invocação
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-}
+import { buildCorsHeaders } from "../_shared/cors.ts"
+import { twitchProxyParamsSchema } from "../_shared/validators.ts"
+// v14 - CORS restrito e validação de input com Zod
 
 let token: string | null = null
 let tokenExpiry = 0
@@ -23,6 +20,7 @@ async function getTwitchToken(clientId: string, clientSecret: string): Promise<s
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req)
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
 
   try {
@@ -39,12 +37,20 @@ Deno.serve(async (req) => {
     const accessToken = await getTwitchToken(clientId, clientSecret)
 
     const url = new URL(req.url)
-    const action = url.searchParams.get("action")
+    const rawParams = Object.fromEntries(url.searchParams.entries())
+    const parsedParams = twitchProxyParamsSchema.safeParse(rawParams)
+    if (!parsedParams.success) {
+      return new Response(JSON.stringify({ error: "Invalid input", details: parsedParams.error.flatten() }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      })
+    }
+    const { action, username, query, game_id: gameIdParam, first: firstParam, language: languageParam, user_id: userIdParam } = parsedParams.data
 
     let result: unknown
 
     if (action === "users") {
-      const logins = url.searchParams.get("logins")?.split(",").filter(Boolean) || []
+      const logins = parsedParams.data.logins?.split(",").filter(Boolean) || []
       if (!logins.length) return new Response("[]", { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } })
 
       const params = logins.map(l => `login=${encodeURIComponent(l.toLowerCase())}`).join("&")
@@ -69,10 +75,7 @@ Deno.serve(async (req) => {
       }
 
     } else if (action === "user") {
-      const username = url.searchParams.get("username")
-      if (!username) return new Response("Missing username", { status: 400, headers: corsHeaders })
-
-      const res = await fetch(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(username)}`, {
+      const res = await fetch(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(username!)}`, {
         headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
       })
       const data = await res.json()
@@ -87,7 +90,7 @@ Deno.serve(async (req) => {
       result = { ...u, broadcaster_language: channel?.broadcaster_language || "", game_name: channel?.game_name || "" }
 
     } else if (action === "streams") {
-      const usernames = url.searchParams.get("usernames")?.split(",") || []
+      const usernames = parsedParams.data.usernames?.split(",") || []
       if (!usernames.length) return new Response("[]", { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } })
 
       const params = usernames.map(u => `user_login=${encodeURIComponent(u.toLowerCase())}`).join("&")
@@ -98,19 +101,16 @@ Deno.serve(async (req) => {
       result = data.data || []
 
     } else if (action === "search_categories") {
-      const query = url.searchParams.get("query")
-      if (!query) return new Response("Missing query", { status: 400, headers: corsHeaders })
-
-      const res = await fetch(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}&first=10`, {
+      const res = await fetch(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query!)}&first=10`, {
         headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
       })
       const data = await res.json()
       result = data.data || []
 
     } else if (action === "streams_by_game") {
-      const gameId = url.searchParams.get("game_id") || ""
-      const first = url.searchParams.get("first") || "100"
-      const language = url.searchParams.get("language") || ""
+      const gameId = gameIdParam || ""
+      const first = firstParam || "100"
+      const language = languageParam || ""
       const langParam = language ? `&language=${language}` : ""
       const gameParam = gameId ? `&game_id=${gameId}` : ""
 
@@ -149,10 +149,7 @@ Deno.serve(async (req) => {
       }
 
     } else if (action === "last_video") {
-      const userId = url.searchParams.get("user_id")
-      if (!userId) return new Response("Missing user_id", { status: 400, headers: corsHeaders })
-
-      const res = await fetch(`https://api.twitch.tv/helix/videos?user_id=${userId}&first=1&type=archive`, {
+      const res = await fetch(`https://api.twitch.tv/helix/videos?user_id=${userIdParam}&first=1&type=archive`, {
         headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
       })
       const data = await res.json()
@@ -160,10 +157,7 @@ Deno.serve(async (req) => {
 
     } else if (action === "lookup") {
       // Combina user + channel + last_video/streams numa única invocação (evita 3 round-trips serializados)
-      const username = url.searchParams.get("username")
-      if (!username) return new Response("Missing username", { status: 400, headers: corsHeaders })
-
-      const userRes = await fetch(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(username)}`, {
+      const userRes = await fetch(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(username!)}`, {
         headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
       })
       const userData = await userRes.json()

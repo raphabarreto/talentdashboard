@@ -1,12 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-// v2 - exige header x-cron-secret (evita disparo por qualquer requisicao externa)
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
-}
+import { buildCorsHeaders } from "../_shared/cors.ts"
+// v3 - exige header x-cron-secret (evita disparo por qualquer requisicao externa) e CORS restrito
 
 Deno.serve(async (req) => {
+  const corsHeaders = buildCorsHeaders(req, "x-cron-secret")
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
 
   const cronSecret = Deno.env.get("CRON_SECRET")
