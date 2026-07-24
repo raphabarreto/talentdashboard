@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setStreamers, getCachedCountries, getCachedCategories } from '../state'
-import type { Streamer } from '../types'
+import type { Streamer } from '../types/index'
 
 describe('State - Cache', () => {
   const mockStreamers: Streamer[] = [
-    { id: '1', name: 'Streamer1', country: 'br', main_category: 'Just Chatting', avg_viewers: 1000, peak_viewers: 2000, hours_watched: 10000, hours_streamed: 100, is_active: true, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
-    { id: '2', name: 'Streamer2', country: 'us', main_category: 'League of Legends', avg_viewers: 500, peak_viewers: 1000, hours_watched: 5000, hours_streamed: 50, is_active: true, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
-    { id: '3', name: 'Streamer3', country: 'br', main_category: 'Just Chatting', avg_viewers: 800, peak_viewers: 1500, hours_watched: 8000, hours_streamed: 80, is_active: true, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
+    { id: '1', name: 'Streamer1', country: 'br', main_category: 'Just Chatting', avg_viewers: 1000, peak_viewers: 2000, hours_watched: 10000, hours_streamed: 100, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
+    { id: '2', name: 'Streamer2', country: 'us', main_category: 'League of Legends', avg_viewers: 500, peak_viewers: 1000, hours_watched: 5000, hours_streamed: 50, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
+    { id: '3', name: 'Streamer3', country: 'br', main_category: 'Just Chatting', avg_viewers: 800, peak_viewers: 1500, hours_watched: 8000, hours_streamed: 80, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
   ]
 
   beforeEach(() => {

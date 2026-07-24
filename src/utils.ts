@@ -1,5 +1,5 @@
-import type { Streamer } from './types'
-import { DEBOUNCE_SEARCH_MS, ACTIVE_STREAMER_DAYS } from './constants'
+import type { Streamer } from './types/index'
+import { ACTIVE_STREAMER_DAYS } from './constants'
 
 export const langToCountry: Record<string, string> = {
   pt: 'br', en: 'us', es: 'es', fr: 'fr', de: 'de', it: 'it', ja: 'jp', ko: 'kr', ru: 'ru', zh: 'cn', pl: 'pl', nl: 'nl', sv: 'se'

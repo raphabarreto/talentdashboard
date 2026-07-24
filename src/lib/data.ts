@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Streamer, Campaign, CampaignStreamer, ContactStatus } from '../types'
+import type { Streamer, Campaign, CampaignStreamer, ContactStatus } from '../types/index'
 
 // --- STREAMERS ---
 export async function getStreamers() {
@@ -36,7 +36,7 @@ export async function deleteStreamer(id: string) {
 
 export async function updateLastLive(streamerId: string, lastLiveAt: string) {
   const { data: { session } } = await supabase.auth.getSession()
-  const res = await fetch(`${supabase.supabaseUrl}/functions/v1/update-last-live`, {
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-last-live`, {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',

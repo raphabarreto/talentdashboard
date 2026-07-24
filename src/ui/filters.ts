@@ -1,6 +1,6 @@
 import { streamers, campaigns, currentSort, getCachedCountries, getCachedCategories } from '../state'
 import { isActive, countryNames } from '../utils'
-import type { Streamer } from '../types'
+import type { Streamer } from '../types/index'
 
 export function getFilteredStreamers(prefix: string): Streamer[] {
   const search = (document.getElementById(`search-${prefix}`) as HTMLInputElement)?.value.toLowerCase() || ''

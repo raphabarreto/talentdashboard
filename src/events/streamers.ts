@@ -1,15 +1,15 @@
 import { supabase } from '../lib/supabase'
-import { addStreamer, addStreamers, deleteStreamer, updateLastLive } from '../lib/data'
+import { addStreamers, deleteStreamer, updateLastLive } from '../lib/data'
 import { fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate, fetchStreamerLookup } from '../lib/twitch'
 import { exportStreamersToCSV } from '../lib/export'
 import { streamers, selectedStreamers, setStreamers } from '../state'
 import { showToast, confirmAction, fmt, langToCountry } from '../utils'
 import { getFilteredStreamers } from '../ui/filters'
-import { streamerSchema } from '../lib/validators'
-import { logError } from '../lib/logger'
 import { setupAddStreamerModal } from './streamers/addStreamer'
 import { setupLookupModal } from './streamers/lookup'
 import { MAX_STREAMERS_BATCH, TWITCH_API_BATCH_SIZE } from '../constants'
+
+type TwitchUser = Awaited<ReturnType<typeof fetchTwitchUsers>>[number]
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void; renderTable: () => void }
 
@@ -77,7 +77,6 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
   document.getElementById('closeMultipleModal')?.addEventListener('click', () => document.getElementById('addMultipleModal')!.classList.add('hidden'))
   document.getElementById('saveMultipleBtn')?.addEventListener('click', async () => {
     const textarea = document.getElementById('multipleNamesInput') as HTMLTextAreaElement
-    const btn = document.getElementById('saveMultipleBtn') as HTMLButtonElement
     const names = textarea.value.split('\n').map(line => {
       const l = line.trim()
       const urlMatch = l.match(/twitch\.tv\/([^\s\/]+)/)
@@ -98,7 +97,7 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     progress.classList.remove('hidden')
     progress.textContent = `Buscando ${names.length} streamers...`
     try {
-      const allUsers = []
+      const allUsers: TwitchUser[] = []
       for (let i = 0; i < names.length; i += TWITCH_API_BATCH_SIZE) {
         const users = await fetchTwitchUsers(names.slice(i, i + TWITCH_API_BATCH_SIZE))
         allUsers.push(...users)

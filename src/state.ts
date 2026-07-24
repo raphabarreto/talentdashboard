@@ -1,4 +1,4 @@
-import type { Streamer, Campaign } from './types'
+import type { Streamer, Campaign } from './types/index'
 import { PAGE_SIZE } from './constants'
 
 export let streamers: Streamer[] = []

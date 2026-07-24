@@ -49,7 +49,7 @@ export function setupAddStreamerModal(
       
       const validation = streamerSchema.safeParse(streamerData)
       if (!validation.success) {
-        const firstError = validation.error.errors[0]
+        const firstError = validation.error.issues[0]
         showToast(firstError.message, 'error')
         logError(validation.error, 'Streamer validation failed')
         return

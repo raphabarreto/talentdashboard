@@ -1,4 +1,4 @@
-import type { Campaign, Streamer } from '../types'
+import type { Campaign, Streamer } from '../types/index'
 
 export function exportCampaignsToCSV(campaigns: Campaign[], filename = 'campanhas.csv') {
   // Header

@@ -135,7 +135,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     })
 
     if (!validation.success) {
-      const firstError = validation.error.errors[0]
+      const firstError = validation.error.issues[0]
       showToast(firstError.message, 'error')
       logError(validation.error, 'Campaign validation failed')
       return
