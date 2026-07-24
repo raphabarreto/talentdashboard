@@ -3,7 +3,7 @@
 // Sem essa env var configurada, apenas localhost (dev) é permitido - nunca "*".
 const DEV_ORIGINS = ["http://localhost:8000"]
 
-function resolveAllowedOrigin(requestOrigin: string | null): string {
+function resolveAllowedOrigin(requestOrigin: string | null): string | null {
   const configuredOrigin = Deno.env.get("ALLOWED_ORIGIN")
   const allowedOrigins = configuredOrigin
     ? [configuredOrigin, ...DEV_ORIGINS]
@@ -13,18 +13,23 @@ function resolveAllowedOrigin(requestOrigin: string | null): string {
     return requestOrigin
   }
 
-  // Fallback restritivo: nunca "*". Se a origem não bate, usamos o primeiro
-  // permitido (produção, se configurado) só para preencher o header - o
-  // browser do solicitante vai bloquear a resposta por não bater com a sua origem.
-  return allowedOrigins[0]
+  // Origem não reconhecida: omitimos o header (retornamos null) em vez de
+  // vazar o domínio de produção no fallback. Sem o header, o browser do
+  // solicitante bloqueia a leitura da resposta por padrão.
+  return null
 }
 
 export function buildCorsHeaders(req: Request, extraHeaders = ""): Record<string, string> {
   const requestOrigin = req.headers.get("origin")
   const baseHeaders = "authorization, x-client-info, apikey, content-type"
-  return {
-    "Access-Control-Allow-Origin": resolveAllowedOrigin(requestOrigin),
+  const allowedOrigin = resolveAllowedOrigin(requestOrigin)
+
+  const headers: Record<string, string> = {
     "Access-Control-Allow-Headers": extraHeaders ? `${baseHeaders}, ${extraHeaders}` : baseHeaders,
     "Vary": "Origin",
   }
+  if (allowedOrigin) {
+    headers["Access-Control-Allow-Origin"] = allowedOrigin
+  }
+  return headers
 }
