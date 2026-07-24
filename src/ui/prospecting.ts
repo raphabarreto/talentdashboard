@@ -145,18 +145,20 @@ export function setupProspecting() {
             <button id="clearListBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-trash mr-1"></i>Limpar</button>
           </div>
         </div>
-        <div class="overflow-x-auto rounded-lg border border-slate-700 bg-slate-800">
-          <table class="w-full text-left">
-            <thead class="border-b border-slate-700 text-sm text-slate-400">
-              <tr>
-                <th class="p-3">Streamer</th>
-                <th class="p-3">Categoria</th>
-                <th class="p-3">Email</th>
-                <th class="p-3 w-[120px]">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="shortlistBody" class="divide-y divide-slate-700"></tbody>
-          </table>
+        <div class="rounded-lg border border-slate-700 bg-slate-800">
+          <div class="overflow-x-auto overflow-y-auto max-h-[480px]">
+            <table class="w-full text-left">
+              <thead class="border-b border-slate-700 text-sm text-slate-400 sticky top-0 bg-slate-800">
+                <tr>
+                  <th class="p-3">Streamer</th>
+                  <th class="p-3">Categoria</th>
+                  <th class="p-3">Email</th>
+                  <th class="p-3 w-[120px]">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="shortlistBody" class="divide-y divide-slate-700"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
