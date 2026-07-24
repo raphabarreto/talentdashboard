@@ -62,7 +62,7 @@ src/
 
 supabase/functions/
   collect-snapshots/    # Coleta viewers a cada 15min
-  consolidate-monthly/  # Consolida métricas mensais
+  consolidate-daily/    # Consolida métricas diárias (últimos 30 dias)
   twitch-proxy/         # Proxy autenticado para Twitch API
   update-last-live/     # Atualiza última vez online
 ```

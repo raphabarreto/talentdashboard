@@ -42,7 +42,7 @@ Coleta periódica de viewers (a cada 5 minutos via Edge Function).
 ---
 
 ### `streamer_history`
-Histórico mensal consolidado (gerado pela Edge Function `consolidate-monthly`).
+Histórico mensal consolidado (gerado pela Edge Function `consolidate-daily`).
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
