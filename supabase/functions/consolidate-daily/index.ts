@@ -1,12 +1,22 @@
-// v11 - SOLUÇÃO DEFINITIVA: Usar SQL direto no Postgres (sem limit de 1000)
+// v12 - exige header x-cron-secret (evita disparo por qualquer requisicao externa)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-Deno.serve(async () => {
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
+
+  const cronSecret = Deno.env.get("CRON_SECRET")
+  if (cronSecret && req.headers.get("x-cron-secret") !== cronSecret) {
+    return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+  }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || 
-                        Deno.env.get("SUPABASE_SECRET_KEYS") ||
-                        Deno.env.get("SUPABASE_ANON_KEY")!
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     
     const supabase = createClient(supabaseUrl, supabaseKey)
 
@@ -21,11 +31,11 @@ Deno.serve(async () => {
     })
 
     if (metricsError) {
-      return new Response(JSON.stringify({ error: "Metrics calculation error", details: metricsError }), { status: 500 })
+      return new Response(JSON.stringify({ error: "Metrics calculation error", details: metricsError }), { status: 500, headers: corsHeaders })
     }
 
     if (!metrics?.length) {
-      return new Response(JSON.stringify({ msg: "Nenhum streamer com dados nos últimos 30 dias", startDate }))
+      return new Response(JSON.stringify({ msg: "Nenhum streamer com dados nos últimos 30 dias", startDate }), { headers: corsHeaders })
     }
 
     // Executar updates em paralelo (batch de 10)
@@ -56,9 +66,9 @@ Deno.serve(async () => {
       startDate,
       updateResults: updateResults.slice(0, 5)
     }), {
-      headers: { "Content-Type": "application/json" }
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500 })
+    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: corsHeaders })
   }
 })
