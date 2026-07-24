@@ -42,7 +42,7 @@ export function renderTable() {
     pag.className = 'table-pagination flex items-center justify-center gap-4 mt-6'
     pag.innerHTML = `
       <button class="prev-table py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${tablePage === 1 ? 'disabled' : ''}>← Anterior</button>
-      <span class="text-sm text-slate-400">${tablePage} / ${totalPages}</span>
+      <span class="text-sm text-slate-400">Página <span class="text-white font-semibold">${tablePage}</span> de ${totalPages} <span class="text-slate-500">· ${data.length} streamer${data.length !== 1 ? 's' : ''}</span></span>
       <button class="next-table py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${tablePage === totalPages ? 'disabled' : ''}>Próxima →</button>
     `
     tableContainer.appendChild(pag)

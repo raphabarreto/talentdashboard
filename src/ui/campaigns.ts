@@ -29,7 +29,7 @@ export function renderCampaigns() {
       <td class="p-4">${c.company}</td>
       <td class="p-4">${fmtDate(c.start_date)}</td>
       <td class="p-4">${fmtDate(c.end_date)}</td>
-      <td class="p-4 font-semibold">${fmtCurrency(myCommission)}</td>
+      <td class="p-4 font-semibold${myCommission === 0 ? ' text-slate-500' : ''}">${myCommission === 0 ? '— <span class="text-xs font-normal">(não lançado)</span>' : fmtCurrency(myCommission)}</td>
       <td class="p-4">${total > 0 ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-emerald-500/20 text-emerald-400">${confirmed} confirmado${confirmed !== 1 ? 's' : ''}</span>` : '—'}</td>
       <td class="p-4 flex gap-3">
         <button class="text-amber-500 hover:text-amber-400 edit-campaign-btn" data-id="${c.id}" title="Editar"><i class="fas fa-pen"></i></button>
