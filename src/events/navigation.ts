@@ -20,10 +20,8 @@ export function setupNav() {
         l.classList.toggle('text-slate-400', !active)
       })
       const streamerBtns = viewId === 'overview' || viewId === 'table'
-      const campaignBtn = viewId === 'campaigns'
       document.getElementById('addMultipleBtn')!.classList.toggle('hidden', !streamerBtns)
       document.getElementById('openAddStreamer')!.classList.toggle('hidden', !streamerBtns)
-      document.getElementById('openAddCampaign')!.classList.toggle('hidden', !campaignBtn)
     })
   })
   const saved = sessionStorage.getItem('activeTab')

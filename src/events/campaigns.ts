@@ -6,21 +6,10 @@ import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry, statusCo
 import { renderCampaigns } from '../ui/campaigns'
 import { campaignSchema } from '../lib/validators'
 import { logError, setButtonLoading } from '../lib/logger'
-import { exportCampaignsToCSV } from '../lib/export'
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void }
 
 export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
-  // Export campaigns to CSV
-  document.getElementById('exportCampaignsBtn')?.addEventListener('click', () => {
-    if (campaigns.length === 0) {
-      showToast('Nenhuma campanha para exportar', 'error')
-      return
-    }
-    exportCampaignsToCSV(campaigns)
-    showToast('Campanhas exportadas!')
-  })
-
   // Delegated clicks for campaign buttons
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement
@@ -103,7 +92,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
   })
 
   // Campaign form
-  document.getElementById('openAddCampaign')?.addEventListener('click', () => {
+  document.getElementById('openAddCampaignInline')?.addEventListener('click', () => {
     setEditingCampaignId(null)
     document.getElementById('campaignModalTitle')!.textContent = 'Adicionar Campanha'
     document.getElementById('saveCampaignBtn')!.textContent = 'Salvar'
