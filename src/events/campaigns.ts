@@ -36,8 +36,8 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       ;(document.getElementById('companyInput') as HTMLInputElement).value = c.company
       ;(document.getElementById('startDateInput') as HTMLInputElement).value = c.start_date
       ;(document.getElementById('endDateInput') as HTMLInputElement).value = c.end_date
-      ;(document.getElementById('totalReceivedInput') as HTMLInputElement).value = c.total_received ? String(c.total_received) : ''
-      ;(document.getElementById('totalPaidInput') as HTMLInputElement).value = c.total_paid ? String(c.total_paid) : ''
+      ;(document.getElementById('totalReceivedInput') as HTMLInputElement).value = c.total_received ? c.total_received.toFixed(2).replace('.', ',') : ''
+      ;(document.getElementById('totalPaidInput') as HTMLInputElement).value = c.total_paid ? c.total_paid.toFixed(2).replace('.', ',') : ''
       ;(document.getElementById('currencyInput') as HTMLSelectElement).value = c.currency || 'BRL'
       ;(document.getElementById('paymentDateInput') as HTMLInputElement).value = c.payment_date || ''
       ;(document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value = c.campaign_streamers?.map(s => s.streamer_name).join('\n') || ''
@@ -98,7 +98,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     const raw = input.value.replace(/\./g, '').replace(/,/g, '.')
     const total = Number(raw) || 0
     const streamersPart = Math.round(total * 0.8 * 100) / 100
-    ;(document.getElementById('totalPaidInput') as HTMLInputElement).value = streamersPart > 0 ? String(streamersPart) : ''
+    ;(document.getElementById('totalPaidInput') as HTMLInputElement).value = streamersPart > 0 ? streamersPart.toFixed(2).replace('.', ',') : ''
   })
 
   // Campaign form
