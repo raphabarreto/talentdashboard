@@ -31,8 +31,8 @@ export function renderCampaigns() {
       <td class="p-4">${fmtDate(c.start_date)}</td>
       <td class="p-4">${fmtDate(c.end_date)}</td>
       <td class="p-4">${c.payment_date ? fmtDate(c.payment_date) : '<span class="text-slate-500">—</span>'}</td>
-      <td class="p-4 font-semibold">${!isLaunched ? '<span class="inline-flex items-center justify-center w-32 px-3 py-1 rounded text-sm font-semibold bg-amber-500/20 text-amber-400">Não lançado</span>' : fmtCurrency(myCommission)}</td>
-      <td class="p-4">${total > 0 ? `<span class="inline-flex items-center justify-center gap-1.5 w-32 px-3 py-1 rounded text-sm font-semibold bg-emerald-500/20 text-emerald-400">${confirmed} confirmado${confirmed !== 1 ? 's' : ''}</span>` : '—'}</td>
+      <td class="p-4 font-semibold">${!isLaunched ? '<span class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1 rounded text-sm font-semibold bg-amber-500/20 text-amber-400">Não lançado</span>' : fmtCurrency(myCommission)}</td>
+      <td class="p-4">${total > 0 ? `<span class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap px-3 py-1 rounded text-sm font-semibold bg-emerald-500/20 text-emerald-400">${confirmed} confirmado${confirmed !== 1 ? 's' : ''}</span>` : '—'}</td>
       <td class="p-4 flex gap-3">
         <button class="text-amber-500 hover:text-amber-400 edit-campaign-btn" data-id="${c.id}" title="Editar"><i class="fas fa-pen"></i></button>
         <button class="text-indigo-500 hover:text-indigo-400 details-campaign-btn" data-id="${c.id}" title="Detalhes"><i class="fas fa-eye"></i></button>
