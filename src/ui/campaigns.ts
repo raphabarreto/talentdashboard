@@ -1,15 +1,6 @@
 import { campaigns } from '../state'
 import { fmtDate, fmtCurrency, monthNames } from '../utils'
 
-/**
- * Retorna a data usada para filtrar/agrupar a campanha por mês.
- * Prioriza a data de pagamento (quando o dinheiro entrou de fato).
- * Se ainda não foi paga, usa a data de início da campanha como fallback.
- */
-export function getReferenceDate(c: { payment_date: string | null; start_date: string }): string | null {
-  return c.payment_date || c.start_date || null
-}
-
 export function renderCampaigns() {
   const tbody = document.getElementById('campaigns-body')!
   const monthVal = (document.getElementById('month-filter') as HTMLSelectElement).value
@@ -17,9 +8,8 @@ export function renderCampaigns() {
   tbody.innerHTML = ''
 
   const filtered = campaigns.filter(c => {
-    const refDate = getReferenceDate(c)
-    if (!refDate) return false
-    const [y, m] = refDate.split('-')
+    if (!c.start_date) return false
+    const [y, m] = c.start_date.split('-')
     const monthMatch = monthVal === 'all' || String(parseInt(m) - 1) === monthVal
     const yearMatch = yearVal === 'all' || y === yearVal
     return monthMatch && yearMatch
@@ -64,9 +54,8 @@ export function populateCampaignFilters() {
   years.add(now.getFullYear())
 
   campaigns.forEach(c => {
-    const refDate = getReferenceDate(c)
-    if (refDate) {
-      const [y, m] = refDate.split('-').map(Number)
+    if (c.start_date) {
+      const [y, m] = c.start_date.split('-').map(Number)
       months.add(m - 1)
       years.add(y)
     }
