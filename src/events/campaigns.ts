@@ -33,6 +33,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       setEditingCampaignId(c.id)
       document.getElementById('campaignModalTitle')!.textContent = 'Editar Campanha'
       document.getElementById('saveCampaignBtn')!.textContent = 'Atualizar'
+      document.getElementById('saveAndAddAnotherBtn')!.classList.add('hidden')
       ;(document.getElementById('companyInput') as HTMLInputElement).value = c.company
       ;(document.getElementById('startDateInput') as HTMLInputElement).value = c.start_date
       ;(document.getElementById('endDateInput') as HTMLInputElement).value = c.end_date
@@ -106,6 +107,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     setEditingCampaignId(null)
     document.getElementById('campaignModalTitle')!.textContent = 'Adicionar Campanha'
     document.getElementById('saveCampaignBtn')!.textContent = 'Salvar'
+    document.getElementById('saveAndAddAnotherBtn')!.classList.remove('hidden')
     ;(document.getElementById('campaignForm') as HTMLFormElement).reset()
     document.getElementById('campaignModal')!.classList.remove('hidden')
   })
@@ -113,6 +115,8 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
   setupStreamerAutocomplete()
   document.getElementById('campaignForm')?.addEventListener('submit', async (e) => {
     e.preventDefault()
+    const submitter = (e as SubmitEvent).submitter as HTMLButtonElement | null
+    const shouldAddAnother = submitter?.id === 'saveAndAddAnotherBtn'
     const company = (document.getElementById('companyInput') as HTMLInputElement).value
     const startDate = (document.getElementById('startDateInput') as HTMLInputElement).value
     const endDate = (document.getElementById('endDateInput') as HTMLInputElement).value
@@ -150,7 +154,9 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     })
 
     const saveBtn = document.getElementById('saveCampaignBtn') as HTMLButtonElement
-    setButtonLoading(saveBtn, true)
+    const addAnotherBtn = document.getElementById('saveAndAddAnotherBtn') as HTMLButtonElement
+    setButtonLoading(submitter || saveBtn, true)
+    ;(submitter === addAnotherBtn ? saveBtn : addAnotherBtn).disabled = true
 
     try {
       if (editingCampaignId) {
@@ -163,12 +169,21 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
 
       setEditingCampaignId(null)
       await loadData(); renderAll()
-      document.getElementById('campaignModal')!.classList.add('hidden')
+
+      if (shouldAddAnother) {
+        ;(document.getElementById('campaignForm') as HTMLFormElement).reset()
+        ;(document.getElementById('companyInput') as HTMLInputElement).focus()
+      } else {
+        document.getElementById('campaignModal')!.classList.add('hidden')
+      }
     } catch (error) {
       logError(error, 'Failed to save campaign', { company, editingCampaignId })
       showToast('Erro ao salvar campanha', 'error')
     } finally {
       setButtonLoading(saveBtn, false, editingCampaignId ? 'Atualizar' : 'Salvar')
+      setButtonLoading(addAnotherBtn, false, 'Salvar e Adicionar Outra')
+      saveBtn.disabled = false
+      addAnotherBtn.disabled = false
     }
   })
 
