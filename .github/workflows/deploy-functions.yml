@@ -20,14 +20,27 @@ jobs:
       - name: Deploy Edge Functions
         run: |
           set -e
+          # Functions que devem ser publicas (sem verificacao de JWT do gateway),
+          # pois sao chamadas por cron externo (cron-job.org) usando header proprio (x-cron-secret).
+          NO_VERIFY_JWT_FUNCS=("collect-snapshots" "consolidate-daily")
+
           for func in supabase/functions/*/; do
             func_name=$(basename "$func")
             if [[ "$func_name" == _* ]]; then
               echo "Skipping shared folder $func_name..."
               continue
             fi
-            echo "Deploying $func_name..."
-            npx supabase functions deploy "$func_name" --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+
+            extra_flags=""
+            for no_verify_func in "${NO_VERIFY_JWT_FUNCS[@]}"; do
+              if [[ "$func_name" == "$no_verify_func" ]]; then
+                extra_flags="--no-verify-jwt"
+                break
+              fi
+            done
+
+            echo "Deploying $func_name (flags: $extra_flags)..."
+            npx supabase functions deploy "$func_name" --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} $extra_flags
           done
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
