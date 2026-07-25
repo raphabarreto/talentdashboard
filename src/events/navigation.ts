@@ -20,9 +20,14 @@ export function setupNav() {
         l.classList.toggle('text-slate-400', !active)
       })
       const streamerBtns = viewId === 'overview' || viewId === 'table'
-      document.getElementById('openLookup')!.classList.toggle('hidden', !streamerBtns)
-      document.getElementById('addMultipleBtn')!.classList.toggle('hidden', !streamerBtns)
-      document.getElementById('openAddStreamer')!.classList.toggle('hidden', !streamerBtns)
+      const actionsGroup = document.getElementById('streamerActionsTemplate')!
+      if (streamerBtns) {
+        const slot = document.getElementById(`streamerActionsSlot-${viewId}`)!
+        slot.appendChild(actionsGroup)
+        actionsGroup.classList.remove('hidden')
+      } else {
+        actionsGroup.classList.add('hidden')
+      }
     })
   })
   const saved = sessionStorage.getItem('activeTab')
