@@ -15,7 +15,7 @@ Armazena os streamers monitorados.
 | `hours_watched` | int | Total de horas assistidas |
 | `hours_streamed` | int | Total de horas transmitidas |
 | `is_active` | boolean | Status (ativo se transmitiu nos últimos 30 dias) |
-| `main_category` | text | Categoria principal do streamer |
+| `main_category` | text | Categoria principal do streamer (coluna legada, sem uso na UI atual) |
 | `last_live_at` | timestamptz | Última vez que ficou online |
 | `created_at` | timestamptz | Data de criação |
 

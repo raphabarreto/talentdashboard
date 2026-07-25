@@ -26,7 +26,7 @@ describe('Export', () => {
   describe('exportStreamersToCSV', () => {
     it('deve gerar CSV com headers corretos', () => {
       const streamers: Streamer[] = [
-        { id: '1', name: 'Test1', country: 'br', main_category: 'Games', avg_viewers: 1000, peak_viewers: 2000, hours_watched: 5000, hours_streamed: 100, last_live_at: null, created_at: '' }
+        { id: '1', name: 'Test1', country: 'br', avg_viewers: 1000, peak_viewers: 2000, hours_watched: 5000, hours_streamed: 100, last_live_at: null, created_at: '' }
       ]
       
       exportStreamersToCSV(streamers, 'test.csv')
@@ -38,7 +38,7 @@ describe('Export', () => {
 
     it('deve incluir todos os dados do streamer', () => {
       const streamers: Streamer[] = [
-        { id: '1', name: 'TestStreamer', country: 'br', main_category: 'Just Chatting', avg_viewers: 500, peak_viewers: 1000, hours_watched: 10000, hours_streamed: 200, last_live_at: null, created_at: '' }
+        { id: '1', name: 'TestStreamer', country: 'br', avg_viewers: 500, peak_viewers: 1000, hours_watched: 10000, hours_streamed: 200, last_live_at: null, created_at: '' }
       ]
       
       exportStreamersToCSV(streamers)

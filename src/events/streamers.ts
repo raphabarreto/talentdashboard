@@ -14,7 +14,7 @@ type TwitchUser = Awaited<ReturnType<typeof fetchTwitchUsers>>[number]
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void; renderTable: () => void }
 
 // Helper: buscar e preparar dados de um streamer
-async function prepareStreamerData(name: string, category = '') {
+async function prepareStreamerData(name: string) {
   // lookup combinado (user + channel + last_video/streams em 1 invocação) e stats do twitchtracker
   // disparam juntos, pois não dependem um do outro.
   const [{ user, lastLive }, stats] = await Promise.all([
@@ -32,7 +32,6 @@ async function prepareStreamerData(name: string, category = '') {
     peak_viewers: stats?.peak_viewers || 0,
     hours_watched: stats?.hours_watched || 0,
     hours_streamed: stats?.hours_streamed || 0,
-    main_category: category
   }
   
   return { user, streamerData, lastLive }
@@ -125,7 +124,7 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       const toInsert = newUsers.map((u, i) => {
         const stats = statsResults[i].status === 'fulfilled' ? statsResults[i].value : null
         const lang = u.broadcaster_language?.split('-')[0]
-        return { name: u.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' }
+        return { name: u.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0 }
       })
       await addStreamers(toInsert)
 
@@ -202,73 +201,4 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     showToast(`${selected.length} streamers exportados!`)
   })
 
-  // Set Category
-  document.getElementById('setCategoryBtn')?.addEventListener('click', () => {
-    document.getElementById('categoryCount')!.textContent = String(selectedStreamers.size)
-    ;(document.getElementById('categoryInput') as HTMLInputElement).value = ''
-    document.getElementById('categoryModal')!.classList.remove('hidden')
-  })
-  document.getElementById('closeCategoryModal')?.addEventListener('click', () => document.getElementById('categoryModal')!.classList.add('hidden'))
-  document.getElementById('saveCategoryBtn')?.addEventListener('click', async () => {
-    const category = (document.getElementById('categoryInput') as HTMLInputElement).value.trim()
-    if (!category) { showToast('Digite uma categoria', 'error'); return }
-    await supabase.from('streamers').update({ main_category: category }).in('id', [...selectedStreamers])
-    selectedStreamers.clear()
-    await loadData(); renderAll()
-    document.getElementById('categoryModal')!.classList.add('hidden')
-    showToast(`Categoria "${category}" aplicada!`)
-  })
-
-  // Manage Categories
-  document.getElementById('manageCategoriesBtn')?.addEventListener('click', () => {
-    renderCategoriesList(loadData, renderAll)
-    document.getElementById('manageCategoriesModal')!.classList.remove('hidden')
-  })
-  document.getElementById('closeManageCategories')?.addEventListener('click', () => document.getElementById('manageCategoriesModal')!.classList.add('hidden'))
-}
-
-function renderCategoriesList(loadData: () => Promise<void>, renderAll: () => void) {
-  const categories = [...new Set(streamers.map(s => s.main_category).filter(Boolean))].sort()
-  const container = document.getElementById('categoriesList')!
-  if (!categories.length) { container.innerHTML = '<p class="text-slate-400 text-sm">Nenhuma categoria cadastrada.</p>'; return }
-  container.innerHTML = categories.map(c => {
-    const count = streamers.filter(s => s.main_category === c).length
-    return `<div class="flex items-center gap-2 bg-slate-700/50 rounded-lg px-4 py-3">
-      <span class="text-white text-sm font-medium truncate flex-1">${c}</span>
-      <span class="text-slate-400 text-xs">${count}</span>
-      <button class="rename-cat-btn text-indigo-400 hover:text-indigo-300 text-sm ml-2" data-cat="${c}"><i class="fas fa-pen"></i></button>
-      <button class="delete-cat-btn text-slate-400 hover:text-red-400 text-sm" data-cat="${c}"><i class="fas fa-trash"></i></button>
-    </div>`
-  }).join('')
-  container.querySelectorAll('.rename-cat-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const oldName = (btn as HTMLElement).dataset.cat!
-      const row = btn.closest('div')!
-      const nameEl = row.querySelector('span')!
-      const input = document.createElement('input')
-      input.type = 'text'; input.value = oldName
-      input.className = 'px-3 py-1.5 rounded bg-slate-700 border border-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1'
-      nameEl.replaceWith(input)
-      input.focus(); input.select()
-      const save = async () => {
-        const newName = input.value.trim()
-        if (!newName || newName === oldName) { renderCategoriesList(loadData, renderAll); return }
-        await supabase.from('streamers').update({ main_category: newName }).eq('main_category', oldName)
-        await loadData(); renderAll(); renderCategoriesList(loadData, renderAll)
-        showToast(`Categoria renomeada para "${newName}"`)
-      }
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') renderCategoriesList(loadData, renderAll) })
-      input.addEventListener('blur', save)
-    })
-  })
-  container.querySelectorAll('.delete-cat-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const cat = (btn as HTMLElement).dataset.cat!
-      const count = streamers.filter(s => s.main_category === cat).length
-      if (!await confirmAction(`Remover a categoria "${cat}" de ${count} streamer${count > 1 ? 's' : ''}?`)) return
-      await supabase.from('streamers').update({ main_category: '' }).eq('main_category', cat)
-      await loadData(); renderAll(); renderCategoriesList(loadData, renderAll)
-      showToast(`Categoria "${cat}" removida`)
-    })
-  })
 }

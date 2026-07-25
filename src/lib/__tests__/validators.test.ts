@@ -72,7 +72,6 @@ describe('Streamer Validation', () => {
       peak_viewers: 100000,
       hours_watched: 1000000,
       hours_streamed: 200,
-      main_category: 'Counter-Strike',
     }
     
     const result = streamerSchema.safeParse(validStreamer)

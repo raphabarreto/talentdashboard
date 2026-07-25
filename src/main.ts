@@ -44,8 +44,6 @@ async function init() {
   setupStreamersEvents({ loadData, renderAll, renderTable })
   setupCampaignsEvents({ loadData, renderAll })
   setupProspecting()
-  setupAutocomplete('streamerCategoryInput', 'streamerCategorySuggestions')
-  setupAutocomplete('categoryInput', 'categorySuggestions')
   setupAutocomplete('companyInput', 'companySuggestions', getExistingCompanies)
   renderAll()
   document.getElementById('loading-overlay')?.classList.add('hidden')

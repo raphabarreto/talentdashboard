@@ -8,7 +8,6 @@ export interface Streamer {
   hours_watched: number
   hours_streamed: number
   last_live_at: string | null
-  main_category: string
   created_at: string
   is_live?: boolean
 }

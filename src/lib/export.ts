@@ -36,13 +36,12 @@ export function exportCampaignsToCSV(campaigns: Campaign[], filename = 'campanha
 
 export function exportStreamersToCSV(streamers: Streamer[], filename = 'streamers.csv') {
   // Header
-  const headers = ['Nome', 'País', 'Categoria', 'Média Viewers', 'Pico Viewers', 'Horas Assistidas', 'Horas Transmitidas']
+  const headers = ['Nome', 'País', 'Média Viewers', 'Pico Viewers', 'Horas Assistidas', 'Horas Transmitidas']
   
   // Rows
   const rows = streamers.map(s => [
     s.name,
     s.country || '-',
-    s.main_category || '-',
     s.avg_viewers.toString(),
     s.peak_viewers.toString(),
     s.hours_watched.toString(),

@@ -5,7 +5,7 @@ import { showToast } from '../../utils'
 import { streamerSchema } from '../../lib/validators'
 import { logError } from '../../lib/logger'
 
-type PrepareStreamerData = (name: string, category?: string) => Promise<{
+type PrepareStreamerData = (name: string) => Promise<{
   user: any
   streamerData: any
   lastLive: string | null
@@ -30,7 +30,6 @@ export function setupAddStreamerModal(
     const input = document.getElementById('streamerNameInput') as HTMLInputElement
     const submitBtn = (e.target as HTMLFormElement).querySelector('button[type="submit"]') as HTMLButtonElement
     const name = input.value.trim()
-    const category = (document.getElementById('streamerCategoryInput') as HTMLInputElement).value.trim()
     
     if (!name) {
       showToast('Nome do streamer é obrigatório', 'error')
@@ -41,7 +40,7 @@ export function setupAddStreamerModal(
     submitBtn.textContent = 'Buscando...'
     
     try {
-      const { user, streamerData, lastLive } = await prepareStreamerData(name, category)
+      const { user, streamerData, lastLive } = await prepareStreamerData(name)
       
       if (streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())) {
         throw new Error('Já cadastrado.')
@@ -65,7 +64,6 @@ export function setupAddStreamerModal(
       await loadData()
       renderAll()
       input.value = ''
-      ;(document.getElementById('streamerCategoryInput') as HTMLInputElement).value = ''
       document.getElementById('addStreamerModal')!.classList.add('hidden')
       showToast('Streamer adicionado!')
     } catch (err: unknown) {

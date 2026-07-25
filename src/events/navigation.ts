@@ -42,14 +42,14 @@ export function setupFiltersAndSort() {
 
   // Overview filters
   document.getElementById('search-overview')?.addEventListener('input', debouncedRenderOverview)
-  ;['country-filter', 'status-filter-overview', 'category-filter-overview'].forEach(id => {
+  ;['country-filter', 'status-filter-overview'].forEach(id => {
     const el = document.getElementById(id)
     el?.addEventListener('change', () => { setOverviewPage(1); renderOverview() })
   })
   
   // Table filters
   document.getElementById('search-table')?.addEventListener('input', debouncedRenderTable)
-  ;['country-filter-table', 'status-filter-table', 'category-filter-table'].forEach(id => {
+  ;['country-filter-table', 'status-filter-table'].forEach(id => {
     const el = document.getElementById(id)
     el?.addEventListener('change', () => { setTablePage(1); renderTable() })
   })

@@ -8,7 +8,6 @@ export const streamerSchema = z.object({
   peak_viewers: z.number().int().min(0).default(0),
   hours_watched: z.number().int().min(0).default(0),
   hours_streamed: z.number().int().min(0).default(0),
-  main_category: z.string().default(''),
 })
 
 // Campaign validation

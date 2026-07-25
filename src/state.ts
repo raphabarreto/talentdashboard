@@ -12,7 +12,6 @@ export let editingCampaignId: string | null = null
 
 // Cache de filtros
 let cachedCountries: string[] = []
-let cachedCategories: string[] = []
 let cacheInvalidated = true
 
 export function setStreamers(s: Streamer[]) { 
@@ -29,12 +28,4 @@ export function getCachedCountries(): string[] {
     cachedCountries = [...new Set(streamers.map(s => s.country).filter(Boolean))].sort()
   }
   return cachedCountries
-}
-
-export function getCachedCategories(): string[] {
-  if (cacheInvalidated || cachedCategories.length === 0) {
-    cachedCategories = [...new Set(streamers.map(s => s.main_category).filter(Boolean))].sort()
-    cacheInvalidated = false
-  }
-  return cachedCategories
 }

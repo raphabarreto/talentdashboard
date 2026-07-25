@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { setStreamers, getCachedCountries, getCachedCategories } from '../state'
+import { setStreamers, getCachedCountries } from '../state'
 import type { Streamer } from '../types/index'
 
 describe('State - Cache', () => {
   const mockStreamers: Streamer[] = [
-    { id: '1', name: 'Streamer1', country: 'br', main_category: 'Just Chatting', avg_viewers: 1000, peak_viewers: 2000, hours_watched: 10000, hours_streamed: 100, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
-    { id: '2', name: 'Streamer2', country: 'us', main_category: 'League of Legends', avg_viewers: 500, peak_viewers: 1000, hours_watched: 5000, hours_streamed: 50, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
-    { id: '3', name: 'Streamer3', country: 'br', main_category: 'Just Chatting', avg_viewers: 800, peak_viewers: 1500, hours_watched: 8000, hours_streamed: 80, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
+    { id: '1', name: 'Streamer1', country: 'br', avg_viewers: 1000, peak_viewers: 2000, hours_watched: 10000, hours_streamed: 100, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
+    { id: '2', name: 'Streamer2', country: 'us', avg_viewers: 500, peak_viewers: 1000, hours_watched: 5000, hours_streamed: 50, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
+    { id: '3', name: 'Streamer3', country: 'br', avg_viewers: 800, peak_viewers: 1500, hours_watched: 8000, hours_streamed: 80, last_live_at: new Date().toISOString(), created_at: new Date().toISOString() },
   ]
 
   beforeEach(() => {
@@ -42,21 +42,6 @@ describe('State - Cache', () => {
       
       expect(first).not.toBe(second)
       expect(second).toEqual(['br', 'es', 'us'])
-    })
-  })
-
-  describe('getCachedCategories', () => {
-    it('deve retornar categorias únicas ordenadas', () => {
-      setStreamers(mockStreamers)
-      const categories = getCachedCategories()
-      expect(categories).toEqual(['Just Chatting', 'League of Legends'])
-    })
-
-    it('deve usar cache na segunda chamada', () => {
-      setStreamers(mockStreamers)
-      const first = getCachedCategories()
-      const second = getCachedCategories()
-      expect(first).toBe(second)
     })
   })
 })

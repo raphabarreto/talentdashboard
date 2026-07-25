@@ -230,7 +230,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
           ])
           if (user) {
             const lang = user.broadcaster_language?.split('-')[0]
-            await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0, main_category: '' })
+            await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0 })
             const lastLive = await fetchLastLiveDate(user.id, user.login)
             if (lastLive) {
               const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data

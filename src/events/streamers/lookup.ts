@@ -3,7 +3,7 @@ import { addStreamer, updateLastLive } from '../../lib/data'
 import { streamers } from '../../state'
 import { showToast, fmt } from '../../utils'
 
-type PrepareStreamerData = (name: string, category?: string) => Promise<{
+type PrepareStreamerData = (name: string) => Promise<{
   user: any
   streamerData: any
   lastLive: string | null
