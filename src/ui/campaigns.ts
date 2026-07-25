@@ -1,6 +1,15 @@
 import { campaigns } from '../state'
 import { fmtDate, fmtCurrency, monthNames } from '../utils'
 
+/**
+ * Retorna a data usada para filtrar/agrupar a campanha por mês.
+ * Prioriza a data de pagamento (quando o dinheiro entrou de fato).
+ * Se ainda não foi paga, usa a data de início da campanha como fallback.
+ */
+export function getReferenceDate(c: { payment_date: string | null; start_date: string }): string | null {
+  return c.payment_date || c.start_date || null
+}
+
 export function renderCampaigns() {
   const tbody = document.getElementById('campaigns-body')!
   const monthVal = (document.getElementById('month-filter') as HTMLSelectElement).value
@@ -8,8 +17,9 @@ export function renderCampaigns() {
   tbody.innerHTML = ''
 
   const filtered = campaigns.filter(c => {
-    if (!c.start_date) return false
-    const [y, m] = c.start_date.split('-')
+    const refDate = getReferenceDate(c)
+    if (!refDate) return false
+    const [y, m] = refDate.split('-')
     const monthMatch = monthVal === 'all' || String(parseInt(m) - 1) === monthVal
     const yearMatch = yearVal === 'all' || y === yearVal
     return monthMatch && yearMatch
@@ -20,7 +30,8 @@ export function renderCampaigns() {
     const totalReceived = c.total_received || 0
     const totalPaid = c.total_paid || 0
     const myCommission = totalReceived - totalPaid
-    grandTotal += myCommission
+    const isLaunched = totalReceived > 0 || totalPaid > 0
+    if (isLaunched) grandTotal += myCommission
     const total = c.campaign_streamers?.length || 0
     const confirmed = c.campaign_streamers?.filter(s => s.contact_status === 'confirmado').length || 0
     const row = document.createElement('tr')
@@ -29,7 +40,8 @@ export function renderCampaigns() {
       <td class="p-4">${c.company}</td>
       <td class="p-4">${fmtDate(c.start_date)}</td>
       <td class="p-4">${fmtDate(c.end_date)}</td>
-      <td class="p-4 font-semibold${myCommission === 0 ? ' text-slate-500' : ''}">${myCommission === 0 ? '— <span class="text-xs font-normal">(não lançado)</span>' : fmtCurrency(myCommission)}</td>
+      <td class="p-4">${c.payment_date ? fmtDate(c.payment_date) : '<span class="text-slate-500">—</span>'}</td>
+      <td class="p-4 font-semibold">${!isLaunched ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/20 text-amber-400">Não lançado</span>' : fmtCurrency(myCommission)}</td>
       <td class="p-4">${total > 0 ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-emerald-500/20 text-emerald-400">${confirmed} confirmado${confirmed !== 1 ? 's' : ''}</span>` : '—'}</td>
       <td class="p-4 flex gap-3">
         <button class="text-amber-500 hover:text-amber-400 edit-campaign-btn" data-id="${c.id}" title="Editar"><i class="fas fa-pen"></i></button>
@@ -52,8 +64,9 @@ export function populateCampaignFilters() {
   years.add(now.getFullYear())
 
   campaigns.forEach(c => {
-    if (c.start_date) {
-      const [y, m] = c.start_date.split('-').map(Number)
+    const refDate = getReferenceDate(c)
+    if (refDate) {
+      const [y, m] = refDate.split('-').map(Number)
       months.add(m - 1)
       years.add(y)
     }
