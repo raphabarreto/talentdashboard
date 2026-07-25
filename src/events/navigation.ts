@@ -20,6 +20,7 @@ export function setupNav() {
         l.classList.toggle('text-slate-400', !active)
       })
       const streamerBtns = viewId === 'overview' || viewId === 'table'
+      document.getElementById('openLookup')!.classList.toggle('hidden', !streamerBtns)
       document.getElementById('addMultipleBtn')!.classList.toggle('hidden', !streamerBtns)
       document.getElementById('openAddStreamer')!.classList.toggle('hidden', !streamerBtns)
     })
