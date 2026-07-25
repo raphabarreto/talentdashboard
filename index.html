@@ -153,10 +153,15 @@
         </header>
 
         <!-- Botões de ação de streamers: movidos via JS para dentro da view ativa (Overview/Tabela) -->
-        <div id="streamerActionsTemplate" class="hidden flex flex-wrap gap-2">
-            <button id="openLookup" class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors"><i class="fas fa-search mr-1"></i>Lookup</button>
-            <button id="addMultipleBtn" class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Vários</button>
-            <button id="openAddStreamer" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Streamer</button>
+        <div id="streamerActionsTemplate" class="hidden flex flex-wrap gap-2 items-center">
+            <button id="openLookup" class="text-slate-400 hover:text-white p-2.5 rounded-lg transition-colors" title="Lookup de streamer"><i class="fas fa-search"></i></button>
+            <div class="relative">
+                <button id="openAddMenu" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar<i class="fas fa-chevron-down ml-2 text-xs"></i></button>
+                <div id="addMenuDropdown" class="dropdown-menu hidden absolute right-0 mt-1 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-20">
+                    <button id="openAddStreamer" class="w-full text-left px-4 py-3 text-white hover:bg-slate-700 transition-colors flex items-center gap-2"><i class="fas fa-user-plus w-4"></i>Adicionar Streamer</button>
+                    <button id="addMultipleBtn" class="w-full text-left px-4 py-3 text-white hover:bg-slate-700 transition-colors flex items-center gap-2"><i class="fas fa-layer-group w-4"></i>Adicionar Vários</button>
+                </div>
+            </div>
         </div>
 
         <!-- Navigation -->
