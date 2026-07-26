@@ -2,12 +2,110 @@ import { supabase } from '../lib/supabase'
 import { addStreamer, addCampaign, updateCampaign, deleteCampaign, updateContactStatus, getStreamers, updateLastLive } from '../lib/data'
 import { fetchTwitchUser, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
 import { streamers, campaigns, editingCampaignId, setCampaigns, setEditingCampaignId, setStreamers } from '../state'
-import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry, statusColors, selectColors } from '../utils'
+import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry } from '../utils'
 import { renderCampaigns } from '../ui/campaigns'
 import { campaignSchema } from '../lib/validators'
 import { logError, setButtonLoading } from '../lib/logger'
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void }
+
+// Estado local do modal de detalhes (não precisa ser global)
+let detailsActiveFilter: string = 'pendente'
+let detailsCampaignId: string | null = null
+function setDetailsCampaignId(id: string | null) { detailsCampaignId = id }
+
+const statusFinalBadge: Record<string, string> = {
+  confirmado: 'bg-emerald-500/20 text-emerald-400',
+  recusado: 'bg-red-500/20 text-red-400',
+  nao_respondeu: 'bg-orange-500/20 text-orange-400'
+}
+const statusChipClass: Record<string, string> = {
+  pendente: 'bg-slate-500/20 text-slate-300',
+  contatado: 'bg-amber-500/20 text-amber-400',
+  confirmado: 'bg-emerald-500/20 text-emerald-400',
+  recusado: 'bg-red-500/20 text-red-400',
+  nao_respondeu: 'bg-orange-500/20 text-orange-400'
+}
+const statusChipLabel: Record<string, string> = {
+  pendente: 'pendentes',
+  contatado: 'contatados',
+  confirmado: 'confirmados',
+  recusado: 'recusados',
+  nao_respondeu: 'não respondeu'
+}
+const statusOutline: Record<string, string> = {
+  pendente: 'outline-slate-400',
+  contatado: 'outline-amber-400',
+  confirmado: 'outline-emerald-400',
+  recusado: 'outline-red-400',
+  nao_respondeu: 'outline-orange-400',
+  all: 'outline-slate-400'
+}
+
+function renderDetailsChips(c: typeof campaigns[number]) {
+  const order = ['pendente', 'contatado', 'confirmado', 'nao_respondeu', 'recusado']
+  const counts: Record<string, number> = { pendente: 0, contatado: 0, confirmado: 0, recusado: 0, nao_respondeu: 0 }
+  c.campaign_streamers?.forEach(s => { counts[s.contact_status || 'pendente']++ })
+  const container = document.getElementById('detailsStatusChips')!
+  container.innerHTML = order.filter(k => counts[k] > 0).map(k =>
+    `<button data-filter="${k}" class="status-filter-btn px-3 py-1.5 rounded text-sm font-semibold ${statusChipClass[k]}">${counts[k]} ${statusChipLabel[k]}</button>`
+  ).join('')
+
+  const total = c.campaign_streamers?.length || 0
+  const jaContatados = total - counts.pendente
+  document.getElementById('detailsProgressText')!.textContent = total > 0 ? `${jaContatados} de ${total} já contatados` : ''
+  ;(document.getElementById('detailsProgressBar') as HTMLElement).style.width = total > 0 ? `${Math.round((jaContatados / total) * 100)}%` : '0%'
+  highlightActiveChip()
+}
+
+function highlightActiveChip() {
+  document.querySelectorAll('.status-filter-btn').forEach(b => b.classList.remove('outline', 'outline-2', 'outline-slate-400', 'outline-amber-400', 'outline-emerald-400', 'outline-red-400', 'outline-orange-400'))
+  const active = document.querySelector(`.status-filter-btn[data-filter="${detailsActiveFilter}"]`)
+  active?.classList.add('outline', 'outline-2', statusOutline[detailsActiveFilter])
+}
+
+function renderDetailsList(c: typeof campaigns[number]) {
+  const search = (document.getElementById('detailsSearch') as HTMLInputElement).value.toLowerCase()
+  const list = document.getElementById('detailsStreamers')!
+  const all = c.campaign_streamers || []
+  const filtered = all.filter(s => {
+    const st = s.contact_status || 'pendente'
+    const matchStatus = detailsActiveFilter === 'all' || st === detailsActiveFilter
+    const matchSearch = !search || s.streamer_name.toLowerCase().includes(search)
+    return matchStatus && matchSearch
+  })
+  list.innerHTML = ''
+  document.getElementById('detailsEmptyState')!.classList.toggle('hidden', filtered.length > 0)
+
+  filtered.forEach(s => {
+    const st = s.contact_status || 'pendente'
+    const row = document.createElement('div')
+    row.className = 'flex items-center justify-between gap-2 bg-slate-700/40 hover:bg-slate-700/70 rounded-lg px-3 py-2 transition-colors'
+    row.dataset.id = s.id
+
+    let actions = ''
+    if (st === 'pendente') {
+      actions = `
+        <button data-next="contatado" class="quick-status-btn text-sm font-semibold px-3 py-1.5 rounded bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 whitespace-nowrap"><i class="fas fa-paper-plane mr-1"></i>Marcar contatado</button>
+        <button data-next="recusado" class="quick-status-btn text-sm px-2 py-1.5 rounded bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400" title="Recusado"><i class="fas fa-times"></i></button>
+      `
+    } else if (st === 'contatado') {
+      actions = `
+        <button data-next="confirmado" class="quick-status-btn text-sm font-semibold px-3 py-1.5 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 whitespace-nowrap"><i class="fas fa-check mr-1"></i>Marcar confirmado</button>
+        <button data-next="nao_respondeu" class="quick-status-btn text-sm px-2 py-1.5 rounded bg-slate-700 text-slate-400 hover:bg-orange-500/20 hover:text-orange-400" title="Não respondeu"><i class="fas fa-clock"></i></button>
+        <button data-next="recusado" class="quick-status-btn text-sm px-2 py-1.5 rounded bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400" title="Recusado"><i class="fas fa-times"></i></button>
+      `
+    } else {
+      actions = `
+        <span class="text-sm font-semibold px-3 py-1.5 rounded ${statusFinalBadge[st] || 'bg-slate-500/20 text-slate-300'}">${st === 'nao_respondeu' ? 'Não respondeu' : st.charAt(0).toUpperCase() + st.slice(1)}</span>
+        <button data-next="pendente" class="quick-status-btn text-xs px-2 py-1 rounded text-slate-500 hover:text-slate-300" title="Desfazer"><i class="fas fa-undo"></i></button>
+      `
+    }
+
+    row.innerHTML = `<span class="text-white text-sm font-medium">${s.streamer_name}</span><span class="flex items-center gap-1.5">${actions}</span>`
+    list.appendChild(row)
+  })
+}
 
 export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
   // Delegated clicks for campaign buttons
@@ -40,6 +138,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     if (detailsBtn) {
       const c = campaigns.find(cp => cp.id === detailsBtn.dataset.id!)
       if (!c) return
+      setDetailsCampaignId(c.id)
       document.getElementById('detailsTitle')!.textContent = c.company
       document.getElementById('detailsCompany')!.textContent = c.company
       document.getElementById('detailsPeriod')!.textContent = `${fmtDate(c.start_date)} a ${fmtDate(c.end_date)}`
@@ -50,23 +149,12 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       document.getElementById('detailsCampaignValue')!.textContent = valueTxt
       document.getElementById('detailsCommission')!.textContent = fmtCurrency(myCommission)
       document.getElementById('detailsPaymentDate')!.textContent = c.payment_date ? fmtDate(c.payment_date) : 'Pendente'
-      const tbody = document.getElementById('detailsStreamers')!
-      tbody.innerHTML = ''
-      const statusOrder: Record<string, number> = { pendente: 0, contatado: 1, nao_respondeu: 2, confirmado: 3, recusado: 4 }
-      const counts = { pendente: 0, contatado: 0, nao_respondeu: 0, confirmado: 0, recusado: 0 }
-      const sorted = [...(c.campaign_streamers || [])].sort((a, b) => (statusOrder[a.contact_status || 'pendente'] || 0) - (statusOrder[b.contact_status || 'pendente'] || 0))
-      sorted.forEach(s => {
-        const st = s.contact_status || 'pendente'
-        counts[st as keyof typeof counts]++
-        tbody.innerHTML += `<tr class="hover:bg-slate-700/50" data-status="${st}"><td class="p-2">${s.streamer_name}</td><td class="p-2 text-right whitespace-nowrap"><select class="contact-status-select ${selectColors[st]} text-white text-sm rounded px-3 py-1.5 border border-slate-600 cursor-pointer" data-id="${s.id}"><option value="pendente"${st === 'pendente' ? ' selected' : ''}>Pendente</option><option value="contatado"${st === 'contatado' ? ' selected' : ''}>Contatado</option><option value="nao_respondeu"${st === 'nao_respondeu' ? ' selected' : ''}>Não respondeu</option><option value="confirmado"${st === 'confirmado' ? ' selected' : ''}>Confirmado</option><option value="recusado"${st === 'recusado' ? ' selected' : ''}>Recusado</option></select></td></tr>`
-      })
-      const summary = document.getElementById('detailsStatusSummary')!
-      summary.innerHTML = Object.entries(counts).filter(([,v]) => v > 0).map(([k,v]) => `<span class="${statusColors[k]} text-white px-2 py-1 rounded-full">${v} ${k}</span>`).join('')
+
+      const hasPending = c.campaign_streamers?.some(s => (s.contact_status || 'pendente') === 'pendente')
+      detailsActiveFilter = hasPending ? 'pendente' : 'all'
       ;(document.getElementById('detailsSearch') as HTMLInputElement).value = ''
-      document.querySelectorAll('.status-filter-btn').forEach(b => { b.className = 'status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300'; b.removeAttribute('data-active') })
-      const allBtn = document.querySelector('.status-filter-btn[data-filter="all"]')!
-      allBtn.className = 'status-filter-btn px-2 py-1 rounded bg-indigo-600 text-white'
-      allBtn.setAttribute('data-active', 'true')
+      renderDetailsChips(c)
+      renderDetailsList(c)
       document.getElementById('campaignDetailsModal')!.classList.remove('hidden')
     }
 
@@ -181,46 +269,48 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
 
   document.getElementById('campaignDetailsModal')?.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement
-    const btn = target.closest('.status-filter-btn') as HTMLElement | null
-    if (btn) {
-      document.querySelectorAll('.status-filter-btn').forEach(b => { b.className = 'status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300'; b.removeAttribute('data-active') })
-      btn.className = 'status-filter-btn px-2 py-1 rounded bg-indigo-600 text-white'
-      btn.setAttribute('data-active', 'true')
-      filterDetailsStreamers()
+
+    // Filtro por chip de status
+    const filterBtn = target.closest('.status-filter-btn') as HTMLElement | null
+    if (filterBtn) {
+      detailsActiveFilter = filterBtn.dataset.filter!
+      highlightActiveChip()
+      const c = campaigns.find(cp => cp.id === detailsCampaignId)
+      if (c) renderDetailsList(c)
+      return
+    }
+
+    // Ação rápida de status (substitui o select)
+    const quickBtn = target.closest('.quick-status-btn') as HTMLElement | null
+    if (quickBtn) {
+      const row = quickBtn.closest('[data-id]') as HTMLElement
+      const id = row.dataset.id!
+      const newStatus = quickBtn.dataset.next as any
+      await applyContactStatus(id, newStatus)
     }
   })
 
-  document.getElementById('detailsSearch')?.addEventListener('input', filterDetailsStreamers)
+  document.getElementById('detailsSearch')?.addEventListener('input', () => {
+    const c = campaigns.find(cp => cp.id === detailsCampaignId)
+    if (c) renderDetailsList(c)
+  })
 
-  // Contact status change
-  document.getElementById('campaignDetailsModal')?.addEventListener('change', async (e) => {
-    const select = e.target as HTMLSelectElement
-    if (!select.classList.contains('contact-status-select')) return
-    const newStatus = select.value as any
-    const id = select.dataset.id!
-
-    select.className = `contact-status-select ${selectColors[newStatus]} text-white text-sm rounded px-3 py-1.5 border border-slate-600 cursor-pointer`
-    select.closest('tr')!.setAttribute('data-status', newStatus)
-
+  async function applyContactStatus(id: string, newStatus: string) {
     const idx = campaigns.findIndex(c => c.campaign_streamers?.some(s => s.id === id))
-    if (idx >= 0) {
-      const s = campaigns[idx].campaign_streamers!.find(s => s.id === id)!
-      s.contact_status = newStatus
-    }
+    if (idx < 0) return
+    const s = campaigns[idx].campaign_streamers!.find(s => s.id === id)!
+    s.contact_status = newStatus as any
 
-    const counts = { pendente: 0, contatado: 0, confirmado: 0, recusado: 0 }
-    const statusColors: Record<string, string> = { pendente: 'bg-slate-500', contatado: 'bg-amber-500', confirmado: 'bg-emerald-500', recusado: 'bg-red-500' }
-    if (idx >= 0) campaigns[idx].campaign_streamers?.forEach(s => { counts[(s.contact_status || 'pendente') as keyof typeof counts]++ })
-    document.getElementById('detailsStatusSummary')!.innerHTML = Object.entries(counts).filter(([,v]) => v > 0).map(([k,v]) => `<span class="${statusColors[k]} text-white px-2 py-1 rounded-full">${v} ${k}</span>`).join('')
-    filterDetailsStreamers()
+    const c = campaigns[idx]
+    renderDetailsChips(c)
+    renderDetailsList(c)
     renderCampaigns()
 
-    try { await updateContactStatus(id, newStatus) }
+    try { await updateContactStatus(id, newStatus as any) }
     catch { showToast('Erro ao salvar status', 'error'); return }
 
     // Auto-register streamer when confirmed
-    if (newStatus === 'confirmado' && idx >= 0) {
-      const s = campaigns[idx].campaign_streamers!.find(s => s.id === id)!
+    if (newStatus === 'confirmado') {
       if (!streamers.some(st => st.name.toLowerCase() === s.streamer_name.toLowerCase())) {
         try {
           // fetchInitialStats não depende do resultado de fetchTwitchUser, dispara em paralelo
@@ -242,20 +332,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       }
     }
     showToast('Status atualizado!')
-  })
-}
-
-function filterDetailsStreamers() {
-  const activeBtn = document.querySelector('.status-filter-btn[data-active="true"]') as HTMLElement | null
-  const filter = activeBtn?.dataset.filter || 'all'
-  const search = (document.getElementById('detailsSearch') as HTMLInputElement).value.toLowerCase()
-  document.querySelectorAll('#detailsStreamers tr').forEach(row => {
-    const name = row.querySelector('td')!.textContent!.toLowerCase()
-    const status = row.getAttribute('data-status')
-    const matchStatus = filter === 'all' || status === filter
-    const matchSearch = !search || name.includes(search)
-    ;(row as HTMLElement).style.display = matchStatus && matchSearch ? '' : 'none'
-  })
+  }
 }
 
 // Autocomplete de streamers já cadastrados no dashboard, aplicado à linha atual da textarea

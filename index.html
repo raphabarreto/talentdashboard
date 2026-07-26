@@ -343,20 +343,20 @@
                     <p id="detailsPaymentDate" class="text-white font-bold"></p>
                 </div>
             </div>
-            <div id="detailsStatusSummary" class="flex gap-2 flex-wrap mb-3 text-xs"></div>
-            <div class="flex gap-2 mb-3 text-xs">
-                <button class="status-filter-btn px-2 py-1 rounded bg-indigo-600 text-white" data-filter="all">Todos</button>
-                <button class="status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300" data-filter="pendente">Pendentes</button>
-                <button class="status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300" data-filter="contatado">Contatados</button>
-                <button class="status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300" data-filter="nao_respondeu">Não respondeu</button>
-                <button class="status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300" data-filter="confirmado">Confirmados</button>
-                <button class="status-filter-btn px-2 py-1 rounded bg-slate-600 text-slate-300" data-filter="recusado">Recusados</button>
+            <div id="detailsProgressText" class="text-slate-400 text-xs mb-1"></div>
+            <div class="w-full h-2 bg-slate-700 rounded-full mb-4 overflow-hidden">
+                <div id="detailsProgressBar" class="h-full bg-emerald-500 transition-all" style="width: 0%"></div>
+            </div>
+            <div class="flex items-center justify-between gap-2 mb-3">
+                <div id="detailsStatusChips" class="flex gap-2 flex-wrap"></div>
+                <button class="status-filter-btn shrink-0 px-3 py-1.5 rounded text-sm font-semibold bg-slate-700 text-slate-300" data-filter="all">Ver todos</button>
             </div>
             <input id="detailsSearch" type="text" placeholder="Buscar streamer..." class="w-full mb-3 px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-            <table class="w-full text-sm text-left">
-                <thead class="border-b border-slate-600 text-slate-400"><tr><th class="p-2">Streamer</th><th class="p-2 text-right">Status</th></tr></thead>
-                <tbody id="detailsStreamers" class="divide-y divide-slate-700"></tbody>
-            </table>
+            <div id="detailsStreamers" class="space-y-1.5"></div>
+            <p id="detailsEmptyState" class="hidden text-center text-slate-500 text-sm py-8">
+                <i class="fas fa-check-circle text-emerald-500 text-2xl block mb-2"></i>
+                Nenhum streamer nesse filtro
+            </p>
             <button id="closeDetailsModal" class="mt-4 w-full py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>
         </div>
     </div>
