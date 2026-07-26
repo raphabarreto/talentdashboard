@@ -155,13 +155,7 @@
         <!-- Botões de ação de streamers: movidos via JS para dentro da view ativa (Overview/Tabela) -->
         <div id="streamerActionsTemplate" class="hidden flex flex-wrap gap-2 items-center">
             <button id="openLookup" class="text-slate-400 hover:text-white p-2.5 rounded-lg transition-colors" title="Lookup de streamer"><i class="fas fa-search"></i></button>
-            <div class="relative">
-                <button id="openAddMenu" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar<i class="fas fa-chevron-down ml-2 text-xs"></i></button>
-                <div id="addMenuDropdown" class="dropdown-menu hidden absolute right-0 mt-1 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-20">
-                    <button id="openAddStreamer" class="w-full text-left px-4 py-3 text-white hover:bg-slate-700 transition-colors flex items-center gap-2"><i class="fas fa-user-plus w-4"></i>Adicionar Streamer</button>
-                    <button id="addMultipleBtn" class="w-full text-left px-4 py-3 text-white hover:bg-slate-700 transition-colors flex items-center gap-2"><i class="fas fa-layer-group w-4"></i>Adicionar Vários</button>
-                </div>
-            </div>
+            <button id="addMultipleBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Streamer</button>
         </div>
 
         <!-- Navigation -->
@@ -256,27 +250,12 @@
         <section id="view-prospecting" class="view hidden"></section>
     </div>
 
-    <!-- Modal: Adicionar Streamer -->
-    <div id="addStreamerModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-sm">
-            <h3 class="text-lg font-bold text-white mb-4">Adicionar Streamer</h3>
-            <form id="addStreamerForm" class="space-y-4">
-                <input id="streamerNameInput" type="text" placeholder="Nome do streamer na Twitch" required
-                    class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <div class="flex gap-3">
-                    <button type="submit" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">Buscar e Salvar</button>
-                    <button type="button" id="closeAddStreamer" class="flex-1 py-3 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal: Adicionar Vários -->
+    <!-- Modal: Adicionar Streamer(s) -->
     <div id="addMultipleModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-sm">
-            <h3 class="text-lg font-bold text-white mb-4">Adicionar Vários Streamers</h3>
+            <h3 class="text-lg font-bold text-white mb-4">Adicionar Streamer</h3>
             <textarea id="multipleNamesInput" rows="8" placeholder="Um por linha: nome ou nome - URL&#10;Ex: gaules&#10;alanzoka&#10;https://twitch.tv/yoda" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></textarea>
-            <p class="text-xs text-slate-500 mt-1">Máximo de 50 streamers por vez</p>
+            <p class="text-xs text-slate-500 mt-1">Máximo de 50 streamers por vez · <kbd class="px-1 py-0.5 bg-slate-700 rounded text-slate-400">Ctrl</kbd>+<kbd class="px-1 py-0.5 bg-slate-700 rounded text-slate-400">Enter</kbd> para salvar</p>
             <p id="multipleProgress" class="text-sm text-slate-400 mt-2 hidden"></p>
             <div class="flex gap-3 mt-4">
                 <button id="saveMultipleBtn" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">Buscar e Salvar</button>

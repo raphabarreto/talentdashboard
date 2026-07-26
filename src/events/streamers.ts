@@ -5,7 +5,6 @@ import { exportStreamersToCSV } from '../lib/export'
 import { streamers, selectedStreamers, setStreamers } from '../state'
 import { showToast, confirmAction, fmt, langToCountry } from '../utils'
 import { getFilteredStreamers } from '../ui/filters'
-import { setupAddStreamerModal } from './streamers/addStreamer'
 import { setupLookupModal } from './streamers/lookup'
 import { MAX_STREAMERS_BATCH, TWITCH_API_BATCH_SIZE } from '../constants'
 
@@ -39,7 +38,6 @@ async function prepareStreamerData(name: string) {
 
 export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callbacks) {
   // Configurar modais (extraídos para arquivos separados)
-  setupAddStreamerModal(prepareStreamerData, { loadData, renderAll })
   setupLookupModal(prepareStreamerData, { loadData, renderAll })
   // Delete streamer + history (delegated click)
   document.addEventListener('click', async (e) => {
@@ -74,6 +72,13 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
   // Add Multiple
   document.getElementById('addMultipleBtn')?.addEventListener('click', () => document.getElementById('addMultipleModal')!.classList.remove('hidden'))
   document.getElementById('closeMultipleModal')?.addEventListener('click', () => document.getElementById('addMultipleModal')!.classList.add('hidden'))
+  document.getElementById('multipleNamesInput')?.addEventListener('keydown', (e) => {
+    const evt = e as KeyboardEvent
+    if ((evt.ctrlKey || evt.metaKey) && evt.key === 'Enter') {
+      evt.preventDefault()
+      document.getElementById('saveMultipleBtn')?.click()
+    }
+  })
   document.getElementById('saveMultipleBtn')?.addEventListener('click', async () => {
     const textarea = document.getElementById('multipleNamesInput') as HTMLTextAreaElement
     const names = textarea.value.split('\n').map(line => {

@@ -96,17 +96,6 @@ export function setupGlobalEvents() {
     }
   })
 
-  // Add menu dropdown (Adicionar Streamer / Adicionar Vários)
-  document.getElementById('openAddMenu')?.addEventListener('click', (e) => {
-    e.stopPropagation()
-    document.getElementById('addMenuDropdown')!.classList.toggle('hidden')
-  })
-  ;['openAddStreamer', 'addMultipleBtn'].forEach(id => {
-    document.getElementById(id)?.addEventListener('click', () => {
-      document.getElementById('addMenuDropdown')!.classList.add('hidden')
-    })
-  })
-
   // Logout
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     if (await confirmAction('Deseja sair?', 'Sair')) signOut()
