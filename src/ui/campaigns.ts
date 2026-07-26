@@ -43,7 +43,16 @@ export function renderCampaigns() {
   })
 
   document.getElementById('monthly-total')!.textContent = fmtCurrency(grandTotal)
+  document.getElementById('monthly-total-label')!.textContent = buildTotalLabel(monthVal, yearVal)
   populateCampaignFilters()
+}
+
+function buildTotalLabel(monthVal: string, yearVal: string): string {
+  if (monthVal === 'all' && yearVal === 'all') return 'Meu Valor Total (Geral)'
+  if (monthVal === 'all') return `Meu Valor Total — ${yearVal}`
+  const monthLabel = monthNames[parseInt(monthVal)]
+  if (yearVal === 'all') return `Meu Valor Total — ${monthLabel}`
+  return `Meu Valor Total — ${monthLabel}/${yearVal}`
 }
 
 export function populateCampaignFilters() {

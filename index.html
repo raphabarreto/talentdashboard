@@ -219,13 +219,13 @@
         <section id="view-campaigns" class="view hidden">
             <div class="flex flex-wrap gap-4 mb-6 items-center justify-between">
                 <div class="flex flex-wrap gap-4">
-                    <select id="month-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-[220px]"><option value="all">Todos os Meses</option></select>
-                    <select id="year-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-[160px]"><option value="all">Todos os Anos</option></select>
+                    <select id="month-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-auto"><option value="all">Todos os Meses</option></select>
+                    <select id="year-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-auto"><option value="all">Todos os Anos</option></select>
                 </div>
                 <button id="openAddCampaignInline" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Campanha</button>
             </div>
             <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-6">
-                <p class="text-slate-400 text-sm">Meu Valor Total do Mês</p>
+                <p id="monthly-total-label" class="text-slate-400 text-sm">Meu Valor Total do Mês</p>
                 <p id="monthly-total" class="text-2xl font-bold text-indigo-400">R$ 0,00</p>
             </div>
             <div class="overflow-x-auto rounded-lg border border-slate-700">
