@@ -76,7 +76,7 @@ export async function updateCampaign(id: string, campaign: Partial<Campaign>, st
     const statusMap = new Map((existing || []).map(e => [e.streamer_name.toLowerCase(), e.contact_status]))
     await supabase.from('campaign_streamers').delete().eq('campaign_id', id)
     if (streamers.length > 0) {
-      const rows = streamers.map(s => ({ ...s, campaign_id: id, contact_status: statusMap.get(s.streamer_name.toLowerCase()) || s.contact_status || 'pendente' }))
+      const rows = streamers.map(s => ({ ...s, campaign_id: id, contact_status: s.contact_status || statusMap.get(s.streamer_name.toLowerCase()) || 'pendente' }))
       await supabase.from('campaign_streamers').insert(rows)
     }
   }
