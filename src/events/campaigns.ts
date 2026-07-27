@@ -170,15 +170,6 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     }
   })
 
-  // Auto-calculate 80% for streamers when typing total received
-  document.getElementById('totalReceivedInput')?.addEventListener('input', (e) => {
-    const input = e.target as HTMLInputElement
-    const raw = input.value.replace(/\./g, '').replace(/,/g, '.')
-    const total = Number(raw) || 0
-    const streamersPart = Math.round(total * 0.8 * 100) / 100
-    ;(document.getElementById('totalPaidInput') as HTMLInputElement).value = streamersPart > 0 ? streamersPart.toFixed(2).replace('.', ',') : ''
-  })
-
   // Campaign form
   document.getElementById('openAddCampaignInline')?.addEventListener('click', () => {
     setEditingCampaignId(null)
