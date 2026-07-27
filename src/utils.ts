@@ -33,6 +33,17 @@ export const fmt = (n: number) => n.toLocaleString('pt-BR')
 export const fmtCurrency = (n: number) => `R$ ${n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
 export const fmtDate = (d: string) => { if (!d) return '-'; const [y, m, day] = d.split('-'); return `${day}/${m}/${y}` }
 
+// Remove qualquer caractere que não seja dígito, ponto (milhar) ou vírgula (decimal),
+// mantendo apenas uma vírgula decimal. Usado para bloquear letras/símbolos em campos de valor.
+export function sanitizeCurrencyInput(value: string): string {
+  let sanitized = value.replace(/[^0-9.,]/g, '')
+  const firstComma = sanitized.indexOf(',')
+  if (firstComma !== -1) {
+    sanitized = sanitized.slice(0, firstComma + 1) + sanitized.slice(firstComma + 1).replace(/,/g, '')
+  }
+  return sanitized
+}
+
 export function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
   let timeout: number
   return ((...args: any[]) => {

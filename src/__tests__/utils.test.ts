@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { debounce } from '../utils'
+import { debounce, sanitizeCurrencyInput } from '../utils'
 
 describe('Utils', () => {
   beforeEach(() => {
@@ -42,6 +42,25 @@ describe('Utils', () => {
       vi.advanceTimersByTime(300)
       
       expect(fn).toHaveBeenCalledWith('arg1', 'arg2')
+    })
+  })
+
+  describe('sanitizeCurrencyInput', () => {
+    it('deve remover letras e símbolos, mantendo dígitos', () => {
+      expect(sanitizeCurrencyInput('abc123')).toBe('123')
+      expect(sanitizeCurrencyInput('R$ 100')).toBe('100')
+    })
+
+    it('deve manter pontos (milhar) e vírgula (decimal)', () => {
+      expect(sanitizeCurrencyInput('1.234,56')).toBe('1.234,56')
+    })
+
+    it('deve permitir apenas uma vírgula decimal', () => {
+      expect(sanitizeCurrencyInput('12,34,56')).toBe('12,3456')
+    })
+
+    it('deve remover espaços e caracteres inválidos misturados com números', () => {
+      expect(sanitizeCurrencyInput('1 2 3 abc')).toBe('123')
     })
   })
 })

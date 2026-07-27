@@ -23,6 +23,7 @@ export const campaignSchema = z.object({
   }, 'Data de fim inválida'),
   total_received: z.number().min(0, 'Valor total deve ser positivo').default(0),
   total_paid: z.number().min(0, 'Pagamento deve ser positivo').default(0),
+  my_commission: z.number().min(0, 'Comissão deve ser positiva').default(0),
   currency: z.enum(['BRL', 'USD']).default('BRL'),
   payment_date: z.string().nullable().default(null),
 }).refine((data) => new Date(data.end_date) >= new Date(data.start_date), {
@@ -33,6 +34,12 @@ export const campaignSchema = z.object({
   return new Date(data.payment_date) >= new Date(data.start_date)
 }, {
   message: 'Data de pagamento não pode ser antes da data de início',
+  path: ['payment_date'],
+}).refine((data) => {
+  if (!data.payment_date) return true
+  return new Date(data.payment_date) >= new Date(data.end_date)
+}, {
+  message: 'Data de pagamento não pode ser antes da data de fim da campanha',
   path: ['payment_date'],
 })
 

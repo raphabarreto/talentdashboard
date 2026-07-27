@@ -7,7 +7,7 @@ Dashboard para acompanhamento de streamers da Twitch. Monitora métricas como vi
 ## ✨ Features
 
 - 📊 **Dashboard de Streamers**: Visualização em cards e tabelas
-- 💰 **Gestão de Campanhas**: Cálculo automático de comissão (80/20)
+- 💰 **Gestão de Campanhas**: Comissão informada manualmente por campanha
 - 📥 **Exportação CSV**: Exporte campanhas e streamers para planilhas
 - 🔐 **Autenticação**: Google OAuth com emails permitidos
 - 📈 **Coleta Automática**: Snapshots a cada 15 minutos
@@ -95,7 +95,7 @@ npm run test:run     # Roda testes uma vez
 
 O projeto possui 24 testes automatizados que cobrem:
 - ✅ Validação de dados (Zod schemas)
-- ✅ Cálculos de comissão (80/20)
+- ✅ Cálculos de comissão
 - ✅ Debounce e cache de filtros
 - ✅ Exportação CSV
 - ✅ Regras de negócio críticas

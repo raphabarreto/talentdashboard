@@ -9,6 +9,7 @@ describe('Campaign Validation', () => {
       end_date: '2026-06-30',
       total_received: 9000,
       total_paid: 7200,
+      my_commission: 1800,
       currency: 'BRL' as const,
       payment_date: null,
     }
@@ -24,6 +25,7 @@ describe('Campaign Validation', () => {
       end_date: '2026-06-30',
       total_received: 9000,
       total_paid: 7200,
+      my_commission: 1800,
       currency: 'BRL' as const,
       payment_date: null,
     }
@@ -39,6 +41,7 @@ describe('Campaign Validation', () => {
       end_date: '2026-06-01',
       total_received: 9000,
       total_paid: 7200,
+      my_commission: 1800,
       currency: 'BRL' as const,
       payment_date: null,
     }
@@ -54,12 +57,61 @@ describe('Campaign Validation', () => {
       end_date: '2026-06-30',
       total_received: -100,
       total_paid: 7200,
+      my_commission: 1800,
       currency: 'BRL' as const,
       payment_date: null,
     }
     
     const result = campaignSchema.safeParse(invalidCampaign)
     expect(result.success).toBe(false)
+  })
+
+  it('should reject payment_date before start_date', () => {
+    const invalidCampaign = {
+      company: 'Test',
+      start_date: '2026-06-10',
+      end_date: '2026-06-30',
+      total_received: 9000,
+      total_paid: 7200,
+      my_commission: 1800,
+      currency: 'BRL' as const,
+      payment_date: '2026-06-05',
+    }
+
+    const result = campaignSchema.safeParse(invalidCampaign)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject payment_date before end_date', () => {
+    const invalidCampaign = {
+      company: 'Test',
+      start_date: '2026-06-01',
+      end_date: '2026-06-30',
+      total_received: 9000,
+      total_paid: 7200,
+      my_commission: 1800,
+      currency: 'BRL' as const,
+      payment_date: '2026-06-15',
+    }
+
+    const result = campaignSchema.safeParse(invalidCampaign)
+    expect(result.success).toBe(false)
+  })
+
+  it('should accept payment_date equal to or after end_date', () => {
+    const validCampaign = {
+      company: 'Test',
+      start_date: '2026-06-01',
+      end_date: '2026-06-30',
+      total_received: 9000,
+      total_paid: 7200,
+      my_commission: 1800,
+      currency: 'BRL' as const,
+      payment_date: '2026-06-30',
+    }
+
+    const result = campaignSchema.safeParse(validCampaign)
+    expect(result.success).toBe(true)
   })
 })
 

@@ -19,7 +19,7 @@ export function renderCampaigns() {
   filtered.forEach(c => {
     const totalReceived = c.total_received || 0
     const totalPaid = c.total_paid || 0
-    const myCommission = totalReceived - totalPaid
+    const myCommission = c.my_commission || 0
     const isLaunched = totalReceived > 0 || totalPaid > 0
     if (isLaunched) grandTotal += myCommission
     const total = c.campaign_streamers?.length || 0

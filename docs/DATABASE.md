@@ -70,12 +70,13 @@ Campanhas comerciais com empresas.
 | `end_date` | date | Data de fim |
 | `total_received` | numeric | Valor total recebido da empresa |
 | `total_paid` | numeric | Valor total pago aos streamers |
+| `my_commission` | numeric | Comissão informada manualmente |
 | `currency` | text | Moeda (`BRL` ou `USD`) |
 | `commission_percentage` | numeric | Percentual de comissão (deprecated) |
 | `payment_date` | date | Data que você recebeu o pagamento |
 | `created_at` | timestamptz | Data de criação |
 
-**Cálculo de comissão:** `total_received - total_paid`
+**Comissão:** informada manualmente no campo `my_commission` (não é mais calculada automaticamente).
 
 ---
 

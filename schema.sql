@@ -91,6 +91,7 @@ create table campaigns (
   end_date date not null,
   total_received numeric default 0,
   total_paid numeric default 0,
+  my_commission numeric default 0,
   currency text default 'BRL' check (currency in ('BRL', 'USD')),
   commission_percentage numeric default 20,
   payment_date date,

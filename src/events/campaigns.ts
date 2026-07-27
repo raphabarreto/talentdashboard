@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase'
 import { addStreamer, addCampaign, updateCampaign, deleteCampaign, updateContactStatus, getStreamers, updateLastLive } from '../lib/data'
 import { fetchTwitchUser, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
 import { streamers, campaigns, editingCampaignId, setCampaigns, setEditingCampaignId, setStreamers } from '../state'
-import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry } from '../utils'
+import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry, sanitizeCurrencyInput } from '../utils'
 import { renderCampaigns } from '../ui/campaigns'
 import { campaignSchema } from '../lib/validators'
 import { logError, setButtonLoading } from '../lib/logger'
@@ -126,6 +126,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       ;(document.getElementById('endDateInput') as HTMLInputElement).value = c.end_date
       ;(document.getElementById('totalReceivedInput') as HTMLInputElement).value = c.total_received ? c.total_received.toFixed(2).replace('.', ',') : ''
       ;(document.getElementById('totalPaidInput') as HTMLInputElement).value = c.total_paid ? c.total_paid.toFixed(2).replace('.', ',') : ''
+      ;(document.getElementById('myCommissionInput') as HTMLInputElement).value = c.my_commission ? c.my_commission.toFixed(2).replace('.', ',') : ''
       ;(document.getElementById('currencyInput') as HTMLSelectElement).value = c.currency || 'BRL'
       ;(document.getElementById('paymentDateInput') as HTMLInputElement).value = c.payment_date || ''
       ;(document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value = c.campaign_streamers?.map(s => s.streamer_name).join('\n') || ''
@@ -143,8 +144,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       document.getElementById('detailsCompany')!.textContent = c.company
       document.getElementById('detailsPeriod')!.textContent = `${fmtDate(c.start_date)} a ${fmtDate(c.end_date)}`
       const totalReceived = c.total_received || 0
-      const totalPaid = c.total_paid || 0
-      const myCommission = totalReceived - totalPaid
+      const myCommission = c.my_commission || 0
       const valueTxt = c.currency === 'USD' ? `US$ ${totalReceived.toFixed(2)}` : fmtCurrency(totalReceived)
       document.getElementById('detailsCampaignValue')!.textContent = valueTxt
       document.getElementById('detailsCommission')!.textContent = fmtCurrency(myCommission)
@@ -170,6 +170,22 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     }
   })
 
+  // Bloqueia caracteres não numéricos nos campos de valor (permite apenas dígitos e vírgula decimal)
+  ;['totalReceivedInput', 'totalPaidInput', 'myCommissionInput'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', (e) => {
+      const input = e.target as HTMLInputElement
+      const sanitized = sanitizeCurrencyInput(input.value)
+      if (sanitized !== input.value) input.value = sanitized
+    })
+  })
+
+  // Data de pagamento não pode ser antes da data de fim da campanha
+  document.getElementById('endDateInput')?.addEventListener('change', (e) => {
+    const endDate = (e.target as HTMLInputElement).value
+    const paymentDateInput = document.getElementById('paymentDateInput') as HTMLInputElement
+    if (endDate) paymentDateInput.min = endDate
+  })
+
   // Campaign form
   document.getElementById('openAddCampaignInline')?.addEventListener('click', () => {
     setEditingCampaignId(null)
@@ -192,6 +208,8 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     const totalReceived = Number(totalReceivedRaw) || 0
     const totalPaidRaw = (document.getElementById('totalPaidInput') as HTMLInputElement).value.replace(/\./g, '').replace(/,/g, '.')
     const totalPaid = Number(totalPaidRaw) || 0
+    const myCommissionRaw = (document.getElementById('myCommissionInput') as HTMLInputElement).value.replace(/\./g, '').replace(/,/g, '.')
+    const myCommission = Number(myCommissionRaw) || 0
     const currency = (document.getElementById('currencyInput') as HTMLSelectElement).value as 'BRL' | 'USD'
     const paymentDate = (document.getElementById('paymentDateInput') as HTMLInputElement).value || null
 
@@ -202,6 +220,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       end_date: endDate,
       total_received: totalReceived,
       total_paid: totalPaid,
+      my_commission: myCommission,
       currency,
       payment_date: paymentDate,
     })
@@ -228,10 +247,10 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
 
     try {
       if (editingCampaignId) {
-        await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, currency, payment_date: paymentDate }, streamerRows)
+        await updateCampaign(editingCampaignId, { company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, my_commission: myCommission, currency, payment_date: paymentDate }, streamerRows)
         showToast('Campanha atualizada!')
       } else {
-        await addCampaign({ company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, currency, payment_date: paymentDate }, streamerRows)
+        await addCampaign({ company, start_date: startDate, end_date: endDate, total_received: totalReceived, total_paid: totalPaid, my_commission: myCommission, currency, payment_date: paymentDate }, streamerRows)
         showToast('Campanha adicionada!')
       }
 
