@@ -18,9 +18,8 @@ export function renderCampaigns() {
   let grandTotal = 0
   filtered.forEach(c => {
     const totalReceived = c.total_received || 0
-    const totalPaid = c.total_paid || 0
     const myCommission = c.my_commission || 0
-    const isLaunched = totalReceived > 0 || totalPaid > 0
+    const isLaunched = totalReceived > 0
     if (isLaunched) grandTotal += myCommission
     const total = c.campaign_streamers?.length || 0
     const confirmed = c.campaign_streamers?.filter(s => s.contact_status === 'confirmado').length || 0

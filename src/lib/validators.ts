@@ -22,7 +22,6 @@ export const campaignSchema = z.object({
     return !isNaN(d.getTime()) && d.getFullYear() >= 2020 && d.getFullYear() <= 2030
   }, 'Data de fim inválida'),
   total_received: z.number().min(0, 'Valor total deve ser positivo').default(0),
-  total_paid: z.number().min(0, 'Pagamento deve ser positivo').default(0),
   my_commission: z.number().min(0, 'Comissão deve ser positiva').default(0),
   currency: z.enum(['BRL', 'USD']).default('BRL'),
   payment_date: z.string().nullable().default(null),

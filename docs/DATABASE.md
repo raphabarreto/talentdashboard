@@ -69,7 +69,6 @@ Campanhas comerciais com empresas.
 | `start_date` | date | Data de início |
 | `end_date` | date | Data de fim |
 | `total_received` | numeric | Valor total recebido da empresa |
-| `total_paid` | numeric | Valor total pago aos streamers |
 | `my_commission` | numeric | Comissão informada manualmente |
 | `currency` | text | Moeda (`BRL` ou `USD`) |
 | `commission_percentage` | numeric | Percentual de comissão (deprecated) |
@@ -114,8 +113,8 @@ create policy "Allow all for authenticated users"
 Para adicionar/alterar colunas, crie um arquivo em `migrations/`:
 
 ```sql
--- migrations/2026_06_25_add_total_paid.sql
-ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS total_paid NUMERIC DEFAULT 0;
+-- migrations/2026_07_26_add_my_commission.sql
+ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS my_commission NUMERIC DEFAULT 0;
 ```
 
 Execute no SQL Editor do Supabase.

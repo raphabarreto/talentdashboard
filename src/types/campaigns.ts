@@ -7,7 +7,6 @@ export interface Campaign {
   start_date: string
   end_date: string
   total_received: number
-  total_paid: number
   my_commission: number
   currency: 'BRL' | 'USD'
   payment_date: string | null
