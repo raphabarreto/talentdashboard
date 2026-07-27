@@ -68,7 +68,7 @@ Campanhas comerciais com empresas.
 | `company` | text | Nome da empresa/marca |
 | `start_date` | date | Data de início |
 | `end_date` | date | Data de fim |
-| `total_received` | numeric | Valor total recebido da empresa |
+| `total_received` | numeric | Valor da campanha (exibido como "Valor da Campanha") |
 | `my_commission` | numeric | Comissão informada manualmente |
 | `currency` | text | Moeda (`BRL` ou `USD`) |
 | `commission_percentage` | numeric | Percentual de comissão (deprecated) |
