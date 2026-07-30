@@ -3,6 +3,7 @@ import { fmtDate, fmtCurrency, monthNames } from '../utils'
 
 export function renderCampaigns() {
   const tbody = document.getElementById('campaigns-body')!
+  populateCampaignFilters()
   const monthVal = (document.getElementById('month-filter') as HTMLSelectElement).value
   const yearVal = (document.getElementById('year-filter') as HTMLSelectElement).value
   tbody.innerHTML = ''
@@ -43,7 +44,6 @@ export function renderCampaigns() {
 
   document.getElementById('monthly-total')!.textContent = fmtCurrency(grandTotal)
   document.getElementById('monthly-total-label')!.textContent = buildTotalLabel(monthVal, yearVal)
-  populateCampaignFilters()
 }
 
 function buildTotalLabel(monthVal: string, yearVal: string): string {
