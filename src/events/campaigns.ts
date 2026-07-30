@@ -126,7 +126,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       ;(document.getElementById('endDateInput') as HTMLInputElement).value = c.end_date
       ;(document.getElementById('totalReceivedInput') as HTMLInputElement).value = c.total_received ? c.total_received.toFixed(2).replace('.', ',') : ''
       ;(document.getElementById('myCommissionInput') as HTMLInputElement).value = c.my_commission ? c.my_commission.toFixed(2).replace('.', ',') : ''
-      ;(document.getElementById('currencyInput') as HTMLSelectElement).value = c.currency || 'BRL'
+      ;(document.getElementById('currencyInput') as HTMLSelectElement).value = c.currency || 'USD'
       ;(document.getElementById('paymentDateInput') as HTMLInputElement).value = c.payment_date || ''
       ;(document.getElementById('campaignStreamersInput') as HTMLTextAreaElement).value = c.campaign_streamers?.map(s => s.streamer_name).join('\n') || ''
       ;(document.getElementById('alreadyConfirmedInput') as HTMLInputElement).checked = false
