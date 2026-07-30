@@ -54,6 +54,8 @@ function buildTotalLabel(monthVal: string, yearVal: string): string {
   return `Meu Valor Total — ${monthLabel}/${yearVal}`
 }
 
+let filtersInitialized = false
+
 export function populateCampaignFilters() {
   const months = new Set<number>()
   const years = new Set<number>()
@@ -79,6 +81,12 @@ export function populateCampaignFilters() {
   yFilter.innerHTML = '<option value="all">Todos os Anos</option>'
   ;[...years].sort().forEach(y => { yFilter.innerHTML += `<option value="${y}">${y}</option>` })
 
-  mFilter.value = mVal || String(now.getMonth())
-  yFilter.value = yVal || String(now.getFullYear())
+  if (!filtersInitialized) {
+    filtersInitialized = true
+    mFilter.value = String(now.getMonth())
+    yFilter.value = String(now.getFullYear())
+  } else {
+    mFilter.value = mVal
+    yFilter.value = yVal
+  }
 }
