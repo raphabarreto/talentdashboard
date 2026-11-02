@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ f043109. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ b28dda3. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -24,7 +24,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 - Falhas da Twitch: `collect-snapshots` aborta sem gravar se token ou consulta falhar (antes gravava todos
   como "offline") e checa o resultado dos `insert`/`update`; `twitch-proxy` valida token e toda resposta da
   Twitch e responde 502 (antes devolvia lista vazia). [ok] testes 44/44 (5 novos), `tsc` e build.
-  **Em PR, sem merge.** Efeito: em falha da Twitch o cron não grava aquela rodada (lacuna, não dado falso).
+  (PR #11) [ok] na main; [ok] job "Deploy Edge Functions" com sucesso (02/11). [a verificar] busca de streamer em produção. Efeito: em falha da Twitch o cron não grava aquela rodada (lacuna, não dado falso).
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -45,17 +45,17 @@ Baixa
 8. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-PR de falhas da Twitch aberto (`fix/twitch-error-handling`), aguardando autorização. Deploy de Edge Functions ocorre no merge.
+Nenhuma em andamento. Aguardando autorização do PR de documentação.
 
 ## Próximo passo sugerido
-Item 1 (CSP e headers de segurança: `vercel.json`), após aprovação do PR atual.
+Item 1 (CSP e headers de segurança: criar `vercel.json`; testar CSP em preview antes de publicar).
 
-## Testes (branch fix/twitch-error-handling)
+## Testes (main @ b28dda3)
 - [ok] `vitest run`: 9 arquivos, 44 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #9 mesclados. `gh` instalado e autenticado.
+- PRs #1 a #11 mesclados. `gh` instalado e autenticado.
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
@@ -65,3 +65,4 @@ Item 1 (CSP e headers de segurança: `vercel.json`), após aprovação do PR atu
 - [a verificar] `update-last-live` em produção (função e `GRANT UPDATE` em `streamers`).
 - [ok] Vercel (produção), merge do PR #7 (02/11): deploy concluído com sucesso.
 - [ok] Vercel (produção), merge do PR #9 (02/11): deploy concluído com sucesso.
+- [ok] Workflow, merge do PR #11 (02/11): `collect-snapshots` e `twitch-proxy` publicadas com sucesso.
