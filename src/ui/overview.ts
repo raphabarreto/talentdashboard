@@ -26,7 +26,7 @@ export function renderOverview() {
     card.className = 'bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700 hover:border-slate-600 transition-colors relative'
     card.innerHTML = `
       <div class="absolute top-4 right-4">
-        <button class="text-slate-500 hover:text-slate-300 transition-colors p-2 hover:bg-slate-700/50 rounded" onclick="this.nextElementSibling.classList.toggle('hidden')">
+        <button class="card-menu-btn text-slate-500 hover:text-slate-300 transition-colors p-2 hover:bg-slate-700/50 rounded">
           <i class="fas fa-ellipsis-v"></i>
         </button>
         <div class="dropdown-menu hidden absolute right-0 mt-2 w-40 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-10">
@@ -55,6 +55,10 @@ export function renderOverview() {
         <div><p class="text-[11px] text-slate-500">H. Transmitidas</p><p class="text-sm font-semibold text-white">${fmt(s.hours_streamed)}</p></div>
       </div>
     `
+    // Sem onclick inline (bloqueado por CSP sem 'unsafe-inline').
+    card.querySelector('.card-menu-btn')?.addEventListener('click', (e) => {
+      (e.currentTarget as HTMLElement).nextElementSibling?.classList.toggle('hidden')
+    })
     fragment.appendChild(card)
   })
 
