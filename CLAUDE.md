@@ -18,6 +18,10 @@ Stack: Vite + TypeScript (front), Supabase (banco, RLS, Edge Functions), deploy 
 - Nunca alterar dados ou configurações do Supabase de produção sem autorização explícita.
 - Nunca expor segredos, tokens ou credenciais (nem em logs, diffs ou respostas).
 
+## Auditoria de segurança
+- Ao iniciar, consultar o `AUDIT_STATUS.md`; atualizá-lo ao concluir cada correção ou encerrar a sessão.
+- Mantê-lo conciso, sem duplicar informação nem registrar segredos; marcar "a verificar" o que não foi confirmado.
+
 ## Testes
 - Após alterações, executar os testes relevantes quando possível (`npm run test:run`, `npm run build`) e informar os resultados.
 - Não assumir que um teste passou sem executá-lo; se não der para rodar, dizer isso.
