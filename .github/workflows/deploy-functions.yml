@@ -15,7 +15,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.108.0
 
       - name: Deploy Edge Functions
         run: |
@@ -40,7 +40,7 @@ jobs:
             done
 
             echo "Deploying $func_name (flags: $extra_flags)..."
-            npx supabase functions deploy "$func_name" --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} $extra_flags
+            supabase functions deploy "$func_name" --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} $extra_flags
           done
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
