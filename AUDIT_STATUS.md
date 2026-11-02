@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ f611fc7. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ f043109. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -20,7 +20,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 - Dependências (`npm audit fix`, sem `--force`): `dompurify` 3.4.11→3.4.17, `zod` 4.4.3→4.6.7, `vite`,
   `postcss`, `nanoid`, `source-map-js` atualizados (só `package-lock.json`). [ok] testes 39/39, `tsc` e build.
   Restam 4 (3 moderadas, 1 alta), só dev: `vitest`/`@vitest/mocker`/`happy-dom`; exigem `--force` (versão
-  maior), não aplicado. Não chegam ao navegador. **Em PR, sem merge.**
+  maior), não aplicado. Não chegam ao navegador. (PR #9) [ok] na main; [ok] deploy Vercel de produção com sucesso (02/11). [a verificar] geração de PDF (`jspdf`/`dompurify`) no navegador.
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -43,18 +43,18 @@ Baixa
 9. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-PR de dependências aberto (`fix/dependencies`), aguardando checks e autorização para merge.
+Nenhuma em andamento. Aguardando autorização para a próxima publicação.
 
 ## Próximo passo sugerido
-Item 1 (falhas da Twitch sem tratamento).
+Item 1 (falhas da Twitch sem tratamento), após os testes manuais pendentes.
 
-## Testes (main @ f611fc7)
+## Testes (main @ f043109)
 - [ok] `vitest run`: 8 arquivos, 39 testes passando; [ok] `npm run build`. [ok] `tsc --noEmit`: 0 erros.
 - [a verificar] build na main atual (passou na branch do PR #3); resultado do `test.yml` no CI.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #7 mesclados. `gh` instalado e autenticado.
+- PRs #1 a #9 mesclados. `gh` instalado e autenticado.
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
@@ -63,3 +63,4 @@ Item 1 (falhas da Twitch sem tratamento).
 - [ok] Workflow, merge do PR #4 (02/11): job concluiu com sucesso; `twitch-proxy` validado em produção.
 - [a verificar] `update-last-live` em produção (função e `GRANT UPDATE` em `streamers`).
 - [ok] Vercel (produção), merge do PR #7 (02/11): deploy concluído com sucesso.
+- [ok] Vercel (produção), merge do PR #9 (02/11): deploy concluído com sucesso.
