@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ 7cc190a. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ ca525cf. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -27,7 +27,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   (PR #11) [ok] na main; [ok] job "Deploy Edge Functions" com sucesso (02/11). [a verificar] busca de streamer em produção. Efeito: em falha da Twitch o cron não grava aquela rodada (lacuna, não dado falso).
 - Headers de segurança (`vercel.json`): nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy, HSTS
   (1 ano) e CSP em modo **Report-Only** (não bloqueia, só registra no console). `onclick` inline do menu do
-  card (`src/ui/overview.ts`) trocado por listener. [ok] testes 44/44, `tsc` e build. **Em PR, sem merge.**
+  card (`src/ui/overview.ts`) trocado por listener. (PR #13) [ok] na main, testes 44/44, `tsc` e build; [ok] deploy Vercel de produção com sucesso e cabeçalhos confirmados via `curl` em produção (02/11).
   [a verificar] violações de CSP no console em produção e domínio do Sentry (`*.ingest.sentry.io` presumido);
   depois trocar para `Content-Security-Policy` (bloqueante) em PR separado.
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
@@ -49,17 +49,17 @@ Baixa
 7. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-PR de headers de segurança aberto (`fix/security-headers`), aguardando autorização.
+Nenhuma em andamento. Aguardando: console do navegador em produção (violações de CSP) e autorização do PR de documentação.
 
 ## Próximo passo sugerido
 Após aprovar e observar o console em produção: tornar a CSP bloqueante. Depois, item 1 (`set search_path` em `is_allowed_user()`; exige SQL no Supabase de produção, só com sua aprovação).
 
-## Testes (branch fix/security-headers)
+## Testes (main @ ca525cf)
 - [ok] `vitest run`: 9 arquivos, 44 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #12 mesclados. `gh` instalado e autenticado.
+- PRs #1 a #13 mesclados. `gh` instalado e autenticado.
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
@@ -70,3 +70,4 @@ Após aprovar e observar o console em produção: tornar a CSP bloqueante. Depoi
 - [ok] Vercel (produção), merge do PR #7 (02/11): deploy concluído com sucesso.
 - [ok] Vercel (produção), merge do PR #9 (02/11): deploy concluído com sucesso.
 - [ok] Workflow, merge do PR #11 (02/11): `collect-snapshots` e `twitch-proxy` publicadas com sucesso.
+- [ok] Vercel (produção), merge do PR #13 (02/11): deploy concluído; headers de segurança presentes.
