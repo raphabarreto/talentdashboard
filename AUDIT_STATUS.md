@@ -14,9 +14,9 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   [ok] job no GitHub Actions com sucesso (merge do PR #4).
 - CLAUDE.md criado (PR #2).
 - XSS: `escapeHtml` (`src/lib/escape.ts`, com teste) aplicado nos campos de texto interpolados em
-  `innerHTML` (`src/ui`, `src/events/campaigns.ts`): [ok] testes, tsc e build. **Em PR, sem merge.**
+  `innerHTML` (`src/ui`, `src/events/campaigns.ts`) (PR #7): [ok] na main, testes, tsc e build; [ok] deploy Vercel de produção com sucesso (02/11).
   Não escapados: `id` (UUID do banco) e constantes. [a verificar] teste manual no navegador com nome
-  malicioso; `src/lib/logger.ts` usa só HTML estático.
+  malicioso (teste visual pendente); `src/lib/logger.ts` usa só HTML estático.
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -42,18 +42,18 @@ Baixa
 12. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-PR do XSS aberto (`fix/xss-escape-html`), aguardando checks e sua autorização para merge.
+Nenhuma em andamento. Aguardando autorização para a próxima publicação.
 
 ## Próximo passo sugerido
 Dependências (item 1: `zod` e `dompurify` no navegador).
 
-## Testes (local, branch do XSS)
+## Testes (main @ f611fc7)
 - [ok] `vitest run`: 8 arquivos, 39 testes passando; [ok] `npm run build`. [ok] `tsc --noEmit`: 0 erros.
 - [a verificar] build na main atual (passou na branch do PR #3); resultado do `test.yml` no CI.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #5 mesclados. `gh` instalado e autenticado.
+- PRs #1 a #7 mesclados. `gh` instalado e autenticado.
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
@@ -61,3 +61,4 @@ Dependências (item 1: `zod` e `dompurify` no navegador).
 - [ok] Manual, 02/11: `collect-snapshots` e `consolidate-daily`.
 - [ok] Workflow, merge do PR #4 (02/11): job concluiu com sucesso; `twitch-proxy` validado em produção.
 - [a verificar] `update-last-live` em produção (função e `GRANT UPDATE` em `streamers`).
+- [ok] Vercel (produção), merge do PR #7 (02/11): deploy concluído com sucesso.
