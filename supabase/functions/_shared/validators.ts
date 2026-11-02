@@ -28,10 +28,10 @@ export const twitchProxyParamsSchema = z.object({
   username: twitchLoginSchema.optional(),
   usernames: z.string().optional(),
   query: z.string().trim().min(1).max(100).optional(),
-  game_id: z.string().trim().max(50).optional(),
-  first: z.string().regex(/^\d+$/).optional(),
-  language: z.string().trim().max(10).optional(),
-  user_id: z.string().trim().max(50).optional(),
+  game_id: z.string().trim().regex(/^\d{1,20}$/).optional(),
+  first: z.string().regex(/^\d{1,4}$/).optional(),
+  language: z.string().trim().regex(/^[a-zA-Z-]{1,10}$/).optional(),
+  user_id: z.string().trim().regex(/^\d{1,20}$/).optional(),
 }).superRefine((data, ctx) => {
   const requiredByAction: Record<string, string[]> = {
     users: ["logins"],

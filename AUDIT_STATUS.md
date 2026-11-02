@@ -13,20 +13,21 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 - Workflow de deploy: CLI fixada em 2.108.0 e `supabase` direto, sem `npx` (PR #1): [ok] código;
   [a verificar] resultado do job no GitHub Actions (gh não instalado aqui).
 - CLAUDE.md criado (PR #2).
+- `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
+  encode/regex de `language`/`game_id`/`after`/`user_id`: [ok] código na working tree, testes 36/36 e
+  `tsc` ok; **não commitado, sem deploy**. [a verificar] testar em produção após deploy.
 
 ## Pendente (por prioridade)
 Média
-1. `twitch-proxy` sem checagem de allowlist; `language`/`game_id`/`after` sem encode na URL da Twitch
-   (`supabase/functions/twitch-proxy/index.ts`). Impacto: cota da Twitch, sem acesso a dados.
-2. XSS: 28 usos de `innerHTML` com dados sem escape; não há `escapeHtml` (`src/ui/table.ts`,
+1. XSS: 28 usos de `innerHTML` com dados sem escape; não há `escapeHtml` (`src/ui/table.ts`,
    `src/ui/prospecting.ts`, `src/ui/filters.ts`, `src/events/campaigns.ts`, outros em `src/ui`).
-3. Dependências (`npm audit`: 1 crítica, 6 altas, 4 moderadas). Chegam ao navegador: `zod` <4.6.6 e
+2. Dependências (`npm audit`: 1 crítica, 6 altas, 4 moderadas). Chegam ao navegador: `zod` <4.6.6 e
    `dompurify` (transitiva; [a verificar] via `npm ls dompurify`). O resto é dev/CI (vite, happy-dom,
    postcss, vitest...).
-4. Falhas da Twitch não tratadas: sem `res.ok`/checagem do token em `collect-snapshots` e
+3. Falhas da Twitch não tratadas: sem `res.ok`/checagem do token em `collect-snapshots` e
    `twitch-proxy`; token ausente grava snapshots "offline" e distorce métricas.
-5. Sem `vercel.json`, CSP nem headers de segurança (`index.html`/`login.html` sem CSP).
-6. `is_allowed_user()` é `security definer` sem `set search_path` (`migration_rls_allowlist.sql`).
+4. Sem `vercel.json`, CSP nem headers de segurança (`index.html`/`login.html` sem CSP).
+5. `is_allowed_user()` é `security definer` sem `set search_path` (`migration_rls_allowlist.sql`).
 Baixa
 7. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
    da janela das métricas).
@@ -40,7 +41,7 @@ Baixa
 Nenhuma em andamento. Preparação concluída; aguardando instrução para retomar.
 
 ## Próximo passo sugerido
-Item 1 (`twitch-proxy`: allowlist via RLS/`is_allowed_user` e encode dos parâmetros), depois 2 (XSS).
+Item 1 (XSS: criar `escapeHtml` e aplicar nos `innerHTML`). Antes, commitar/PR do `twitch-proxy` se autorizado.
 
 ## Testes (local, main @ 4e1ce5a)
 - [ok] `vitest run`: 7 arquivos, 36 testes passando. [ok] `tsc --noEmit`: 0 erros.
