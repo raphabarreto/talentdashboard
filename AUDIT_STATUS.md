@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ 53609f1. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ f611fc7. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -17,6 +17,10 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   `innerHTML` (`src/ui`, `src/events/campaigns.ts`) (PR #7): [ok] na main, testes, tsc e build; [ok] deploy Vercel de produção com sucesso (02/11).
   Não escapados: `id` (UUID do banco) e constantes. [a verificar] teste manual no navegador com nome
   malicioso (teste visual pendente); `src/lib/logger.ts` usa só HTML estático.
+- Dependências (`npm audit fix`, sem `--force`): `dompurify` 3.4.11→3.4.17, `zod` 4.4.3→4.6.7, `vite`,
+  `postcss`, `nanoid`, `source-map-js` atualizados (só `package-lock.json`). [ok] testes 39/39, `tsc` e build.
+  Restam 4 (3 moderadas, 1 alta), só dev: `vitest`/`@vitest/mocker`/`happy-dom`; exigem `--force` (versão
+  maior), não aplicado. Não chegam ao navegador. **Em PR, sem merge.**
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -25,27 +29,24 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 ## Pendente (por prioridade)
 Média
-1. Dependências (`npm audit`: 1 crítica, 6 altas, 4 moderadas). Chegam ao navegador: `zod` <4.6.6 e
-   `dompurify` (transitiva; [a verificar] via `npm ls dompurify`). O resto é dev/CI (vite, happy-dom,
-   postcss, vitest...).
-2. Falhas da Twitch não tratadas: sem `res.ok`/checagem do token em `collect-snapshots` e
+1. Falhas da Twitch não tratadas: sem `res.ok`/checagem do token em `collect-snapshots` e
    `twitch-proxy`; token ausente grava snapshots "offline" e distorce métricas.
-3. Sem `vercel.json`, CSP nem headers de segurança (`index.html`/`login.html` sem CSP).
-4. `is_allowed_user()` é `security definer` sem `set search_path` (`migration_rls_allowlist.sql`).
+2. Sem `vercel.json`, CSP nem headers de segurança (`index.html`/`login.html` sem CSP).
+3. `is_allowed_user()` é `security definer` sem `set search_path` (`migration_rls_allowlist.sql`).
 Baixa
-7. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
+4. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
    da janela das métricas).
-8. CI em Node 20; sem `engines`/`.nvmrc`; local roda Node 26.
-9. Imports `esm.sh` sem versão fixa (`supabase-js@2`) e Zod 3 nas functions vs Zod 4 no front.
-10. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
-11. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
-12. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
+5. CI em Node 20; sem `engines`/`.nvmrc`; local roda Node 26.
+6. Imports `esm.sh` sem versão fixa (`supabase-js@2`) e Zod 3 nas functions vs Zod 4 no front.
+7. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
+8. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
+9. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-Nenhuma em andamento. Aguardando autorização para a próxima publicação.
+PR de dependências aberto (`fix/dependencies`), aguardando checks e autorização para merge.
 
 ## Próximo passo sugerido
-Dependências (item 1: `zod` e `dompurify` no navegador).
+Item 1 (falhas da Twitch sem tratamento).
 
 ## Testes (main @ f611fc7)
 - [ok] `vitest run`: 8 arquivos, 39 testes passando; [ok] `npm run build`. [ok] `tsc --noEmit`: 0 erros.
