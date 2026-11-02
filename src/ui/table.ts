@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from '../lib/escape'
 import { tablePage, setTablePage, selectedStreamers, PAGE_SIZE } from '../state'
 import { fmt } from '../utils'
 import { getFilteredStreamers } from './filters'
@@ -20,12 +21,12 @@ export function renderTable() {
       <td class="p-4 font-medium">
         <div class="flex items-center gap-2">
           ${s.is_live ? '<span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>' : ''}
-          <span class="text-white">${s.name}</span>
+          <span class="text-white">${esc(s.name)}</span>
         </div>
       </td>
       <td class="p-4">${fmt(s.avg_viewers)}</td>
-      <td class="p-4"><a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-indigo-400 hover:underline">twitch.tv/${s.name.toLowerCase()}</a></td>
-      <td class="p-4"><a href="https://sullygnome.com/channel/${s.name.toLowerCase()}/30" target="_blank" class="text-indigo-400 hover:underline">Ver no SullyGnome</a></td>
+      <td class="p-4"><a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" class="text-indigo-400 hover:underline">twitch.tv/${esc(s.name.toLowerCase())}</a></td>
+      <td class="p-4"><a href="https://sullygnome.com/channel/${esc(s.name.toLowerCase())}/30" target="_blank" class="text-indigo-400 hover:underline">Ver no SullyGnome</a></td>
       <td class="p-4"><button class="text-slate-400 hover:text-red-400 transition-colors delete-btn" data-id="${s.id}" title="Remover"><i class="fas fa-trash"></i></button></td>
     `
     fragment.appendChild(row)

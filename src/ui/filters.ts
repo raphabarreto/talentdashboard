@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from '../lib/escape'
 import { streamers, campaigns, currentSort, getCachedCountries } from '../state'
 import { isActive, countryNames } from '../utils'
 import type { Streamer } from '../types/index'
@@ -33,7 +34,7 @@ export function populateFilters() {
     const el = document.getElementById(id) as HTMLSelectElement
     const val = el.value
     el.innerHTML = '<option value="all">Todos os Países</option>'
-    countries.forEach(c => { el.innerHTML += `<option value="${c}">${countryNames[c] || c.toUpperCase()}</option>` })
+    countries.forEach(c => { el.innerHTML += `<option value="${esc(c)}">${esc(countryNames[c] || c.toUpperCase())}</option>` })
     el.value = val || 'all'
   })
 }
@@ -54,7 +55,7 @@ function showSuggestions(input: HTMLInputElement, container: HTMLElement, dataFn
   const val = input.value.toLowerCase()
   const filtered = val ? items.filter(c => c.toLowerCase().includes(val)) : items
   if (!filtered.length) { container.classList.add('hidden'); return }
-  container.innerHTML = filtered.map(c => `<div class="px-4 py-3 hover:bg-slate-600 cursor-pointer text-white">${c}</div>`).join('')
+  container.innerHTML = filtered.map(c => `<div class="px-4 py-3 hover:bg-slate-600 cursor-pointer text-white">${esc(c)}</div>`).join('')
   container.classList.remove('hidden')
   container.querySelectorAll('div').forEach(el => {
     el.addEventListener('click', () => { input.value = el.textContent!; container.classList.add('hidden') })

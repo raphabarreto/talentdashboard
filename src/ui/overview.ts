@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from '../lib/escape'
 import { overviewPage, setOverviewPage, PAGE_SIZE } from '../state'
 import { fmt, countryNames } from '../utils'
 import { getFilteredStreamers } from './filters'
@@ -20,7 +21,7 @@ export function renderOverview() {
   const fragment = document.createDocumentFragment()
 
   paged.forEach(s => {
-    const flagHtml = s.country ? `<span class="fi fi-${s.country} w-3.5 h-3.5 rounded-full shadow-md"></span> ${countryNames[s.country] || s.country}` : '-'
+    const flagHtml = s.country ? `<span class="fi fi-${esc(s.country)} w-3.5 h-3.5 rounded-full shadow-md"></span> ${esc(countryNames[s.country] || s.country)}` : '-'
     const card = document.createElement('div')
     card.className = 'bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700 hover:border-slate-600 transition-colors relative'
     card.innerHTML = `
@@ -38,7 +39,7 @@ export function renderOverview() {
         <div class="w-12 h-12 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold text-xl flex-shrink-0">${s.name.charAt(0).toUpperCase()}</div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
-            <a href="https://twitch.tv/${s.name.toLowerCase()}" target="_blank" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors truncate">${s.name}</a>
+            <a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors truncate">${esc(s.name)}</a>
             ${s.is_live ? '<span class="flex items-center justify-center w-2 h-2 bg-red-600 rounded-full animate-pulse flex-shrink-0" title="AO VIVO"></span>' : ''}
           </div>
           <span class="text-xs text-slate-400 flex items-center gap-1">${flagHtml}</span>
