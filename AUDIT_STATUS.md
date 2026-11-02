@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ 4e1ce5a. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ 53609f1. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -11,11 +11,13 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 - `update-last-live` grava com o JWT do usuário (RLS), não service role (PR #3): [ok] na main.
   [a verificar] deploy em produção (workflow) e `GRANT UPDATE` de `authenticated` em `streamers`.
 - Workflow de deploy: CLI fixada em 2.108.0 e `supabase` direto, sem `npx` (PR #1): [ok] código;
-  [a verificar] resultado do job no GitHub Actions (gh não instalado aqui).
+  [ok] job no GitHub Actions com sucesso (merge do PR #4).
 - CLAUDE.md criado (PR #2).
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
-  encode/regex de `language`/`game_id`/`after`/`user_id`: [ok] código na working tree, testes 36/36 e
-  `tsc` ok; **não commitado, sem deploy**. [a verificar] testar em produção após deploy.
+  encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
+  `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
+  `authenticated` (true) e busca de streamers funcionando em produção. [a verificar] 403 com conta fora
+  da allowlist (não testado).
 
 ## Pendente (por prioridade)
 Média
@@ -38,10 +40,10 @@ Baixa
 12. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-Nenhuma em andamento. Preparação concluída; aguardando instrução para retomar.
+Item 1 (XSS): criar `escapeHtml` e aplicar nos `innerHTML` com dados externos. Branch `fix/xss-escape-html`.
 
 ## Próximo passo sugerido
-Item 1 (XSS: criar `escapeHtml` e aplicar nos `innerHTML`). Antes, commitar/PR do `twitch-proxy` se autorizado.
+Após o XSS: item 2 (dependências).
 
 ## Testes (local, main @ 4e1ce5a)
 - [ok] `vitest run`: 7 arquivos, 36 testes passando. [ok] `tsc --noEmit`: 0 erros.
@@ -49,10 +51,11 @@ Item 1 (XSS: criar `escapeHtml` e aplicar nos `innerHTML`). Antes, commitar/PR d
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- Local `main` sincronizada com `origin/main`. PRs #1, #2 e #3 mesclados.
+- PRs #1 a #5 mesclados. `gh` instalado e autenticado.
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
 ## Deploys
 - [ok] Manual, 02/11: `collect-snapshots` e `consolidate-daily`.
-- [a verificar] `twitch-proxy` e `update-last-live` (dependem do job disparado pelo merge).
+- [ok] Workflow, merge do PR #4 (02/11): job concluiu com sucesso; `twitch-proxy` validado em produção.
+- [a verificar] `update-last-live` em produção (função e `GRANT UPDATE` em `streamers`).
