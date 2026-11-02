@@ -21,6 +21,10 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   `postcss`, `nanoid`, `source-map-js` atualizados (só `package-lock.json`). [ok] testes 39/39, `tsc` e build.
   Restam 4 (3 moderadas, 1 alta), só dev: `vitest`/`@vitest/mocker`/`happy-dom`; exigem `--force` (versão
   maior), não aplicado. Não chegam ao navegador. (PR #9) [ok] na main; [ok] deploy Vercel de produção com sucesso (02/11). [a verificar] geração de PDF (`jspdf`/`dompurify`) no navegador.
+- Falhas da Twitch: `collect-snapshots` aborta sem gravar se token ou consulta falhar (antes gravava todos
+  como "offline") e checa o resultado dos `insert`/`update`; `twitch-proxy` valida token e toda resposta da
+  Twitch e responde 502 (antes devolvia lista vazia). [ok] testes 44/44 (5 novos), `tsc` e build.
+  **Em PR, sem merge.** Efeito: em falha da Twitch o cron não grava aquela rodada (lacuna, não dado falso).
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -29,28 +33,25 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 ## Pendente (por prioridade)
 Média
-1. Falhas da Twitch não tratadas: sem `res.ok`/checagem do token em `collect-snapshots` e
-   `twitch-proxy`; token ausente grava snapshots "offline" e distorce métricas.
-2. Sem `vercel.json`, CSP nem headers de segurança (`index.html`/`login.html` sem CSP).
-3. `is_allowed_user()` é `security definer` sem `set search_path` (`migration_rls_allowlist.sql`).
+1. Sem `vercel.json`, CSP nem headers de segurança (`index.html`/`login.html` sem CSP).
+2. `is_allowed_user()` é `security definer` sem `set search_path` (`migration_rls_allowlist.sql`).
 Baixa
-4. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
+3. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
    da janela das métricas).
-5. CI em Node 20; sem `engines`/`.nvmrc`; local roda Node 26.
-6. Imports `esm.sh` sem versão fixa (`supabase-js@2`) e Zod 3 nas functions vs Zod 4 no front.
-7. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
-8. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
-9. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
+4. CI em Node 20; sem `engines`/`.nvmrc`; local roda Node 26.
+5. Imports `esm.sh` sem versão fixa (`supabase-js@2`) e Zod 3 nas functions vs Zod 4 no front.
+6. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
+7. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
+8. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-Nenhuma em andamento. Aguardando autorização para a próxima publicação.
+PR de falhas da Twitch aberto (`fix/twitch-error-handling`), aguardando autorização. Deploy de Edge Functions ocorre no merge.
 
 ## Próximo passo sugerido
-Item 1 (falhas da Twitch sem tratamento), após os testes manuais pendentes.
+Item 1 (CSP e headers de segurança: `vercel.json`), após aprovação do PR atual.
 
-## Testes (main @ f043109)
-- [ok] `vitest run`: 8 arquivos, 39 testes passando; [ok] `npm run build`. [ok] `tsc --noEmit`: 0 erros.
-- [a verificar] build na main atual (passou na branch do PR #3); resultado do `test.yml` no CI.
+## Testes (branch fix/twitch-error-handling)
+- [ok] `vitest run`: 9 arquivos, 44 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
