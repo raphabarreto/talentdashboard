@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from '../lib/escape'
 import { campaigns } from '../state'
 import { fmtDate, fmtCurrency, monthNames } from '../utils'
 
@@ -27,7 +28,7 @@ export function renderCampaigns() {
     const row = document.createElement('tr')
     row.className = 'hover:bg-slate-700/50 transition-colors'
     row.innerHTML = `
-      <td class="p-4">${c.company}</td>
+      <td class="p-4">${esc(c.company)}</td>
       <td class="p-4">${fmtDate(c.start_date)}</td>
       <td class="p-4">${fmtDate(c.end_date)}</td>
       <td class="p-4">${c.payment_date ? fmtDate(c.payment_date) : '<span class="text-slate-500">—</span>'}</td>

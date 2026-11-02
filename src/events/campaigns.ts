@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from '../lib/escape'
 import { supabase } from '../lib/supabase'
 import { addStreamer, addCampaign, updateCampaign, deleteCampaign, updateContactStatus, getStreamers, updateLastLive } from '../lib/data'
 import { fetchTwitchUser, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
@@ -102,7 +103,7 @@ function renderDetailsList(c: typeof campaigns[number]) {
       `
     }
 
-    row.innerHTML = `<span class="text-white text-sm font-medium">${s.streamer_name}</span><span class="flex items-center gap-1.5">${actions}</span>`
+    row.innerHTML = `<span class="text-white text-sm font-medium">${esc(s.streamer_name)}</span><span class="flex items-center gap-1.5">${actions}</span>`
     list.appendChild(row)
   })
 }
@@ -361,7 +362,7 @@ function setupStreamerAutocomplete() {
     if (!query) { suggestions.classList.add('hidden'); return }
     const matches = streamers.filter(s => s.name.toLowerCase().includes(query)).slice(0, 8)
     if (!matches.length) { suggestions.classList.add('hidden'); return }
-    suggestions.innerHTML = matches.map(s => `<div class="px-4 py-2 hover:bg-slate-600 cursor-pointer text-white text-sm" data-name="${s.name}">${s.name}</div>`).join('')
+    suggestions.innerHTML = matches.map(s => `<div class="px-4 py-2 hover:bg-slate-600 cursor-pointer text-white text-sm" data-name="${esc(s.name)}">${esc(s.name)}</div>`).join('')
     suggestions.classList.remove('hidden')
   }
 
