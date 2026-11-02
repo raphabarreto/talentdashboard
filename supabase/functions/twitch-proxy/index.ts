@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { buildCorsHeaders } from "../_shared/cors.ts"
 import { twitchProxyParamsSchema } from "../_shared/validators.ts"
-// v14 - CORS restrito e validação de input com Zod
+// v15 - exige allowlist (is_allowed_user), encode dos parametros; CORS restrito e Zod
 
 let token: string | null = null
 let tokenExpiry = 0
@@ -31,6 +31,22 @@ Deno.serve(async (req) => {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!)
     const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""))
     if (!user) return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+
+    // Allowlist: qualquer conta Google autenticada tem JWT valido, entao checa
+    // is_allowed_user() com o JWT do proprio usuario antes de gastar cota da Twitch.
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    )
+    const { data: allowed, error: allowError } = await userClient.rpc("is_allowed_user")
+    if (allowError) throw allowError
+    if (allowed !== true) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      })
+    }
 
     const clientId = Deno.env.get("TWITCH_CLIENT_ID")!
     const clientSecret = Deno.env.get("TWITCH_CLIENT_SECRET")!
@@ -111,15 +127,15 @@ Deno.serve(async (req) => {
       const gameId = gameIdParam || ""
       const first = firstParam || "100"
       const language = languageParam || ""
-      const langParam = language ? `&language=${language}` : ""
-      const gameParam = gameId ? `&game_id=${gameId}` : ""
+      const langParam = language ? `&language=${encodeURIComponent(language)}` : ""
+      const gameParam = gameId ? `&game_id=${encodeURIComponent(gameId)}` : ""
 
       const allStreams: Array<Record<string, unknown>> = []
       let cursor = ""
 
       // Buscar até 2 páginas
       for (let i = 0; i < 2; i++) {
-        const afterParam = cursor ? `&after=${cursor}` : ""
+        const afterParam = cursor ? `&after=${encodeURIComponent(cursor)}` : ""
         const res = await fetch(`https://api.twitch.tv/helix/streams?first=100${gameParam}${langParam}${afterParam}`, {
           headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
         })
@@ -149,7 +165,7 @@ Deno.serve(async (req) => {
       }
 
     } else if (action === "last_video") {
-      const res = await fetch(`https://api.twitch.tv/helix/videos?user_id=${userIdParam}&first=1&type=archive`, {
+      const res = await fetch(`https://api.twitch.tv/helix/videos?user_id=${encodeURIComponent(userIdParam!)}&first=1&type=archive`, {
         headers: { "Client-ID": clientId, "Authorization": `Bearer ${accessToken}` }
       })
       const data = await res.json()
