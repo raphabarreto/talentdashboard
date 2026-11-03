@@ -37,6 +37,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 - `is_allowed_user()` com `search_path` fixado (`public, pg_temp`): [ok] executado em produção (Dash Lugs) em 03/11 com
   autorização; validado: `proconfig` ok, `authenticated` mantém EXECUTE, 5 policies intactas, allowlist com 3 e-mails.
   Rollback salvo fora do repositório. [usuário] conferir dashboard após a alteração.
+- `consolidate-daily`: só apaga snapshots antigos se todos os updates deram certo; reporta falhas (500) e erro da
+  limpeza; `cleaned` agora é verdadeiro de fato. [ok] testes 44/44 (3 novos), `tsc` e build. Reversão: revert do PR.
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -45,16 +47,14 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 ## Pendente (por prioridade)
 Baixa
-1. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
-   da janela das métricas).
-2. CI em Node 20; sem `engines`/`.nvmrc`; local roda Node 26.
-3. Imports `esm.sh` sem versão fixa (`supabase-js@2`) e Zod 3 nas functions vs Zod 4 no front.
-4. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
-5. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
-6. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
+1. CI em Node 20; sem `engines`/`.nvmrc`; local roda Node 26.
+2. Imports `esm.sh` sem versão fixa (`supabase-js@2`) e Zod 3 nas functions vs Zod 4 no front.
+3. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
+4. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
+5. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-CSP bloqueante (PR #22) publicada; verificar headers em produção. Rollback: voltar a chave para `Content-Security-Policy-Report-Only` (revert do PR). Funcionalidades com CSP bloqueante: [a verificar] pelo usuário (PDF, Prospecção, novo streamer, detalhes de campanha foram testados só em Report-Only, sem violações).
+Item `consolidate-daily` em PR. Próximo: CI/Node (`engines`, `.nvmrc`).
 
 ## Próximo passo sugerido
 Após o PR #19: itens "Baixa" na ordem; `favicon.png` 404 (manifest aponta para /favicon.png, arquivo está em `src/`; só PWA). Alterações no Supabase de produção só com autorização explícita (CLI autenticado nesta máquina; usar `--remote=<ref>`, ref do Dash Lugs em `supabase/.temp/project-ref`).

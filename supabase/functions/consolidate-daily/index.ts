@@ -1,4 +1,4 @@
-// v13 - exige header x-cron-secret (evita disparo por qualquer requisicao externa) e CORS restrito
+// v14 - exige x-cron-secret, CORS restrito; so limpa snapshots se todos os updates deram certo e reporta falhas
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { buildCorsHeaders } from "../_shared/cors.ts"
 
@@ -54,19 +54,38 @@ Deno.serve(async (req) => {
       updateResults.push(...results)
     }
 
-    // Limpar snapshots antigos
-    await supabase.from("stream_snapshots").delete().lt("captured_at", startDate)
+    const failed = updateResults.filter(r => !r.success)
+    if (failed.length) {
+      // Nao apaga nada se a consolidacao falhou: os snapshots continuam disponiveis para a proxima rodada.
+      return new Response(JSON.stringify({
+        error: "Falha ao atualizar streamers",
+        consolidated: metrics.length - failed.length,
+        failed: failed.length,
+        cleaned: false,
+        failures: failed.slice(0, 5)
+      }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } })
+    }
 
-    return new Response(JSON.stringify({ 
-      consolidated: metrics.length, 
+    // Limpar snapshots antigos (so dados fora da janela de 30 dias das metricas)
+    const { error: cleanError } = await supabase.from("stream_snapshots").delete().lt("captured_at", startDate)
+    if (cleanError) {
+      return new Response(JSON.stringify({
+        error: "Falha ao limpar snapshots antigos",
+        consolidated: metrics.length,
+        cleaned: false,
+        details: cleanError.message
+      }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } })
+    }
+
+    return new Response(JSON.stringify({
+      consolidated: metrics.length,
       period: "last_30_days",
       cleaned: true,
-      startDate,
-      updateResults: updateResults.slice(0, 5)
+      startDate
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: corsHeaders })
+    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } })
   }
 })
