@@ -24,7 +24,7 @@ Armazena os streamers monitorados.
 ---
 
 ### `stream_snapshots`
-Coleta periódica de viewers (a cada 5 minutos via Edge Function).
+Coleta periódica de viewers (via Edge Function, disparada pelo cron-job.org; o intervalo é configurado lá).
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|

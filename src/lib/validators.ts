@@ -45,11 +45,3 @@ export const campaignSchema = z.object({
   message: 'Data de pagamento não pode ser antes da data de fim da campanha',
   path: ['payment_date'],
 })
-
-// Campaign Streamer validation
-export const campaignStreamerSchema = z.object({
-  streamer_name: z.string().min(1, 'Nome do streamer é obrigatório'),
-  payment: z.number().min(0).default(0),
-  payment_date: z.string().nullable().default(null),
-  contact_status: z.enum(['pendente', 'contatado', 'nao_respondeu', 'confirmado', 'recusado']).default('pendente'),
-})

@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.2.0] - 2026-11-03
+
+### 🔒 Segurança
+- RLS por allowlist de e-mail (`is_allowed_user()`), `twitch-proxy` exige usuário permitido
+- Funções de cron falham fechado sem `CRON_SECRET`; falhas da Twitch não gravam snapshots falsos
+- Proteção contra XSS (`escapeHtml`), cabeçalhos de segurança e CSP bloqueante (Vercel)
+- Usuário fora da lista é deslogado (antes entrava em loop entre login e home)
+
+### ✨ Adicionado
+- Prospecção: lista salva no banco (tabela `prospect_shortlist`) e cache de categorias
+- Cadastro de streamer em módulo único (`registration.ts`), com avisos de erro
+
+### 🛠 Manutenção
+- Zod 4 nas Edge Functions, `supabase-js` fixado, Node 22 no CI
+- Favicon e manifest servidos de `public/`; menus dos cards fecham ao abrir outro
+
 ## [2.1.0] - 2026-06-26
 
 ### ✨ Adicionado

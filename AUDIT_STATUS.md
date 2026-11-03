@@ -70,6 +70,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Refatoração do cadastro de streamer: regra única em `src/lib/registration.ts` (antes duplicada em modal de busca, lote e confirmação de campanha). Usa o id devolvido pelo insert (sem reconsultar por nome), consultas ao banco saíram dos eventos (`deleteStreamers` em `data.ts`) e a falha do cadastro automático na campanha agora avisa em vez de ser ignorada. [ok] testes 66/66 (9 novos), `tsc`, build. [a verificar] cadastro pelo modal, em lote e ao confirmar na campanha, no navegador. Reversão: revert do PR.
 
+- Limpeza: removidos exports sem uso (`updateStreamer`, `logInfo`, `logWarn`, `PRODUCTION_URL`, `statusColors`, `selectColors`, `campaignStreamerSchema`); README (estrutura de pastas), DATABASE.md e CHANGELOG atualizados. O intervalo real do cron fica no cron-job.org: [a verificar] qual é (os docs diziam 5 e 15 min). [ok] testes 66/66, `tsc`, build. Reversão: revert do PR.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).

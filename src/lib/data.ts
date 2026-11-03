@@ -24,11 +24,6 @@ export async function addStreamers(streamers: Omit<Streamer, 'id' | 'created_at'
   return data as Streamer[]
 }
 
-export async function updateStreamer(id: string, updates: Partial<Streamer>) {
-  const { error } = await supabase.from('streamers').update(updates).eq('id', id)
-  if (error) throw error
-}
-
 export async function deleteStreamer(id: string) {
   const { error } = await supabase.from('streamers').delete().eq('id', id)
   if (error) throw error
