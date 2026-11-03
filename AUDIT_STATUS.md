@@ -64,9 +64,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 ## Pendente (por prioridade)
 Baixa
-1. Zod 3.23.8 nas functions vs Zod 4 no front (aceito: versões já fixas; unificar só se necessário).
-2. `deno.json` das functions com imports não usados (aceito: inofensivo; remover mexeria no empacotamento do deploy sem ganho).
-3. Migrations: `migration_*.sql` da raiz movidos para `docs/migrations-aplicadas/` (histórico; fora de `supabase/migrations/` de propósito, para a CLI não reaplicar). Itens 1 e 2 reavaliados e mantidos: mexer exige testar deploy de functions sem Deno disponível.
+1. [feito] Zod das functions unificado em 4.6.7 (igual ao front) e `deno.json` sem uso removidos de `collect-snapshots` e `consolidate-daily`. [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
+3. Migrations: `migration_*.sql` da raiz movidos para `docs/migrations-aplicadas/` (histórico; fora de `supabase/migrations/` de propósito, para a CLI não reaplicar). Itens 1 e 2 feitos.
 
 ## Tarefa atual
 Nenhuma correção em andamento. Pendências restantes são itens aceitos (Zod 3/4, deno.json, nomes de migrations) e verificações manuais "a verificar".

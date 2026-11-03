@@ -8,7 +8,7 @@ const createClientMock = vi.fn()
 vi.mock('https://esm.sh/@supabase/supabase-js@2.118.0', () => ({
   createClient: (...args: unknown[]) => createClientMock(...args),
 }))
-vi.mock('https://esm.sh/zod@3.23.8', async () => await import('zod'))
+vi.mock('https://esm.sh/zod@4.6.7', async () => await import('zod'))
 
 type Handler = (req: Request) => Promise<Response>
 let handler: Handler
