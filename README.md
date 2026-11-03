@@ -7,14 +7,15 @@ Dashboard para acompanhamento de streamers da Twitch. Monitora métricas como vi
 ## ✨ Features
 
 - 📊 **Dashboard de Streamers**: Visualização em cards e tabelas
+- 🔎 **Prospecção**: Busca de streamers por categoria na Twitch, com lista salva no banco
 - 💰 **Gestão de Campanhas**: Comissão informada manualmente por campanha
 - 📥 **Exportação CSV**: Exporte campanhas e streamers para planilhas
 - 🔐 **Autenticação**: Google OAuth com emails permitidos
-- 📈 **Coleta Automática**: Snapshots periódicos (o intervalo é definido no cron-job.org)
+- 📈 **Coleta Automática**: Snapshots a cada 15 minutos (cron-job.org)
 - 🔴 **Badge AO VIVO**: Indicador em tempo real de streamers online
 - 🛡️ **Segurança**: Row Level Security no banco
 - 📊 **Monitoramento**: Sentry integrado para erros em produção
-- ✅ **Testes Automatizados**: 24 testes com Vitest
+- ✅ **Testes Automatizados**: Vitest, rodando no CI
 - 🚀 **CI/CD**: GitHub Actions roda testes automaticamente
 - 🔄 **Loading States**: Feedback visual durante operações
 - ✏️ **Validação**: Zod para validação de dados consistente
@@ -28,7 +29,7 @@ Dashboard para acompanhamento de streamers da Twitch. Monitora métricas como vi
 - **Banco de dados e Auth:** Supabase (PostgreSQL + Google OAuth)
 - **Hospedagem:** Vercel
 - **Coleta de dados:** Supabase Edge Functions (Deno)
-- **Cron:** cron-job.org (dispara as Edge Functions; o intervalo é configurado lá)
+- **Cron:** cron-job.org (dispara as Edge Functions a cada 15 min)
 
 ## Estrutura
 
@@ -68,7 +69,7 @@ src/
 public/               # favicon.png e manifest.json (PWA)
 docs/                 # DATABASE.md e migrations-aplicadas/ (histórico já executado em produção)
 supabase/functions/
-  collect-snapshots/    # Coleta viewers (disparada pelo cron)
+  collect-snapshots/    # Coleta viewers a cada 15min
   consolidate-daily/    # Consolida métricas diárias (últimos 30 dias)
   twitch-proxy/         # Proxy autenticado para Twitch API
   update-last-live/     # Atualiza última vez online
@@ -100,12 +101,13 @@ npm run test:run     # Roda testes uma vez
 
 ## Testes
 
-O projeto possui 24 testes automatizados que cobrem:
+O projeto possui testes automatizados (`npm run test:run`) que cobrem:
 - ✅ Validação de dados (Zod schemas)
 - ✅ Cálculos de comissão
 - ✅ Debounce e cache de filtros
 - ✅ Exportação CSV
-- ✅ Regras de negócio críticas
+- ✅ Regras de negócio críticas (cadastro de streamer, lista da Prospecção, falhas da Twitch)
+- ✅ Segurança (escape de HTML, allowlist de login, CSP)
 
 Os testes rodam automaticamente via GitHub Actions em todo push/PR.
 
@@ -123,7 +125,7 @@ As credenciais da Twitch (Client ID e Secret) ficam apenas nos secrets das Edge 
 ## Deploy
 
 ### Front-end (Vercel)
-O deploy é automático — cada push no `main` gera um novo build.
+O deploy é automático — cada merge na `main` (sempre via Pull Request) gera um novo build.
 
 URL de produção: https://dashlugs.vercel.app
 
@@ -146,7 +148,7 @@ Deploy automático via GitHub Actions quando houver mudanças em `supabase/funct
      - `SUPABASE_ACCESS_TOKEN` = token gerado no passo 1
      - `SUPABASE_PROJECT_ID` = ID do passo 2
 
-Após configurado, todo push em `main` que modificar `supabase/functions/` vai deployar automaticamente.
+Após configurado, todo merge na `main` que modificar `supabase/functions/` vai deployar automaticamente.
 
 ## Banco de dados
 
@@ -154,7 +156,10 @@ O schema está em `schema.sql`. As tabelas principais são:
 
 - `streamers` — cadastro de streamers monitorados
 - `stream_snapshots` — coleta periódica de viewers/status
-- `campaigns` — campanhas comerciais com streamers
+- `campaigns` e `campaign_streamers` — campanhas comerciais com streamers
+- `streamer_history` — histórico diário consolidado
+- `prospect_shortlist` — lista salva da aba Prospecção
+- `allowed_users` — e-mails com acesso (usada pelas policies via `is_allowed_user()`)
 
 ## Documentação
 

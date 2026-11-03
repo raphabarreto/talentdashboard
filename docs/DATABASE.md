@@ -24,7 +24,7 @@ Armazena os streamers monitorados.
 ---
 
 ### `stream_snapshots`
-Coleta periódica de viewers (via Edge Function, disparada pelo cron-job.org; o intervalo é configurado lá).
+Coleta periódica de viewers (a cada 15 minutos via Edge Function, disparada pelo cron-job.org).
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
@@ -58,6 +58,17 @@ Histórico mensal consolidado (gerado pela Edge Function `consolidate-daily`).
 | `created_at` | timestamptz | Data de criação |
 
 **Constraint:** `unique(streamer_id, month)`
+
+---
+
+### `prospect_shortlist`
+Lista salva da aba Prospecção (antes ficava só no navegador).
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `user_login` | text | Primary key (login da Twitch) |
+| `data` | jsonb | Dados do streamer na lista (nome, jogo, idioma, e-mail, `added_at`) |
+| `created_at` | timestamptz | Data de criação |
 
 ---
 
