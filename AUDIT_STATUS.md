@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ d254c7f. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ f3dc2b3. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -26,7 +26,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   Twitch e responde 502 (antes devolvia lista vazia). [ok] testes 44/44 (5 novos), `tsc` e build.
   (PR #11) [ok] na main; [ok] job "Deploy Edge Functions" com sucesso (02/11). [a verificar] busca de streamer em produção. Efeito: em falha da Twitch o cron não grava aquela rodada (lacuna, não dado falso).
 - Headers de segurança (`vercel.json`): nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy, HSTS
-  (1 ano) e CSP em modo **Report-Only** (não bloqueia, só registra no console). `onclick` inline do menu do
+  (1 ano) e CSP (Report-Only no PR #13; bloqueante no PR de `fix/csp-enforce`, em PR). `onclick` inline do menu do
   card (`src/ui/overview.ts`) trocado por listener. (PR #13) [ok] na main, testes 44/44, `tsc` e build; [ok] deploy
   Vercel de produção e cabeçalhos confirmados via `curl` (02/11). [usuário] console em produção mostrou 1
   violação: `unsafe-eval` (Zod testa `new Function`; tem fallback, não precisa liberar eval). Correção:
@@ -41,8 +41,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 ## Pendente (por prioridade)
 Média
-1. `is_allowed_user()` sem `set search_path`: migration pronta em `migration_is_allowed_user_search_path.sql` (PR
-   aberto); **não executada em produção** — rodar no SQL Editor só com autorização (inclui conferência e rollback).
+1. `is_allowed_user()` sem `set search_path`: migration na main em `migration_is_allowed_user_search_path.sql` (PR #18
+   mesclado); **não executada em produção** — rodar no SQL Editor só com autorização (inclui conferência e rollback).
 Baixa
 2. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
    da janela das métricas).
@@ -53,17 +53,17 @@ Baixa
 7. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-PR `fix/is-allowed-user-search-path` aberto (só adiciona o arquivo SQL e atualiza este status; nada roda no banco). Aguardando autorização para merge e, separadamente, para executar o SQL em produção.
+PR `fix/csp-enforce` aberto (CSP passa de Report-Only para bloqueante), aguardando autorização. Rollback: voltar a chave para `Content-Security-Policy-Report-Only`.
 
 ## Próximo passo sugerido
-Tornar a CSP bloqueante após o usuário testar PDF, Prospecção, novo streamer (avatar) e detalhes de campanha com o console aberto (console inicial sem violações; `sharebx.js` = extensão do navegador). Depois: `favicon.png` 404 (manifest aponta para /favicon.png, arquivo está em `src/`; só PWA, baixa prioridade).
+Executar `migration_is_allowed_user_search_path.sql` no Supabase de produção (usuário se ofereceu para rodar; conferir com as consultas do próprio arquivo). Depois: `favicon.png` 404 (manifest aponta para /favicon.png, arquivo está em `src/`; só PWA, baixa prioridade).
 
-## Testes (main @ d254c7f)
+## Testes (main @ f3dc2b3)
 - [ok] `vitest run`: 9 arquivos, 41 testes passando (revisão: mantidos os de segurança e dados; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #13, #16 e #17 mesclados (#14 e #15 fechados, substituídos). `gh` instalado e autenticado.
+- PRs #1 a #13, #16, #17 e #18 mesclados (#14 e #15 fechados, substituídos). `gh` instalado e autenticado.
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
