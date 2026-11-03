@@ -127,7 +127,7 @@ Adicionar/remover e-mails da allowlist é uma alteração de permissões em prod
 
 ## Migrations
 
-Para adicionar/alterar colunas, crie um arquivo em `supabase/migrations/` (ou `migration_*.sql` na raiz, como os já existentes). Em produção, só execute com autorização e rollback preparado:
+Para adicionar/alterar colunas, crie um arquivo em `supabase/migrations/` (os históricos já aplicados em produção ficam em `docs/migrations-aplicadas/`, fora de `supabase/migrations/` para a CLI não reaplicá-los). Em produção, só execute com autorização e rollback preparado:
 
 ```sql
 -- migrations/2026_07_26_add_my_commission.sql
