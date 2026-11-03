@@ -57,7 +57,6 @@ export function prospectingHtml(): string {
               <button id="manualAddBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-2 rounded-r-lg text-sm transition-colors cursor-pointer"><i class="fas fa-plus"></i></button>
             </div>
             <button id="copyListBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-copy mr-1"></i>Copiar Lista</button>
-            <button id="copyNamesBtn" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer" title="Copia só os nomes marcados, um por linha, para colar no cadastro de campanha"><i class="fas fa-clipboard-list mr-1"></i>Copiar nomes selecionados (<span id="shortlistSelectedCount">0</span>)</button>
             <button id="clearListBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-trash mr-1"></i>Limpar</button>
           </div>
         </div>
@@ -66,7 +65,6 @@ export function prospectingHtml(): string {
             <table class="w-full text-left">
               <thead class="border-b border-slate-700 text-sm text-slate-400 sticky top-0 bg-slate-800">
                 <tr>
-                  <th class="p-3 w-10"><input type="checkbox" id="shortlistSelectAll" class="w-4 h-4 rounded" title="Marcar todos"></th>
                   <th class="p-3">Streamer</th>
                   <th class="p-3">Categoria</th>
                   <th class="p-3">Email</th>
@@ -94,8 +92,6 @@ export function getElements() {
     addToListBtn: document.getElementById('addToListBtn')!,
     copyListBtn: document.getElementById('copyListBtn')!,
     clearListBtn: document.getElementById('clearListBtn')!,
-    copyNamesBtn: document.getElementById('copyNamesBtn')!,
-    shortlistSelectAll: document.getElementById('shortlistSelectAll') as HTMLInputElement,
     manualAddBtn: document.getElementById('manualAddBtn')!,
     manualAddInput: document.getElementById('manualAddInput') as HTMLInputElement,
     prospectBody: document.getElementById('prospectBody')!,

@@ -73,13 +73,8 @@ export function renderShortlist() {
   section.classList.remove('hidden') // Always visible
   document.getElementById('shortlistCount')!.textContent = String(shortlist.length)
 
-  // Marcados que saíram da lista (removida/limpa) deixam de contar
-  const logins = new Set(shortlist.map(s => s.user_login))
-  ps.shortlistSelected.forEach(l => { if (!logins.has(l)) ps.shortlistSelected.delete(l) })
-
   body.innerHTML = shortlist.map(r => `
     <tr class="hover:bg-slate-700/30 transition-colors">
-      <td class="p-3"><input type="checkbox" class="shortlist-check w-4 h-4 rounded" data-login="${esc(r.user_login)}" ${ps.shortlistSelected.has(r.user_login) ? 'checked' : ''}></td>
       <td class="p-3">
         <a href="https://www.twitch.tv/${esc(r.user_login)}/about" target="_blank" rel="noopener" class="text-white hover:text-indigo-400 font-semibold" title="Abrir a página Sobre do canal">${esc(r.user_name)}</a>
       </td>
@@ -91,16 +86,4 @@ export function renderShortlist() {
     </tr>
   `).join('')
 
-  updateShortlistSelection()
-}
-
-// Contador do botão e caixa "marcar todos" da Minha Lista.
-export function updateShortlistSelection() {
-  const count = ps.shortlistSelected.size
-  document.getElementById('shortlistSelectedCount')!.textContent = String(count)
-  const all = document.getElementById('shortlistSelectAll') as HTMLInputElement | null
-  if (all) {
-    all.checked = shortlist.length > 0 && count === shortlist.length
-    all.indeterminate = count > 0 && count < shortlist.length
-  }
 }
