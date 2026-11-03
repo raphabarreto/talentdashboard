@@ -82,6 +82,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Prospecção: removido o envio de e-mail (coluna Ações/botão Enviar, campo Empresa, modelos PT/ES, código que abria o Gmail e o teste). Mantidos a coluna Email e o filtro "Só com email". Nenhum outro modelo de texto no projeto (`streamerActionsTemplate` é só um bloco de botões escondido na aba Streamers). [ok] testes 79/79, `tsc`, build. Coluna `email` de `campaign_streamers` no banco não foi tocada. Reversão: revert do PR.
 
+- Prospecção, Minha Lista: caixas de seleção por streamer (e "marcar todos") e botão "Copiar nomes selecionados" (um nome por linha, ordem da lista; formato aceito pela caixa Streamers das Campanhas, com teste). Ninguém é removido da lista ao copiar. O nome do streamer na Minha Lista agora abre a página Sobre do canal (`/about`); a tabela de resultados mantém o link do canal. Seleção só em memória. [ok] testes 82/82, `tsc`, build. [a verificar] no navegador: marcar, copiar, colar na campanha, abrir Sobre. Reversão: revert do PR.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
