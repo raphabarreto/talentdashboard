@@ -6,7 +6,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 ## Concluído
 - RLS por allowlist de e-mail (`is_allowed_user()`) nas tabelas: [usuário] aplicado em produção;
   [ok] confirmado via `pg_policies` em produção (03/11): 5 tabelas usam `is_allowed_user()`; `allowed_users` com RLS e 3
-  e-mails. `schema.sql` e `docs/DATABASE.md` ainda mostram a policy antiga.
+  `schema.sql` e `docs/DATABASE.md` atualizados para refletir a produção (03/11) e a allowlist.
 - CRON_SECRET fail-closed em `collect-snapshots` e `consolidate-daily` (PR #1): [ok] código na main;
   [ok] deploy manual (CLI 2.108.0, 02/11) e POST sem credenciais retornou 401 nas duas.
 - `update-last-live` grava com o JWT do usuário (RLS), não service role (PR #3): [ok] na main.
@@ -45,6 +45,9 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   esm.sh, sem mudança de comportamento). [ok] testes 44/44, `tsc` e build. Reversão: revert do PR.
 - `supabase/.temp/` removido do Git e adicionado ao `.gitignore` (estado local do CLI; o workflow de deploy usa o
   secret `SUPABASE_PROJECT_ID`, não esses arquivos). Reversão: revert do PR.
+- Docs de banco: `schema.sql` reescrito espelhando a produção (tabelas, `streamer_history`, `allowed_users`, funções,
+  policies com `is_allowed_user()`; antes trazia as policies antigas inseguras) e `docs/DATABASE.md` alinhado. Conferido
+  por consultas somente leitura ao Dash Lugs. Nenhuma alteração no banco. Reversão: revert do PR.
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -55,11 +58,11 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 Baixa
 1. Zod 3.23.8 nas functions vs Zod 4 no front (aceito: versões já fixas; unificar só se necessário).
 2. `deno.json` das functions com imports não usados (aceito: inofensivo; remover mexeria no empacotamento do deploy sem ganho).
-3. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
+3. Migrations sem padrão de nome (`migration_*.sql` na raiz vs `supabase/migrations/`); apenas organização, sem risco.
 4. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-Untrack de `supabase/.temp` em PR. Próximo: `schema.sql`/docs/migrations desatualizados e `twitchtracker`.
+Docs de banco em PR. Próximo: `twitchtracker.com` chamado direto do navegador (último item "Baixa").
 
 ## Próximo passo sugerido
 Após o PR #19: itens "Baixa" na ordem; `favicon.png` 404 (manifest aponta para /favicon.png, arquivo está em `src/`; só PWA). Alterações no Supabase de produção só com autorização explícita (CLI autenticado nesta máquina; usar `--remote=<ref>`, ref do Dash Lugs em `supabase/.temp/project-ref`).

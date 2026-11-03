@@ -1,5 +1,7 @@
 # Database Schema - Talent Dashboard
 
+> Conferido contra o banco de produção em 2026-11-03. O arquivo `schema.sql` espelha este estado.
+
 ## Tabelas
 
 ### `streamers`
@@ -14,7 +16,7 @@ Armazena os streamers monitorados.
 | `peak_viewers` | int | Pico de viewers |
 | `hours_watched` | int | Total de horas assistidas |
 | `hours_streamed` | int | Total de horas transmitidas |
-| `is_active` | boolean | Status (ativo se transmitiu nos últimos 30 dias) |
+| `game_name` | text | Último jogo/categoria conhecido |
 | `main_category` | text | Categoria principal do streamer (coluna legada, sem uso na UI atual) |
 | `last_live_at` | timestamptz | Última vez que ficou online |
 | `created_at` | timestamptz | Data de criação |
@@ -68,10 +70,12 @@ Campanhas comerciais com empresas.
 | `company` | text | Nome da empresa/marca |
 | `start_date` | date | Data de início |
 | `end_date` | date | Data de fim |
-| `total_received` | numeric | Valor da campanha (exibido como "Valor da Campanha") |
+| `total_received` | numeric(12,2) | Valor recebido |
+| `campaign_value` | numeric | Valor da campanha (padrão 0) |
+| `original_amount_usd` | numeric | Valor original em USD (quando aplicável) |
 | `my_commission` | numeric | Comissão informada manualmente |
-| `currency` | text | Moeda (`BRL` ou `USD`) |
-| `commission_percentage` | numeric | Percentual de comissão (deprecated) |
+| `currency` | text | Moeda (`BRL` ou `USD`; validado no front, sem CHECK no banco) |
+| `commission_percentage` | integer | Percentual de comissão (deprecated, padrão 20) |
 | `payment_date` | date | Data que você recebeu o pagamento |
 | `created_at` | timestamptz | Data de criação |
 
@@ -87,7 +91,7 @@ Streamers associados a cada campanha.
 | `id` | uuid | Primary key |
 | `campaign_id` | uuid | FK para `campaigns.id` |
 | `streamer_name` | text | Nome do streamer |
-| `payment` | numeric | Valor pago ao streamer (opcional) |
+| `payment` | numeric(10,2) | Valor pago ao streamer (opcional) |
 | `payment_date` | date | Data do pagamento ao streamer |
 | `contact_status` | text | Status: `pendente`, `contatado`, `nao_respondeu`, `confirmado`, `recusado` |
 | `email` | text | Email do streamer (opcional) |
@@ -96,21 +100,34 @@ Streamers associados a cada campanha.
 
 ---
 
-## Row Level Security (RLS)
+## Allowlist e Row Level Security (RLS)
 
-Todas as tabelas têm RLS habilitado e permitem **todas as operações** para usuários autenticados:
+Todas as tabelas têm RLS habilitado. O acesso é restrito aos e-mails da tabela `allowed_users`
+(sem policies: não é acessível pela API) por meio da função `is_allowed_user()`:
 
 ```sql
-create policy "Allow all for authenticated users"
+-- security definer com search_path fixo (public, pg_temp)
+create policy "Allow all for allowed users"
   on <tabela> for all
-  using (auth.role() = 'authenticated');
+  using (is_allowed_user());
 ```
+
+**Não usar** `auth.role() = 'authenticated'`: qualquer conta Google logada passaria a ter acesso total.
+Adicionar/remover e-mails da allowlist é uma alteração de permissões em produção e exige autorização.
+
+---
+
+## Funções
+
+- `is_allowed_user()`: verifica o e-mail do JWT contra `allowed_users`.
+- `calculate_streamer_metrics(start_date)`: métricas dos snapshots (usada por `consolidate-daily`).
+- `get_latest_snapshots(streamer_ids)` e `get_streamers_with_live_status()`: leituras otimizadas.
 
 ---
 
 ## Migrations
 
-Para adicionar/alterar colunas, crie um arquivo em `migrations/`:
+Para adicionar/alterar colunas, crie um arquivo em `supabase/migrations/` (ou `migration_*.sql` na raiz, como os já existentes). Em produção, só execute com autorização e rollback preparado:
 
 ```sql
 -- migrations/2026_07_26_add_my_commission.sql
