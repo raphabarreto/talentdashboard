@@ -100,7 +100,7 @@ Baixa
 Nenhuma correção em andamento. Pendências: os itens de baixa prioridade já foram resolvidos ou decididos; restam só os "a verificar" abaixo.
 
 ## Próximo passo sugerido
-Teste de XSS automatizado (03/11): nomes maliciosos (`<img onerror>`, `<script>`, `<svg onload>`) nos cards, tabela e campanhas não viram elementos (`src/__tests__/xss-render.test.ts`); achada e corrigida a inicial do nome no card da Visão Geral, que não era escapada. Verificações manuais opcionais restantes: 403 direto do `twitch-proxy` com conta fora da allowlist (o login já a barra) e ganho percebido do autocompletar de categoria. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
+Teste de XSS automatizado (03/11): nomes maliciosos (`<img onerror>`, `<script>`, `<svg onload>`) nos cards, tabela e campanhas não viram elementos (`src/__tests__/xss-render.test.ts`); achada e corrigida a inicial do nome no card da Visão Geral, que não era escapada. Opcionais encerrados (03/11): o 403 direto do `twitch-proxy` [a verificar] não é testável sem a URL/chave de produção e uma segunda conta Google fora da allowlist; a checagem `is_allowed_user()` está no código e o login já barra essas contas (risco baixo). O ganho percebido do autocompletar de categoria depende só da impressão de uso do usuário. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
 
 ## Testes (main @ 06d2b85)
 - [ok] `vitest run`: 11 arquivos, 48 testes passando (revisão: `campaigns.test.ts` removido; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
