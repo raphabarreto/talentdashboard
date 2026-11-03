@@ -21,7 +21,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 - Dependências (`npm audit fix`, sem `--force`): `dompurify` 3.4.11→3.4.17, `zod` 4.4.3→4.6.7, `vite`,
   `postcss`, `nanoid`, `source-map-js` atualizados (só `package-lock.json`). [ok] testes 39/39, `tsc` e build.
   Restam 4 (3 moderadas, 1 alta), só dev: `vitest`/`@vitest/mocker`/`happy-dom`; exigem `--force` (versão
-  maior), não aplicado. Não chegam ao navegador. (PR #9) [ok] na main; [ok] deploy Vercel de produção com sucesso (02/11). [a verificar] geração de PDF (`jspdf`/`dompurify`) no navegador.
+  maior), não aplicado. Não chegam ao navegador. (PR #9) [ok] na main; [ok] deploy Vercel de produção com sucesso (02/11). [usuário] geração de PDF funcionando em produção (03/11).
 - Falhas da Twitch: `collect-snapshots` aborta sem gravar se token ou consulta falhar (antes gravava todos
   como "offline") e checa o resultado dos `insert`/`update`; `twitch-proxy` valida token e toda resposta da
   Twitch e responde 502 (antes devolvia lista vazia). [ok] testes 44/44 (5 novos), `tsc` e build.
@@ -50,7 +50,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   por consultas somente leitura ao Dash Lugs. Nenhuma alteração no banco. Reversão: revert do PR.
 - `twitchtracker` (`fetchInitialStats`): nome codificado na URL, tempo limite de 8 s (`AbortController`) e falhas registradas
   como aviso (continua retornando `null`, sem quebrar o cadastro). Mantido no navegador (API não oficial; mover para o servidor
-  não compensa). [ok] testes 48/48 (4 novos), `tsc` e build. [a verificar] cadastro de streamer novo no navegador.
+  não compensa). [ok] testes 48/48 (4 novos), `tsc` e build. [usuário] cadastro de streamer novo funcionando em produção (03/11).
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -68,7 +68,7 @@ Baixa
 Nenhuma correção em andamento. Pendências restantes são itens aceitos (Zod 3/4, deno.json, nomes de migrations) e verificações manuais "a verificar".
 
 ## Próximo passo sugerido
-Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navegar por todas as abas), PDF, cadastro de streamer, 403 de conta fora da allowlist, `update-last-live` e `GRANT UPDATE`. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
+Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navegar por todas as abas), 403 de conta fora da allowlist, `update-last-live` e `GRANT UPDATE`. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
 
 ## Testes (main @ 06d2b85)
 - [ok] `vitest run`: 11 arquivos, 48 testes passando (revisão: `campaigns.test.ts` removido; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
