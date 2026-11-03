@@ -64,6 +64,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Dependências seguras (só lock): `supabase-js` 2.108.2→2.118.0 (igual às functions), `@sentry/browser` 10.61.0→10.78.0, `jspdf-autotable` 5.0.8→5.0.9. [ok] testes 51/51, `tsc` e build. [usuário] login e PDF ok após o deploy (03/11); [a verificar] Sentry. Reversão: revert do PR. Fora (salto de versão maior, só dev): vitest, vite, happy-dom, typescript.
 
+- Prospecção: lista salva agora no banco (tabela `prospect_shortlist`, RLS `is_allowed_user()`), com `localStorage` como reserva e migração automática da lista antiga no primeiro acesso. Banco (Dash Lugs) alterado em 03/11 com autorização; validado: RLS ativa, policy e grants iguais a `streamers`. SQL em `docs/migrations-aplicadas/`. Rollback: `drop table public.prospect_shortlist;` + revert do PR. [ok] testes 54/54, `tsc`, build. [a verificar] lista persiste após limpar dados do navegador. O nome da empresa continua só no navegador.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
