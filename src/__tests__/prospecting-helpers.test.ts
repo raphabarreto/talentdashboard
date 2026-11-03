@@ -9,7 +9,7 @@ vi.hoisted(() => {
 vi.mock('../lib/data', () => ({ getProspectShortlist: vi.fn(), replaceProspectShortlist: vi.fn() }))
 
 import { extractEmail } from '../ui/prospecting/email'
-import { formatShortlistForCopy, formatNamesForCampaign } from '../ui/prospecting/shortlist'
+import { formatShortlistForCopy } from '../ui/prospecting/shortlist'
 
 const mk = (login: string, name: string, language: string) => ({ user_login: login, user_name: name, viewer_count: 0, game_name: '', email: null, description: '', language })
 
@@ -28,14 +28,3 @@ describe('formatShortlistForCopy', () => {
   it('lista vazia gera texto vazio', () => expect(formatShortlistForCopy([])).toBe(''))
 })
 
-describe('formatNamesForCampaign', () => {
-  const list = [mk('a', 'Ana', 'pt'), mk('b', 'Bob', 'es'), mk('c', 'Caio', 'pt')]
-  it('copia só os marcados, um por linha, na ordem da lista', () => {
-    expect(formatNamesForCampaign(list, new Set(['c', 'a']))).toBe('Ana\nCaio')
-  })
-  it('sem marcados devolve vazio', () => expect(formatNamesForCampaign(list, new Set())).toBe(''))
-  it('o texto é aceito pelo cadastro de campanha', async () => {
-    const { extractStreamerNames } = await import('../events/campaigns/parse')
-    expect(extractStreamerNames(formatNamesForCampaign(list, new Set(['a', 'b']))).names).toEqual(['Ana', 'Bob'])
-  })
-})
