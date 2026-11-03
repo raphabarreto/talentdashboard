@@ -10,7 +10,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 - CRON_SECRET fail-closed em `collect-snapshots` e `consolidate-daily` (PR #1): [ok] código na main;
   [ok] deploy manual (CLI 2.108.0, 02/11) e POST sem credenciais retornou 401 nas duas.
 - `update-last-live` grava com o JWT do usuário (RLS), não service role (PR #3): [ok] na main.
-  [a verificar] deploy em produção (workflow) e `GRANT UPDATE` de `authenticated` em `streamers`.
+  [usuário] funcionando em produção: streamer recém-cadastrado aparece como ativo (03/11), logo função e `GRANT UPDATE` ok.
 - Workflow de deploy: CLI fixada em 2.108.0 e `supabase` direto, sem `npx` (PR #1): [ok] código;
   [ok] job no GitHub Actions com sucesso (merge do PR #4).
 - CLAUDE.md criado (PR #2).
@@ -72,7 +72,7 @@ Baixa
 Nenhuma correção em andamento. Pendências restantes são itens aceitos (Zod 3/4, deno.json, nomes de migrations) e verificações manuais "a verificar".
 
 ## Próximo passo sugerido
-Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navegar por todas as abas), `update-last-live` e `GRANT UPDATE`. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
+Verificações manuais pelo usuário (ver "a verificar"): nenhuma obrigatória. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
 
 ## Testes (main @ 06d2b85)
 - [ok] `vitest run`: 11 arquivos, 48 testes passando (revisão: `campaigns.test.ts` removido; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
@@ -86,7 +86,7 @@ Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navega
 ## Deploys
 - [ok] Manual, 02/11: `collect-snapshots` e `consolidate-daily`.
 - [ok] Workflow, merge do PR #4 (02/11): job concluiu com sucesso; `twitch-proxy` validado em produção.
-- [a verificar] `update-last-live` em produção (função e `GRANT UPDATE` em `streamers`).
+- [ok] `update-last-live` em produção confirmado pelo usuário (03/11).
 - [ok] Vercel (produção), merge do PR #7 (02/11): deploy concluído com sucesso.
 - [ok] Vercel (produção), merge do PR #9 (02/11): deploy concluído com sucesso.
 - [ok] Workflow, merge do PR #11 (02/11): `collect-snapshots` e `twitch-proxy` publicadas com sucesso.
