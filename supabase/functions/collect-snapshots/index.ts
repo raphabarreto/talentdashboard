@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.118.0"
 import { buildCorsHeaders } from "../_shared/cors.ts"
 // v4 - exige x-cron-secret, CORS restrito; aborta sem gravar se a Twitch falhar (evita snapshots "offline" falsos)
 

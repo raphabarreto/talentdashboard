@@ -1,5 +1,5 @@
 // v14 - exige x-cron-secret, CORS restrito; so limpa snapshots se todos os updates deram certo e reporta falhas
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.118.0"
 import { buildCorsHeaders } from "../_shared/cors.ts"
 
 Deno.serve(async (req) => {

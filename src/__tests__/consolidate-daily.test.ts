@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // consolidate-daily: so apaga snapshots antigos quando todos os updates deram certo.
 
 const createClientMock = vi.fn()
-vi.mock('https://esm.sh/@supabase/supabase-js@2', () => ({
+vi.mock('https://esm.sh/@supabase/supabase-js@2.118.0', () => ({
   createClient: (...args: unknown[]) => createClientMock(...args),
 }))
 
