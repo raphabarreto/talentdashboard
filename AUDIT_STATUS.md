@@ -62,6 +62,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Conferência de acesso (03/11, leitura apenas no Dash Lugs): corpo de `is_allowed_user()` compara `auth.jwt()->>email` com `allowed_users`; 5 policies usam a função; site de produção aponta para o projeto correto. Alarme falso: o e-mail testado estava na lista.
 
+- Dependências seguras (só lock): `supabase-js` 2.108.2→2.118.0 (igual às functions), `@sentry/browser` 10.61.0→10.78.0, `jspdf-autotable` 5.0.8→5.0.9. [ok] testes 51/51, `tsc` e build. [a verificar] login, PDF e Sentry em produção após o deploy. Reversão: revert do PR. Fora (salto de versão maior, só dev): vitest, vite, happy-dom, typescript.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [a verificar] busca de streamer e cadastro em produção com Zod 4) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
