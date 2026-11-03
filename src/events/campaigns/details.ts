@@ -18,6 +18,7 @@ const statusFinalBadge: Record<string, string> = {
   nao_respondeu: 'bg-orange-500/20 text-orange-400'
 }
 const statusChipClass: Record<string, string> = {
+  all: 'bg-slate-700 text-slate-200',
   pendente: 'bg-slate-500/20 text-slate-300',
   contatado: 'bg-amber-500/20 text-amber-400',
   confirmado: 'bg-emerald-500/20 text-emerald-400',
@@ -25,11 +26,20 @@ const statusChipClass: Record<string, string> = {
   nao_respondeu: 'bg-orange-500/20 text-orange-400'
 }
 const statusChipLabel: Record<string, string> = {
+  all: 'no total',
   pendente: 'pendentes',
   contatado: 'contatados',
   confirmado: 'confirmados',
   recusado: 'recusados',
   nao_respondeu: 'não respondeu'
+}
+// Bolinha de cor ao lado do nome: mostra o status de cada streamer mesmo com o filtro "todos".
+const statusDot: Record<string, string> = {
+  pendente: 'bg-slate-400',
+  contatado: 'bg-amber-400',
+  confirmado: 'bg-emerald-400',
+  recusado: 'bg-red-400',
+  nao_respondeu: 'bg-orange-400'
 }
 const statusOutline: Record<string, string> = {
   pendente: 'outline-slate-400',
@@ -45,11 +55,14 @@ function renderDetailsChips(c: typeof campaigns[number]) {
   const counts: Record<string, number> = { pendente: 0, contatado: 0, confirmado: 0, recusado: 0, nao_respondeu: 0 }
   c.campaign_streamers?.forEach(s => { counts[s.contact_status || 'pendente']++ })
   const container = document.getElementById('detailsStatusChips')!
-  container.innerHTML = order.filter(k => counts[k] > 0).map(k =>
-    `<button data-filter="${k}" class="status-filter-btn px-3 py-1.5 rounded text-sm font-semibold ${statusChipClass[k]}">${counts[k]} ${statusChipLabel[k]}</button>`
-  ).join('')
-
   const total = c.campaign_streamers?.length || 0
+  // Todas as etapas aparecem sempre (as vazias ficam apagadas), com a contagem em destaque.
+  container.innerHTML = ['all', ...order].map(k => {
+    const n = k === 'all' ? total : counts[k]
+    const dim = k !== 'all' && n === 0 ? ' opacity-50' : ''
+    return `<button data-filter="${k}" class="status-filter-btn px-3 py-1.5 rounded text-sm ${statusChipClass[k]}${dim}"><span class="font-bold">${n}</span> ${statusChipLabel[k]}</button>`
+  }).join('')
+
   const jaContatados = total - counts.pendente
   document.getElementById('detailsProgressText')!.textContent = total > 0 ? `${jaContatados} de ${total} já contatados` : ''
   ;(document.getElementById('detailsProgressBar') as HTMLElement).style.width = total > 0 ? `${Math.round((jaContatados / total) * 100)}%` : '0%'
@@ -78,29 +91,29 @@ function renderDetailsList(c: typeof campaigns[number]) {
   filtered.forEach(s => {
     const st = s.contact_status || 'pendente'
     const row = document.createElement('div')
-    row.className = 'flex items-center justify-between gap-2 bg-slate-700/40 hover:bg-slate-700/70 rounded-lg px-3 py-2 transition-colors'
+    row.className = 'flex items-center justify-between gap-2 bg-slate-700/40 hover:bg-slate-700/70 rounded-lg px-3 py-1.5 transition-colors'
     row.dataset.id = s.id
 
     let actions = ''
     if (st === 'pendente') {
       actions = `
-        <button data-next="contatado" class="quick-status-btn text-sm font-semibold px-3 py-1.5 rounded bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 whitespace-nowrap"><i class="fas fa-paper-plane mr-1"></i>Marcar contatado</button>
-        <button data-next="recusado" class="quick-status-btn text-sm px-2 py-1.5 rounded bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400" title="Recusado"><i class="fas fa-times"></i></button>
+        <button data-next="contatado" class="quick-status-btn text-sm font-semibold px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 whitespace-nowrap" title="Marcar como contatado"><i class="fas fa-paper-plane mr-1"></i>Contatado</button>
+        <button data-next="recusado" class="quick-status-btn text-sm px-2 py-1 rounded bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400" title="Recusado"><i class="fas fa-times"></i></button>
       `
     } else if (st === 'contatado') {
       actions = `
-        <button data-next="confirmado" class="quick-status-btn text-sm font-semibold px-3 py-1.5 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 whitespace-nowrap"><i class="fas fa-check mr-1"></i>Marcar confirmado</button>
-        <button data-next="nao_respondeu" class="quick-status-btn text-sm px-2 py-1.5 rounded bg-slate-700 text-slate-400 hover:bg-orange-500/20 hover:text-orange-400" title="Não respondeu"><i class="fas fa-clock"></i></button>
-        <button data-next="recusado" class="quick-status-btn text-sm px-2 py-1.5 rounded bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400" title="Recusado"><i class="fas fa-times"></i></button>
+        <button data-next="confirmado" class="quick-status-btn text-sm font-semibold px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 whitespace-nowrap" title="Marcar como confirmado"><i class="fas fa-check mr-1"></i>Confirmado</button>
+        <button data-next="nao_respondeu" class="quick-status-btn text-sm px-2 py-1 rounded bg-slate-700 text-slate-400 hover:bg-orange-500/20 hover:text-orange-400" title="Não respondeu"><i class="fas fa-clock"></i></button>
+        <button data-next="recusado" class="quick-status-btn text-sm px-2 py-1 rounded bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400" title="Recusado"><i class="fas fa-times"></i></button>
       `
     } else {
       actions = `
-        <span class="text-sm font-semibold px-3 py-1.5 rounded ${statusFinalBadge[st] || 'bg-slate-500/20 text-slate-300'}">${st === 'nao_respondeu' ? 'Não respondeu' : st.charAt(0).toUpperCase() + st.slice(1)}</span>
+        <span class="text-sm font-semibold px-2.5 py-1 rounded ${statusFinalBadge[st] || 'bg-slate-500/20 text-slate-300'}">${st === 'nao_respondeu' ? 'Não respondeu' : st.charAt(0).toUpperCase() + st.slice(1)}</span>
         <button data-next="pendente" class="quick-status-btn text-xs px-2 py-1 rounded text-slate-500 hover:text-slate-300" title="Desfazer"><i class="fas fa-undo"></i></button>
       `
     }
 
-    row.innerHTML = `<span class="text-white text-sm font-medium">${esc(s.streamer_name)}</span><span class="flex items-center gap-1.5">${actions}</span>`
+    row.innerHTML = `<span class="flex items-center gap-2 min-w-0"><span class="w-2 h-2 rounded-full shrink-0 ${statusDot[st] || 'bg-slate-400'}" title="${st === 'nao_respondeu' ? 'Não respondeu' : st}"></span><span class="text-white text-sm font-medium truncate" title="${esc(s.streamer_name)}">${esc(s.streamer_name)}</span></span><span class="flex items-center gap-1.5 shrink-0">${actions}</span>`
     list.appendChild(row)
   })
 }
