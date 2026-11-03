@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ fb4bbb4. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ d254c7f. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -41,7 +41,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 ## Pendente (por prioridade)
 Média
-1. `is_allowed_user()` é `security definer` sem `set search_path` (`migration_rls_allowlist.sql`).
+1. `is_allowed_user()` sem `set search_path`: migration pronta em `migration_is_allowed_user_search_path.sql` (PR
+   aberto); **não executada em produção** — rodar no SQL Editor só com autorização (inclui conferência e rollback).
 Baixa
 2. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
    da janela das métricas).
@@ -52,17 +53,17 @@ Baixa
 7. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-PR `chore/remove-dead-test` aberto (remove `campaigns.test.ts`, que testava cópia de função fora do app), aguardando autorização.
+PR `fix/is-allowed-user-search-path` aberto (só adiciona o arquivo SQL e atualiza este status; nada roda no banco). Aguardando autorização para merge e, separadamente, para executar o SQL em produção.
 
 ## Próximo passo sugerido
-Após aprovar e observar o console em produção: tornar a CSP bloqueante. Depois, item 1 (`set search_path` em `is_allowed_user()`; exige SQL no Supabase de produção, só com sua aprovação).
+Tornar a CSP bloqueante após o usuário testar PDF, Prospecção, novo streamer (avatar) e detalhes de campanha com o console aberto (console inicial sem violações; `sharebx.js` = extensão do navegador). Depois: `favicon.png` 404 (manifest aponta para /favicon.png, arquivo está em `src/`; só PWA, baixa prioridade).
 
-## Testes (branch chore/remove-dead-test)
+## Testes (main @ d254c7f)
 - [ok] `vitest run`: 9 arquivos, 41 testes passando (revisão: mantidos os de segurança e dados; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #13 e #16 mesclados (#14 e #15 fechados, substituídos). `gh` instalado e autenticado.
+- PRs #1 a #13, #16 e #17 mesclados (#14 e #15 fechados, substituídos). `gh` instalado e autenticado.
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
