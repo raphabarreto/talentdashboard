@@ -70,7 +70,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Refatoração do cadastro de streamer: regra única em `src/lib/registration.ts` (antes duplicada em modal de busca, lote e confirmação de campanha). Usa o id devolvido pelo insert (sem reconsultar por nome), consultas ao banco saíram dos eventos (`deleteStreamers` em `data.ts`) e a falha do cadastro automático na campanha agora avisa em vez de ser ignorada. [ok] testes 66/66 (9 novos), `tsc`, build. [a verificar] cadastro pelo modal, em lote e ao confirmar na campanha, no navegador. Reversão: revert do PR.
 
-- Limpeza: removidos exports sem uso (`updateStreamer`, `logInfo`, `logWarn`, `PRODUCTION_URL`, `statusColors`, `selectColors`, `campaignStreamerSchema`); README (estrutura de pastas), DATABASE.md e CHANGELOG atualizados. O intervalo real do cron fica no cron-job.org: [a verificar] qual é (os docs diziam 5 e 15 min). [ok] testes 66/66, `tsc`, build. Reversão: revert do PR.
+- Limpeza: removidos exports sem uso (`updateStreamer`, `logInfo`, `logWarn`, `PRODUCTION_URL`, `statusColors`, `selectColors`, `campaignStreamerSchema`); README (estrutura de pastas) e DATABASE.md atualizados; cron confirmado pelo usuário em 15 min; `CHANGELOG.md` removido (o histórico fica nos PRs). [ok] testes 66/66, `tsc`, build. Reversão: revert do PR.
 
 ## Pendente (por prioridade)
 Baixa

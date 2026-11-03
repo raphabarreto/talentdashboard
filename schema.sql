@@ -102,6 +102,13 @@ create table campaign_streamers (
   email text default ''
 );
 
+-- Lista salva da aba Prospecção
+create table prospect_shortlist (
+  user_login text primary key,
+  data jsonb not null,
+  created_at timestamptz not null default now()
+);
+
 -- =============================================
 -- 3. Funcoes
 -- (calculate_streamer_metrics: ver supabase/migrations/calculate_streamer_metrics.sql)
@@ -168,12 +175,14 @@ alter table stream_snapshots enable row level security;
 alter table streamer_history enable row level security;
 alter table campaigns enable row level security;
 alter table campaign_streamers enable row level security;
+alter table prospect_shortlist enable row level security;
 
 create policy "Allow all for allowed users" on streamers for all using (is_allowed_user());
 create policy "Allow all for allowed users" on stream_snapshots for all using (is_allowed_user());
 create policy "Allow all for allowed users" on streamer_history for all using (is_allowed_user());
 create policy "Allow all for allowed users" on campaigns for all using (is_allowed_user());
 create policy "Allow all for allowed users" on campaign_streamers for all using (is_allowed_user());
+create policy "Allow all for allowed users" on prospect_shortlist for all using (is_allowed_user()) with check (is_allowed_user());
 
 -- =============================================
 -- 5. Limpeza automatica de snapshots antigos (opcional)
