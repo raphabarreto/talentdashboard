@@ -13,22 +13,6 @@ export const countryNames: Record<string, string> = {
 
 export const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
-export const statusColors: Record<string, string> = {
-  pendente: 'bg-slate-500',
-  contatado: 'bg-amber-500',
-  nao_respondeu: 'bg-orange-500',
-  confirmado: 'bg-emerald-500',
-  recusado: 'bg-red-500'
-}
-
-export const selectColors: Record<string, string> = {
-  pendente: 'bg-slate-700',
-  contatado: 'bg-amber-700',
-  nao_respondeu: 'bg-orange-700',
-  confirmado: 'bg-emerald-700',
-  recusado: 'bg-red-700'
-}
-
 export const fmt = (n: number) => n.toLocaleString('pt-BR')
 export const fmtCurrency = (n: number) => `R$ ${n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
 export const fmtDate = (d: string) => { if (!d) return '-'; const [y, m, day] = d.split('-'); return `${day}/${m}/${y}` }

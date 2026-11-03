@@ -28,14 +28,6 @@ export function logError(error: unknown, context: string, extra?: LogContext) {
   log('error', `${context}: ${message}`, { ...extra, error })
 }
 
-export function logInfo(message: string, context?: LogContext) {
-  log('info', message, context)
-}
-
-export function logWarn(message: string, context?: LogContext) {
-  log('warn', message, context)
-}
-
 // Loading state helper
 export function setButtonLoading(button: HTMLButtonElement, loading: boolean, originalText?: string) {
   if (loading) {

@@ -10,7 +10,7 @@ Dashboard para acompanhamento de streamers da Twitch. Monitora métricas como vi
 - 💰 **Gestão de Campanhas**: Comissão informada manualmente por campanha
 - 📥 **Exportação CSV**: Exporte campanhas e streamers para planilhas
 - 🔐 **Autenticação**: Google OAuth com emails permitidos
-- 📈 **Coleta Automática**: Snapshots a cada 15 minutos
+- 📈 **Coleta Automática**: Snapshots periódicos (o intervalo é definido no cron-job.org)
 - 🔴 **Badge AO VIVO**: Indicador em tempo real de streamers online
 - 🛡️ **Segurança**: Row Level Security no banco
 - 📊 **Monitoramento**: Sentry integrado para erros em produção
@@ -28,7 +28,7 @@ Dashboard para acompanhamento de streamers da Twitch. Monitora métricas como vi
 - **Banco de dados e Auth:** Supabase (PostgreSQL + Google OAuth)
 - **Hospedagem:** Vercel
 - **Coleta de dados:** Supabase Edge Functions (Deno)
-- **Cron:** cron-job.org (dispara Edge Functions a cada 5 min)
+- **Cron:** cron-job.org (dispara as Edge Functions; o intervalo é configurado lá)
 
 ## Estrutura
 
@@ -36,32 +36,39 @@ Dashboard para acompanhamento de streamers da Twitch. Monitora métricas como vi
 src/
   lib/
     supabase.ts       # Client Supabase
-    auth.ts           # Autenticação (Google OAuth)
-    data.ts           # CRUD (streamers, campanhas)
-    twitch.ts         # Twitch API
+    auth.ts           # Autenticação (Google OAuth) e allowlist de e-mails
+    data.ts           # Acesso ao banco (streamers, campanhas, lista da Prospecção)
+    registration.ts   # Regra única de cadastro de streamer (busca, lote, campanha)
+    twitch.ts         # Twitch API (via Edge Function) e twitchtracker
     validators.ts     # Validação com Zod
+    escape.ts         # escapeHtml (proteção contra XSS em innerHTML)
     logger.ts         # Logger centralizado
     export.ts         # Exportação CSV
   events/
     campaigns.ts      # Eventos de campanhas
-    streamers.ts      # Eventos de streamers (modular)
+    streamers.ts      # Eventos de streamers (lote, remoção, PDF)
     streamers/
-      addStreamer.ts  # Modal de adicionar streamer
-      lookup.ts       # Modal de lookup
+      lookup.ts       # Modal de busca/cadastro individual
     navigation.ts     # Eventos de navegação
   ui/
+    overview.ts       # Visão Geral (cards)
+    table.ts          # Tabela de streamers
     campaigns.ts      # Renderização de campanhas
-    overview.ts       # Renderização de cards
-    table.ts          # Renderização de tabela
+    prospecting.ts    # Prospecção (busca por categoria, lista salva no banco)
     filters.ts        # Filtros com cache
+  types/              # Interfaces TypeScript
+  state.ts            # Estado global em memória
+  constants.ts        # Constantes (paginação, prazos)
+  utils.ts            # Formatação e helpers
   __tests__/          # Testes automatizados
-  types.ts            # Interfaces TypeScript
   main.ts             # Lógica principal do dashboard
   login.ts            # Lógica da página de login
   style.css           # Tailwind import
 
+public/               # favicon.png e manifest.json (PWA)
+docs/                 # DATABASE.md e migrations-aplicadas/ (histórico já executado em produção)
 supabase/functions/
-  collect-snapshots/    # Coleta viewers a cada 15min
+  collect-snapshots/    # Coleta viewers (disparada pelo cron)
   consolidate-daily/    # Consolida métricas diárias (últimos 30 dias)
   twitch-proxy/         # Proxy autenticado para Twitch API
   update-last-live/     # Atualiza última vez online
