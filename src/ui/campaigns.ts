@@ -77,10 +77,10 @@ export function populateCampaignFilters() {
   const mVal = mFilter.value, yVal = yFilter.value
 
   mFilter.innerHTML = '<option value="all">Todos os Meses</option>'
-  ;[...months].sort().forEach(m => { mFilter.innerHTML += `<option value="${m}">${monthNames[m]}</option>` })
+  ;[...months].sort((a, b) => a - b).forEach(m => { mFilter.innerHTML += `<option value="${m}">${monthNames[m]}</option>` })
 
   yFilter.innerHTML = '<option value="all">Todos os Anos</option>'
-  ;[...years].sort().forEach(y => { yFilter.innerHTML += `<option value="${y}">${y}</option>` })
+  ;[...years].sort((a, b) => a - b).forEach(y => { yFilter.innerHTML += `<option value="${y}">${y}</option>` })
 
   if (!filtersInitialized) {
     filtersInitialized = true
