@@ -87,6 +87,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Campanhas, detalhes (olho): modal mais amplo (até `max-w-7xl`, 90% da altura), cabeçalho com resumo e filtros fixos e só a lista rolando; streamers em 1/2/3 colunas conforme a tela (muito mais nomes visíveis); chips mostram todas as etapas com a contagem (vazias apagadas) e "N no total"; bolinha de cor do status em cada linha; botões de ação mais enxutos (mesmas ações e mesmos `data-next`). Status, transições, busca, filtros e progresso preservados; sem mudança de banco, RLS, functions ou do formulário de edição. Obs.: não existe exclusão individual de streamer nesse modal (remover é pelo lápis, editando a lista). [ok] testes 98/98 (4 novos), `tsc`, build. [a verificar] visual no navegador (desktop e tela pequena). Reversão: revert do PR.
 
+- Detalhes da campanha: altura do modal agora se adapta ao conteúdo (`max-h` 90% da tela, rolagem interna só quando necessário; cabeçalho, filtros, busca e Fechar preservados). Só classes no `index.html`. [ok] testes 98/98, `tsc`, build. [a verificar] visual no navegador. Reversão: revert do PR.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
