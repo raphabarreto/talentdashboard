@@ -72,7 +72,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Limpeza: removidos exports sem uso (`updateStreamer`, `logInfo`, `logWarn`, `PRODUCTION_URL`, `statusColors`, `selectColors`, `campaignStreamerSchema`); README (estrutura de pastas) e DATABASE.md atualizados; cron confirmado pelo usuário em 15 min; `CHANGELOG.md` removido (o histórico fica nos PRs). [ok] testes 66/66, `tsc`, build. Reversão: revert do PR.
 
-- Sentry: DSN (região US) presente no site publicado e CSP libera `*.sentry.io`. `logger` agora envia o erro original (com stack) em vez de recriar só a mensagem. [ok] testes 70/70 (4 novos), `tsc`, build. [a verificar] evento chegando no painel do Sentry (teste no console do navegador). Reversão: revert do PR.
+- Sentry: DSN (região US) presente no site publicado e CSP libera `*.sentry.io`. `logger` agora envia o erro original (com stack) em vez de recriar só a mensagem. [ok] testes 70/70 (4 novos), `tsc`, build. [usuário] evento de teste chegou ao painel do Sentry em produção (03/11). Com bloqueador de anúncios ligado o envio é bloqueado pelo navegador (`ERR_BLOCKED_BY_CLIENT`); em janela sem extensão funciona. Reversão: revert do PR.
 
 - Refatoração da Prospecção: `src/ui/prospecting.ts` (494 linhas, `setupProspecting` com 218) dividido em `src/ui/prospecting/` (categories, shortlist, email, layout, render, state, types, index). Código movido sem mudar comportamento (ids e classes do HTML conferidos idênticos); funções puras ganharam testes. [ok] testes 77/77, `tsc`, build. [a verificar] Prospecção no navegador (buscar, selecionar, adicionar à lista, copiar, enviar e-mail, remover). Reversão: revert do PR.
 
