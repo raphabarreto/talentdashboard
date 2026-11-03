@@ -1,11 +1,12 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ d254c7f. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ f3dc2b3. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
 - RLS por allowlist de e-mail (`is_allowed_user()`) nas tabelas: [usuário] aplicado em produção;
-  [a verificar] via `pg_policies`. `schema.sql` e `docs/DATABASE.md` ainda mostram a policy antiga.
+  [ok] confirmado via `pg_policies` em produção (03/11): 5 tabelas usam `is_allowed_user()`; `allowed_users` com RLS e 3
+  e-mails. `schema.sql` e `docs/DATABASE.md` ainda mostram a policy antiga.
 - CRON_SECRET fail-closed em `collect-snapshots` e `consolidate-daily` (PR #1): [ok] código na main;
   [ok] deploy manual (CLI 2.108.0, 02/11) e POST sem credenciais retornou 401 nas duas.
 - `update-last-live` grava com o JWT do usuário (RLS), não service role (PR #3): [ok] na main.
@@ -33,6 +34,9 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   `z.config({ jitless: true })` em `src/lib/validators.ts` + teste (PR #16) [ok] na main; [ok] deploy Vercel de produção com sucesso (03/11). [a verificar] aviso sumiu do console.
   [a verificar] demais violações e domínio do Sentry (`*.ingest.sentry.io` presumido); depois trocar para
   `Content-Security-Policy` (bloqueante) em PR separado.
+- `is_allowed_user()` com `search_path` fixado (`public, pg_temp`): [ok] executado em produção (Dash Lugs) em 03/11 com
+  autorização; validado: `proconfig` ok, `authenticated` mantém EXECUTE, 5 policies intactas, allowlist com 3 e-mails.
+  Rollback salvo fora do repositório. [usuário] conferir dashboard após a alteração.
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -40,25 +44,22 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   da allowlist (não testado).
 
 ## Pendente (por prioridade)
-Média
-1. `is_allowed_user()` sem `set search_path`: migration pronta em `migration_is_allowed_user_search_path.sql` (PR
-   aberto); **não executada em produção** — rodar no SQL Editor só com autorização (inclui conferência e rollback).
 Baixa
-2. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
+1. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
    da janela das métricas).
-3. CI em Node 20; sem `engines`/`.nvmrc`; local roda Node 26.
-4. Imports `esm.sh` sem versão fixa (`supabase-js@2`) e Zod 3 nas functions vs Zod 4 no front.
-5. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
-6. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
-7. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
+2. CI em Node 20; sem `engines`/`.nvmrc`; local roda Node 26.
+3. Imports `esm.sh` sem versão fixa (`supabase-js@2`) e Zod 3 nas functions vs Zod 4 no front.
+4. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
+5. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
+6. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-PR `fix/is-allowed-user-search-path` aberto (só adiciona o arquivo SQL e atualiza este status; nada roda no banco). Aguardando autorização para merge e, separadamente, para executar o SQL em produção.
+PR #19 (`fix/csp-enforce`, CSP bloqueante) aguardando autorização do usuário. Banco: nenhuma outra alteração pendente.
 
 ## Próximo passo sugerido
-Tornar a CSP bloqueante após o usuário testar PDF, Prospecção, novo streamer (avatar) e detalhes de campanha com o console aberto (console inicial sem violações; `sharebx.js` = extensão do navegador). Depois: `favicon.png` 404 (manifest aponta para /favicon.png, arquivo está em `src/`; só PWA, baixa prioridade).
+Após o PR #19: itens "Baixa" na ordem; `favicon.png` 404 (manifest aponta para /favicon.png, arquivo está em `src/`; só PWA). Alterações no Supabase de produção só com autorização explícita (CLI autenticado nesta máquina; usar `--remote=<ref>`, ref do Dash Lugs em `supabase/.temp/project-ref`).
 
-## Testes (main @ d254c7f)
+## Testes (main @ f3dc2b3)
 - [ok] `vitest run`: 9 arquivos, 41 testes passando (revisão: mantidos os de segurança e dados; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
