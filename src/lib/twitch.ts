@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { log } from './logger'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 
@@ -62,9 +63,18 @@ export async function fetchStreamsByGame(gameId: string, first = 100, language =
 }
 
 export async function fetchInitialStats(username: string) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 8000)
   try {
-    const res = await fetch(`https://twitchtracker.com/api/channels/summary/${username.toLowerCase()}`)
-    if (!res.ok) return null
+    // API nao oficial de terceiros: nome codificado na URL, tempo limite e falhas registradas (nao fatais).
+    const res = await fetch(
+      `https://twitchtracker.com/api/channels/summary/${encodeURIComponent(username.toLowerCase())}`,
+      { signal: controller.signal }
+    )
+    if (!res.ok) {
+      log('warn', 'twitchtracker respondeu com erro', { status: res.status })
+      return null
+    }
     const data = await res.json()
     return {
       avg_viewers: data.avg_viewers || 0,
@@ -72,7 +82,10 @@ export async function fetchInitialStats(username: string) {
       hours_watched: data.hours_watched || 0,
       hours_streamed: data.minutes_streamed ? Math.round(data.minutes_streamed / 60) : 0,
     }
-  } catch {
+  } catch (err) {
+    log('warn', 'twitchtracker indisponivel', { error: String(err) })
     return null
+  } finally {
+    clearTimeout(timer)
   }
 }
