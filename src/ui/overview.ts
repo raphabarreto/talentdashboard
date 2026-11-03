@@ -57,7 +57,9 @@ export function renderOverview() {
     `
     // Sem onclick inline (bloqueado por CSP sem 'unsafe-inline').
     card.querySelector('.card-menu-btn')?.addEventListener('click', (e) => {
-      (e.currentTarget as HTMLElement).nextElementSibling?.classList.toggle('hidden')
+      const menu = (e.currentTarget as HTMLElement).nextElementSibling
+      document.querySelectorAll('.dropdown-menu:not(.hidden)').forEach(d => { if (d !== menu) d.classList.add('hidden') })
+      menu?.classList.toggle('hidden')
     })
     fragment.appendChild(card)
   })
