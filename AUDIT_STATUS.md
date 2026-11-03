@@ -64,17 +64,17 @@ Baixa
 3. Migrations sem padrão de nome (`migration_*.sql` na raiz vs `supabase/migrations/`); apenas organização, sem risco.
 
 ## Tarefa atual
-Nenhuma correção em andamento. Pendências restantes são itens aceitos (Zod 3/4, deno.json, nomes de migrations) e verificações manuais "a verificar".
+Sessão encerrada em 03/11 com a main limpa em 360718c e nenhuma correção em andamento. Pendências restantes são itens aceitos (Zod 3/4, deno.json, nomes de migrations) e verificações manuais "a verificar".
 
 ## Próximo passo sugerido
-Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navegar por todas as abas), PDF, cadastro de streamer, 403 de conta fora da allowlist, `update-last-live` e `GRANT UPDATE`. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
+Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navegar por todas as abas), PDF, cadastro de streamer, 403 de conta fora da allowlist, `update-last-live` e `GRANT UPDATE`. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Rodar `supabase logout` ao encerrar (CLI segue autenticado nesta máquina). Depois: corrigir `favicon.png` (404; manifest aponta para `/favicon.png`, arquivo está em `src/`; só visual) em PR de rotina.
 
-## Testes (main @ 06d2b85)
+## Testes (main @ 360718c)
 - [ok] `vitest run`: 11 arquivos, 48 testes passando (revisão: `campaigns.test.ts` removido; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #28 mesclados (exceto #14, #15 e #19, fechados e substituídos). Branches mescladas podem ser apagadas no GitHub (limpeza opcional).
+- PRs #1 a #29 mesclados (exceto #14, #15 e #19, fechados e substituídos). Branches mescladas podem ser apagadas no GitHub (limpeza opcional).
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
