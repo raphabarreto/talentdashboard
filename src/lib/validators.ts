@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+// Evita o teste de `new Function()` do Zod (JIT), que violaria a CSP sem 'unsafe-eval'.
+// O Zod usa o caminho interpretado, sem diferença para o usuário.
+z.config({ jitless: true })
+
 // Streamer validation
 export const streamerSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),

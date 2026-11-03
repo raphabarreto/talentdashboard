@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ b28dda3. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ ca525cf. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -25,6 +25,13 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   como "offline") e checa o resultado dos `insert`/`update`; `twitch-proxy` valida token e toda resposta da
   Twitch e responde 502 (antes devolvia lista vazia). [ok] testes 44/44 (5 novos), `tsc` e build.
   (PR #11) [ok] na main; [ok] job "Deploy Edge Functions" com sucesso (02/11). [a verificar] busca de streamer em produção. Efeito: em falha da Twitch o cron não grava aquela rodada (lacuna, não dado falso).
+- Headers de segurança (`vercel.json`): nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy, HSTS
+  (1 ano) e CSP em modo **Report-Only** (não bloqueia, só registra no console). `onclick` inline do menu do
+  card (`src/ui/overview.ts`) trocado por listener. (PR #13) [ok] na main, testes 44/44, `tsc` e build; [ok] deploy Vercel de produção com sucesso e cabeçalhos confirmados via `curl` em produção (02/11).
+  [usuário] console em produção mostrou 1 violação: `unsafe-eval` (Zod testa `new Function`; tem fallback, não
+  precisa liberar eval). Correção: `z.config({ jitless: true })` em `src/lib/validators.ts` (+ teste), **em PR
+  (`fix/csp-zod-jitless`), sem merge**. [a verificar] demais violações e domínio do Sentry (`*.ingest.sentry.io`
+  presumido); depois trocar para `Content-Security-Policy` (bloqueante) em PR separado.
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -33,29 +40,28 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 ## Pendente (por prioridade)
 Média
-1. Sem `vercel.json`, CSP nem headers de segurança (`index.html`/`login.html` sem CSP).
-2. `is_allowed_user()` é `security definer` sem `set search_path` (`migration_rls_allowlist.sql`).
+1. `is_allowed_user()` é `security definer` sem `set search_path` (`migration_rls_allowlist.sql`).
 Baixa
-3. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
+2. `consolidate-daily` não checa o resultado dos `update` (rebaixado: o `delete` atinge só dados fora
    da janela das métricas).
-4. CI em Node 20; sem `engines`/`.nvmrc`; local roda Node 26.
-5. Imports `esm.sh` sem versão fixa (`supabase-js@2`) e Zod 3 nas functions vs Zod 4 no front.
-6. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
-7. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
-8. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
+3. CI em Node 20; sem `engines`/`.nvmrc`; local roda Node 26.
+4. Imports `esm.sh` sem versão fixa (`supabase-js@2`) e Zod 3 nas functions vs Zod 4 no front.
+5. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
+6. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
+7. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-Nenhuma em andamento. Aguardando autorização do PR de documentação.
+PR `fix/csp-zod-jitless` aberto, aguardando autorização. Depois: reconferir o console e tornar a CSP bloqueante.
 
 ## Próximo passo sugerido
-Item 1 (CSP e headers de segurança: criar `vercel.json`; testar CSP em preview antes de publicar).
+Após aprovar e observar o console em produção: tornar a CSP bloqueante. Depois, item 1 (`set search_path` em `is_allowed_user()`; exige SQL no Supabase de produção, só com sua aprovação).
 
-## Testes (main @ b28dda3)
-- [ok] `vitest run`: 9 arquivos, 44 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
+## Testes (main @ ca525cf)
+- [ok] `vitest run`: 10 arquivos, 45 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #11 mesclados. `gh` instalado e autenticado.
+- PRs #1 a #13 mesclados. `gh` instalado e autenticado.
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
@@ -66,3 +72,4 @@ Item 1 (CSP e headers de segurança: criar `vercel.json`; testar CSP em preview 
 - [ok] Vercel (produção), merge do PR #7 (02/11): deploy concluído com sucesso.
 - [ok] Vercel (produção), merge do PR #9 (02/11): deploy concluído com sucesso.
 - [ok] Workflow, merge do PR #11 (02/11): `collect-snapshots` e `twitch-proxy` publicadas com sucesso.
+- [ok] Vercel (produção), merge do PR #13 (02/11): deploy concluído; headers de segurança presentes.
