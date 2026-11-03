@@ -21,15 +21,46 @@ let selected = new Set<string>()
 let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')
 let page = 1
 
-// Cache em memória de buscas de categoria já feitas na sessão (evita rechamar a API pro mesmo termo)
-const categorySearchCache = new Map<string, Array<{ id: string; name: string; box_art_url: string }>>()
+// Cache de buscas de categoria: em memória (sessão) + localStorage (7 dias; ids de categoria da Twitch são estáveis).
+type Category = { id: string; name: string; box_art_url: string }
+const CATEGORY_CACHE_KEY = 'prospectCategoryCache'
+const CATEGORY_CACHE_TTL = 7 * 24 * 60 * 60 * 1000
+const categorySearchCache = new Map<string, Category[]>()
+const categoryInflight = new Map<string, Promise<Category[]>>()
 
-async function searchCategoriesCached(query: string) {
+function readStoredCategories(key: string): Category[] | null {
+  try {
+    const all = JSON.parse(localStorage.getItem(CATEGORY_CACHE_KEY) || '{}')
+    const hit = all[key]
+    return hit && Date.now() - hit.t < CATEGORY_CACHE_TTL ? hit.cats : null
+  } catch { return null }
+}
+
+function storeCategories(key: string, cats: Category[]) {
+  try {
+    const all = JSON.parse(localStorage.getItem(CATEGORY_CACHE_KEY) || '{}')
+    all[key] = { t: Date.now(), cats }
+    const keys = Object.keys(all)
+    if (keys.length > 100) keys.sort((a, b) => all[a].t - all[b].t).slice(0, keys.length - 100).forEach(k => delete all[k])
+    localStorage.setItem(CATEGORY_CACHE_KEY, JSON.stringify(all))
+  } catch { /* cache é só otimização */ }
+}
+
+export async function searchCategoriesCached(query: string): Promise<Category[]> {
   const key = query.toLowerCase()
-  if (categorySearchCache.has(key)) return categorySearchCache.get(key)!
-  const cats = await searchCategories(query)
-  categorySearchCache.set(key, cats)
-  return cats
+  const mem = categorySearchCache.get(key)
+  if (mem) return mem
+  const stored = readStoredCategories(key)
+  if (stored) { categorySearchCache.set(key, stored); return stored }
+  const inflight = categoryInflight.get(key)
+  if (inflight) return inflight
+  const p = searchCategories(query).then(cats => {
+    categorySearchCache.set(key, cats)
+    if (cats.length) storeCategories(key, cats)
+    return cats
+  }).finally(() => categoryInflight.delete(key))
+  categoryInflight.set(key, p)
+  return p
 }
 
 const EMAIL_REGEX = /[\w.+-]+@[\w-]+\.[\w.-]+/g
@@ -216,13 +247,18 @@ export function setupProspecting() {
     debounce = setTimeout(async () => {
       const q = els.input.value.trim()
       if (q.length < 2) { els.suggestions.classList.add('hidden'); return }
+      if (!categorySearchCache.has(q.toLowerCase())) {
+        els.suggestions.innerHTML = '<div class="px-3 py-2 text-sm text-slate-400">Buscando categorias...</div>'
+        els.suggestions.classList.remove('hidden')
+      }
       try {
         const cats = await searchCategoriesCached(q)
+        if (els.input.value.trim() !== q) return // resposta antiga: o texto já mudou
         if (!cats.length) { els.suggestions.classList.add('hidden'); return }
         els.suggestions.innerHTML = cats.map(c => `<div class="px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm text-white" data-id="${esc(c.id)}" data-name="${esc(c.name)}">${esc(c.name)}</div>`).join('')
         els.suggestions.classList.remove('hidden')
       } catch { els.suggestions.classList.add('hidden') }
-    }, 300)
+    }, 200)
   })
 
   els.suggestions.addEventListener('click', (e) => {

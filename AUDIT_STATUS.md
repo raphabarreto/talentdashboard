@@ -66,6 +66,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Prospecção: lista salva agora no banco (tabela `prospect_shortlist`, RLS `is_allowed_user()`), com `localStorage` como reserva e migração automática da lista antiga no primeiro acesso. Banco (Dash Lugs) alterado em 03/11 com autorização; validado: RLS ativa, policy e grants iguais a `streamers`. SQL em `docs/migrations-aplicadas/`. Rollback: `drop table public.prospect_shortlist;` + revert do PR. [ok] testes 54/54, `tsc`, build. [a verificar] lista persiste após limpar dados do navegador. O nome da empresa continua só no navegador.
 
+- Prospecção, autocompletar de categoria: cache também no navegador (7 dias), busca em andamento não é repetida, respostas antigas ignoradas, aviso "Buscando categorias..." e espera de 200 ms (antes 300). Só front; a chamada ao servidor/Twitch continua igual. [ok] testes 57/57, `tsc`, build. [a verificar] ganho percebido no uso real. Reversão: revert do PR.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
