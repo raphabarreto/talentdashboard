@@ -1,6 +1,7 @@
 import { escapeHtml as esc } from '../lib/escape'
 import { searchCategories, fetchStreamsByGame, fetchTwitchUser } from '../lib/twitch'
 import { showToast } from '../utils'
+import { getProspectShortlist, replaceProspectShortlist } from '../lib/data'
 import { streamers } from '../state'
 import { PROSPECT_PAGE_SIZE } from '../constants'
 
@@ -12,6 +13,7 @@ interface ProspectStream {
   email: string | null
   description: string
   language: string
+  added_at?: string
 }
 
 let results: ProspectStream[] = []
@@ -32,8 +34,28 @@ async function searchCategoriesCached(query: string) {
 
 const EMAIL_REGEX = /[\w.+-]+@[\w-]+\.[\w.-]+/g
 
+// Salva no banco (fonte principal) e no navegador (reserva se o banco falhar).
 function saveShortlist() {
+  const base = Date.now()
+  shortlist.forEach((s, i) => { if (!s.added_at) s.added_at = new Date(base + i).toISOString() })
   localStorage.setItem('prospectShortlist', JSON.stringify(shortlist))
+  replaceProspectShortlist(shortlist.map(s => ({ user_login: s.user_login, data: { ...s } })))
+    .catch(() => showToast('Não foi possível salvar a lista no servidor (salva só neste navegador)'))
+}
+
+// Carrega a lista do banco. Se o banco estiver vazio, envia a lista que já existia no navegador.
+async function loadShortlistFromDb() {
+  try {
+    const rows = await getProspectShortlist()
+    if (rows.length) {
+      shortlist = rows.map(r => r.data as unknown as ProspectStream)
+        .sort((a, b) => (a.added_at || '').localeCompare(b.added_at || ''))
+      localStorage.setItem('prospectShortlist', JSON.stringify(shortlist))
+    } else if (shortlist.length) {
+      saveShortlist()
+    }
+    renderShortlist()
+  } catch { /* sem banco: segue com a lista do navegador */ }
 }
 
 const DEFAULT_TEMPLATE_PT = `Fala {streamer}, tudo bem?
@@ -346,6 +368,7 @@ export function setupProspecting() {
   })
 
   renderShortlist() // Always show
+  loadShortlistFromDb()
 }
 
 function getVisibleResults(): ProspectStream[] {
