@@ -1,4 +1,4 @@
-import { z } from "https://esm.sh/zod@3.23.8"
+import { z } from "https://esm.sh/zod@4.6.7"
 
 // UUID v4 do Postgres/Supabase (gen_random_uuid())
 const uuidSchema = z.string().uuid({ message: "ID inválido" })
@@ -45,7 +45,7 @@ export const twitchProxyParamsSchema = z.object({
   if (required) {
     for (const field of required) {
       if (!data[field as keyof typeof data]) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Missing ${field}`, path: [field] })
+        ctx.addIssue({ code: "custom", message: `Missing ${field}`, path: [field] })
       }
     }
   }
