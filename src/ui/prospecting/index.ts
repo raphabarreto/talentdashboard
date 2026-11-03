@@ -4,10 +4,10 @@ import { showToast } from '../../utils'
 import { streamers } from '../../state'
 import { prospectingHtml, getElements, type Els } from './layout'
 import { searchCategoriesCached, isCategoryCached } from './categories'
-import { shortlist, setShortlist, saveShortlist, loadShortlistFromDb, formatShortlistForCopy } from './shortlist'
+import { shortlist, setShortlist, saveShortlist, loadShortlistFromDb, formatShortlistForCopy, formatNamesForCampaign } from './shortlist'
 import { extractEmail } from './email'
 import { ps } from './state'
-import { getVisibleResults, renderResults, renderShortlist, updateActions } from './render'
+import { getVisibleResults, renderResults, renderShortlist, updateActions, updateShortlistSelection } from './render'
 
 export { searchCategoriesCached } from './categories'
 
@@ -124,6 +124,30 @@ function setupShortlistActions(els: Els) {
   els.copyListBtn.addEventListener('click', () => {
     navigator.clipboard.writeText(formatShortlistForCopy(shortlist))
     showToast(`Lista copiada! (${shortlist.length} streamers)`)
+  })
+
+  // Marcar streamers da lista e copiar só os nomes (um por linha) para colar no cadastro de campanha.
+  els.shortlistBody.addEventListener('change', (e) => {
+    const target = e.target as HTMLInputElement
+    if (!target.classList.contains('shortlist-check')) return
+    if (target.checked) ps.shortlistSelected.add(target.dataset.login!)
+    else ps.shortlistSelected.delete(target.dataset.login!)
+    updateShortlistSelection()
+  })
+
+  els.shortlistSelectAll.addEventListener('change', () => {
+    if (els.shortlistSelectAll.checked) shortlist.forEach(s => ps.shortlistSelected.add(s.user_login))
+    else ps.shortlistSelected.clear()
+    renderShortlist()
+  })
+
+  els.copyNamesBtn.addEventListener('click', async () => {
+    const text = formatNamesForCampaign(shortlist, ps.shortlistSelected)
+    if (!text) { showToast('Marque ao menos um streamer na lista', 'error'); return }
+    try {
+      await navigator.clipboard.writeText(text)
+      showToast(`${ps.shortlistSelected.size} nomes copiados!`)
+    } catch { showToast('Não foi possível copiar', 'error') }
   })
 
   els.clearListBtn.addEventListener('click', () => {

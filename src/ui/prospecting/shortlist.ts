@@ -43,3 +43,8 @@ export function formatShortlistForCopy(list: ProspectStream[]): string {
   if (other.length) out += `🌐 Others\n${other.map(line).join('\n')}\n`
   return out.trim()
 }
+
+// Um nome por linha, na ordem da lista: formato aceito pela caixa "Streamers" do cadastro de campanha.
+export function formatNamesForCampaign(list: ProspectStream[], selectedLogins: Set<string>): string {
+  return list.filter(r => selectedLogins.has(r.user_login)).map(r => r.user_name).join('\n')
+}
