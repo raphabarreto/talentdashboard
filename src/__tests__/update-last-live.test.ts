@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const createClientMock = vi.fn()
 
-vi.mock('https://esm.sh/@supabase/supabase-js@2', () => ({
+vi.mock('https://esm.sh/@supabase/supabase-js@2.118.0', () => ({
   createClient: (...args: unknown[]) => createClientMock(...args),
 }))
 vi.mock('https://esm.sh/zod@3.23.8', async () => await import('zod'))

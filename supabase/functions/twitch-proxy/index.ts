@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.118.0"
 import { buildCorsHeaders } from "../_shared/cors.ts"
 import { twitchProxyParamsSchema } from "../_shared/validators.ts"
 // v16 - allowlist (is_allowed_user), encode dos parametros, CORS restrito, Zod; falhas da Twitch viram 502

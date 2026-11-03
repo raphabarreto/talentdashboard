@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.118.0"
 import { buildCorsHeaders } from "../_shared/cors.ts"
 import { updateLastLiveSchema } from "../_shared/validators.ts"
 // v4 - exige JWT valido, CORS restrito, valida input com Zod e grava via RLS (sem service role)
