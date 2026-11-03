@@ -74,6 +74,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Sentry: DSN (região US) presente no site publicado e CSP libera `*.sentry.io`. `logger` agora envia o erro original (com stack) em vez de recriar só a mensagem. [ok] testes 70/70 (4 novos), `tsc`, build. [a verificar] evento chegando no painel do Sentry (teste no console do navegador). Reversão: revert do PR.
 
+- Refatoração da Prospecção: `src/ui/prospecting.ts` (494 linhas, `setupProspecting` com 218) dividido em `src/ui/prospecting/` (categories, shortlist, email, layout, render, state, types, index). Código movido sem mudar comportamento (ids e classes do HTML conferidos idênticos); funções puras ganharam testes. [ok] testes 77/77, `tsc`, build. [a verificar] Prospecção no navegador (buscar, selecionar, adicionar à lista, copiar, enviar e-mail, remover). Reversão: revert do PR.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
