@@ -35,7 +35,7 @@ describe('formatNamesForCampaign', () => {
   })
   it('sem marcados devolve vazio', () => expect(formatNamesForCampaign(list, new Set())).toBe(''))
   it('o texto é aceito pelo cadastro de campanha', async () => {
-    const { parseStreamerLines } = await import('../events/campaigns/parse')
-    expect(parseStreamerLines(formatNamesForCampaign(list, new Set(['a', 'b'])), false).map(r => r.streamer_name)).toEqual(['Ana', 'Bob'])
+    const { extractStreamerNames } = await import('../events/campaigns/parse')
+    expect(extractStreamerNames(formatNamesForCampaign(list, new Set(['a', 'b']))).names).toEqual(['Ana', 'Bob'])
   })
 })
