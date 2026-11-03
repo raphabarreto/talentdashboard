@@ -25,22 +25,21 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 - Falhas da Twitch: `collect-snapshots` aborta sem gravar se token ou consulta falhar (antes gravava todos
   como "offline") e checa o resultado dos `insert`/`update`; `twitch-proxy` valida token e toda resposta da
   Twitch e responde 502 (antes devolvia lista vazia). [ok] testes 44/44 (5 novos), `tsc` e build.
-  (PR #11) [ok] na main; [ok] job "Deploy Edge Functions" com sucesso (02/11). [a verificar] busca de streamer em produção. Efeito: em falha da Twitch o cron não grava aquela rodada (lacuna, não dado falso).
+  (PR #11) [ok] na main; [ok] job "Deploy Edge Functions" com sucesso (02/11). [usuário] busca de streamer e cadastro funcionando em produção (03/11). Efeito: em falha da Twitch o cron não grava aquela rodada (lacuna, não dado falso).
 - Headers de segurança (`vercel.json`): nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy, HSTS
   (1 ano) e CSP (Report-Only no PR #13; bloqueante no PR #22). `onclick` inline do menu do
   card (`src/ui/overview.ts`) trocado por listener. (PR #13) [ok] na main, testes 44/44, `tsc` e build; [ok] deploy
   Vercel de produção e cabeçalhos confirmados via `curl` (02/11). [usuário] console em produção mostrou 1
   violação: `unsafe-eval` (Zod testa `new Function`; tem fallback, não precisa liberar eval). Correção:
-  `z.config({ jitless: true })` em `src/lib/validators.ts` + teste (PR #16) [ok] na main; [ok] deploy Vercel de produção com sucesso (03/11). [a verificar] aviso sumiu do console.
-  [a verificar] demais violações e domínio do Sentry (`*.ingest.sentry.io` presumido); depois trocar para
-  `Content-Security-Policy` (bloqueante) em PR separado.
+  `z.config({ jitless: true })` em `src/lib/validators.ts` + teste (PR #16) [ok] na main; [ok] deploy Vercel de produção com sucesso (03/11). [usuário] console sem violações de CSP (03/11).
+  CSP bloqueante ativa desde o PR #22; domínio do Sentry (`*.sentry.io`) liberado e confirmado com evento real.
 - `is_allowed_user()` com `search_path` fixado (`public, pg_temp`): [ok] executado em produção (Dash Lugs) em 03/11 com
   autorização; validado: `proconfig` ok, `authenticated` mantém EXECUTE, 5 policies intactas, allowlist com 3 e-mails.
   Rollback salvo fora do repositório. [usuário] conferir dashboard após a alteração.
 - `consolidate-daily`: só apaga snapshots antigos se todos os updates deram certo; reporta falhas (500) e erro da
   limpeza; `cleaned` agora é verdadeiro de fato. [ok] testes 44/44 (3 novos), `tsc` e build. Reversão: revert do PR.
 - Node: CI em Node 22 (antes 20), `.nvmrc` = 22 e `engines.node >=20` (PR de `chore/node-version`). Compatível com vite,
-  vitest e happy-dom instalados. [ok] testes 44/44 e build local (Node 26); [a verificar] `test.yml` no CI com Node 22 (roda no PR).
+  vitest e happy-dom instalados. [ok] testes 44/44 e build local (Node 26); [ok] `test.yml` no CI com Node 22 passando em todos os PRs.
 - `supabase-js` fixado em `2.118.0` nas 4 Edge Functions (era `@2` flutuante; `@2` já resolvia para essa versão no
   esm.sh, sem mudança de comportamento). [ok] testes 44/44, `tsc` e build. Reversão: revert do PR.
 - `supabase/.temp/` removido do Git e adicionado ao `.gitignore` (estado local do CLI; o workflow de deploy usa o
@@ -62,9 +61,9 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Conferência de acesso (03/11, leitura apenas no Dash Lugs): corpo de `is_allowed_user()` compara `auth.jwt()->>email` com `allowed_users`; 5 policies usam a função; site de produção aponta para o projeto correto. Alarme falso: o e-mail testado estava na lista.
 
-- Dependências seguras (só lock): `supabase-js` 2.108.2→2.118.0 (igual às functions), `@sentry/browser` 10.61.0→10.78.0, `jspdf-autotable` 5.0.8→5.0.9. [ok] testes 51/51, `tsc` e build. [usuário] login e PDF ok após o deploy (03/11); [a verificar] Sentry. Reversão: revert do PR. Fora (salto de versão maior, só dev): vitest, vite, happy-dom, typescript.
+- Dependências seguras (só lock): `supabase-js` 2.108.2→2.118.0 (igual às functions), `@sentry/browser` 10.61.0→10.78.0, `jspdf-autotable` 5.0.8→5.0.9. [ok] testes 51/51, `tsc` e build. [usuário] login e PDF ok após o deploy (03/11); [ok] Sentry confirmado (evento real recebido). Reversão: revert do PR. Fora (salto de versão maior, só dev): vitest, vite, happy-dom, typescript.
 
-- Prospecção: lista salva agora no banco (tabela `prospect_shortlist`, RLS `is_allowed_user()`), com `localStorage` como reserva e migração automática da lista antiga no primeiro acesso. Banco (Dash Lugs) alterado em 03/11 com autorização; validado: RLS ativa, policy e grants iguais a `streamers`. SQL em `docs/migrations-aplicadas/`. Rollback: `drop table public.prospect_shortlist;` + revert do PR. [ok] testes 54/54, `tsc`, build. [a verificar] lista persiste após limpar dados do navegador. O nome da empresa continua só no navegador.
+- Prospecção: lista salva agora no banco (tabela `prospect_shortlist`, RLS `is_allowed_user()`), com `localStorage` como reserva e migração automática da lista antiga no primeiro acesso. Banco (Dash Lugs) alterado em 03/11 com autorização; validado: RLS ativa, policy e grants iguais a `streamers`. SQL em `docs/migrations-aplicadas/`. Rollback: `drop table public.prospect_shortlist;` + revert do PR. [ok] testes 54/54, `tsc`, build. [usuário] lista persiste (confirmado em 03/11). O nome da empresa continua só no navegador.
 
 - Prospecção, autocompletar de categoria: cache também no navegador (7 dias), busca em andamento não é repetida, respostas antigas ignoradas, aviso "Buscando categorias..." e espera de 200 ms (antes 300). Só front; a chamada ao servidor/Twitch continua igual. [ok] testes 57/57, `tsc`, build. [a verificar] ganho percebido no uso real. Reversão: revert do PR.
 
@@ -92,10 +91,10 @@ Baixa
 3. Migrations: `migration_*.sql` da raiz movidos para `docs/migrations-aplicadas/` (histórico; fora de `supabase/migrations/` de propósito, para a CLI não reaplicar). Itens 1 e 2 feitos.
 
 ## Tarefa atual
-Nenhuma correção em andamento. Pendências restantes são itens aceitos (Zod 3/4, deno.json, nomes de migrations) e verificações manuais "a verificar".
+Nenhuma correção em andamento. Pendências: os itens de baixa prioridade já foram resolvidos ou decididos; restam só os "a verificar" abaixo.
 
 ## Próximo passo sugerido
-Verificações manuais pelo usuário (ver "a verificar"): nenhuma obrigatória. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
+Verificações manuais opcionais: teste visual de XSS com nome malicioso, 403 direto do `twitch-proxy` com conta fora da allowlist (o login já a barra) e ganho percebido do autocompletar de categoria. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
 
 ## Testes (main @ 06d2b85)
 - [ok] `vitest run`: 11 arquivos, 48 testes passando (revisão: `campaigns.test.ts` removido; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
