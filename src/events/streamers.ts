@@ -1,9 +1,9 @@
-import { supabase } from '../lib/supabase'
-import { addStreamers, deleteStreamer, updateLastLive } from '../lib/data'
-import { fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate, fetchStreamerLookup } from '../lib/twitch'
+import { deleteStreamer, deleteStreamers } from '../lib/data'
+import { prepareStreamerData, buildStreamerRow, registerStreamersBatch } from '../lib/registration'
+import { fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
 import { exportStreamersToCSV } from '../lib/export'
 import { streamers, selectedStreamers, setStreamers } from '../state'
-import { showToast, confirmAction, fmt, langToCountry } from '../utils'
+import { showToast, confirmAction, fmt } from '../utils'
 import { getFilteredStreamers } from '../ui/filters'
 import { setupLookupModal } from './streamers/lookup'
 import { MAX_STREAMERS_BATCH, TWITCH_API_BATCH_SIZE } from '../constants'
@@ -11,30 +11,6 @@ import { MAX_STREAMERS_BATCH, TWITCH_API_BATCH_SIZE } from '../constants'
 type TwitchUser = Awaited<ReturnType<typeof fetchTwitchUsers>>[number]
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void; renderTable: () => void }
-
-// Helper: buscar e preparar dados de um streamer
-async function prepareStreamerData(name: string) {
-  // lookup combinado (user + channel + last_video/streams em 1 invocação) e stats do twitchtracker
-  // disparam juntos, pois não dependem um do outro.
-  const [{ user, lastLive }, stats] = await Promise.all([
-    fetchStreamerLookup(name),
-    fetchInitialStats(name)
-  ])
-  if (!user) throw new Error('Streamer não encontrado.')
-  
-  const lang = user.broadcaster_language?.split('-')[0]
-  
-  const streamerData = {
-    name: user.display_name,
-    country: (lang && langToCountry[lang]) || '',
-    avg_viewers: stats?.avg_viewers || 0,
-    peak_viewers: stats?.peak_viewers || 0,
-    hours_watched: stats?.hours_watched || 0,
-    hours_streamed: stats?.hours_streamed || 0,
-  }
-  
-  return { user, streamerData, lastLive }
-}
 
 export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callbacks) {
   // Configurar modais (extraídos para arquivos separados)
@@ -124,27 +100,18 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
         return 
       }
 
-      progress.textContent = `Buscando estatísticas de ${newUsers.length} streamers...`
-      const statsResults = await Promise.allSettled(newUsers.map(u => fetchInitialStats(u.login)))
-      const toInsert = newUsers.map((u, i) => {
-        const stats = statsResults[i].status === 'fulfilled' ? statsResults[i].value : null
-        const lang = u.broadcaster_language?.split('-')[0]
-        return { name: u.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0 }
-      })
-      await addStreamers(toInsert)
-
-      progress.textContent = `Verificando atividade...`
-      const liveResults = await Promise.allSettled(newUsers.map(u => fetchLastLiveDate(u.id, u.login)))
-      const updates = newUsers.map((u, i) => {
-        const lastLive = liveResults[i].status === 'fulfilled' ? liveResults[i].value : null
-        return lastLive ? { name: u.display_name, lastLive } : null
-      }).filter(Boolean) as { name: string; lastLive: string }[]
-      
-      const inserted = (await supabase.from('streamers').select('id, name').in('name', newUsers.map(u => u.display_name))).data || []
-      for (const { name, lastLive } of updates) {
-        const streamer = inserted.find(s => s.name === name)
-        if (streamer) await updateLastLive(streamer.id, lastLive)
-      }
+      progress.textContent = `Buscando estatísticas e atividade de ${newUsers.length} streamers...`
+      const [statsResults, liveResults] = await Promise.all([
+        Promise.allSettled(newUsers.map(u => fetchInitialStats(u.login))),
+        Promise.allSettled(newUsers.map(u => fetchLastLiveDate(u.id, u.login)))
+      ])
+      const items = newUsers.map((u, i) => ({
+        streamerData: buildStreamerRow(u, statsResults[i].status === 'fulfilled' ? statsResults[i].value : null),
+        lastLive: liveResults[i].status === 'fulfilled' ? liveResults[i].value : null
+      }))
+      progress.textContent = `Cadastrando...`
+      const { lastLiveFailures } = await registerStreamersBatch(items)
+      const toInsert = items
 
       await loadData(); renderAll()
       textarea.value = ''
@@ -153,6 +120,7 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       let msg = `${toInsert.length} adicionados`
       if (alreadyAdded.length) msg += `, ${alreadyAdded.length} já existiam`
       if (notFound.length) msg += `, ${notFound.length} não encontrados`
+      if (lastLiveFailures) msg += `, ${lastLiveFailures} sem data de última live`
       showToast(msg)
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
     finally { progress.classList.add('hidden') }
@@ -166,7 +134,7 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     setStreamers(streamers.filter(s => !ids.includes(s.id)))
     renderAll()
     showToast('Streamers removidos!')
-    supabase.from('streamers').delete().in('id', ids).then(({ error }) => { if (error) showToast('Erro ao remover do banco', 'error') })
+    deleteStreamers(ids).catch(() => showToast('Erro ao remover do banco', 'error'))
   })
 
   // Generate PDF

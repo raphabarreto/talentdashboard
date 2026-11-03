@@ -1,13 +1,8 @@
-import { supabase } from '../../lib/supabase'
-import { addStreamer, updateLastLive } from '../../lib/data'
+import { registerStreamer, type PreparedStreamer } from '../../lib/registration'
 import { streamers } from '../../state'
 import { showToast, fmt } from '../../utils'
 
-type PrepareStreamerData = (name: string) => Promise<{
-  user: any
-  streamerData: any
-  lastLive: string | null
-}>
+type PrepareStreamerData = (name: string) => Promise<PreparedStreamer>
 
 export function setupLookupModal(
   prepareStreamerData: PrepareStreamerData,
@@ -98,18 +93,13 @@ export function setupLookupModal(
     btn.textContent = 'Adicionando...'
     
     try {
-      const { user, streamerData, lastLive } = lookupData
-      await addStreamer(streamerData)
-      
-      if (lastLive) {
-        const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
-        if (added) await updateLastLive(added.id, lastLive)
-      }
-      
+      const { streamerData, lastLive } = lookupData
+      const { lastLiveSaved } = await registerStreamer({ streamerData, lastLive })
+
       await loadData()
       renderAll()
       document.getElementById('lookupModal')!.classList.add('hidden')
-      showToast('Streamer adicionado!')
+      showToast(lastLiveSaved ? 'Streamer adicionado!' : 'Streamer adicionado, mas não foi possível salvar a última live', lastLiveSaved ? undefined : 'error')
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Erro', 'error')
     } finally {

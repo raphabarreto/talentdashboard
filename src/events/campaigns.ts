@@ -1,9 +1,8 @@
 import { escapeHtml as esc } from '../lib/escape'
-import { supabase } from '../lib/supabase'
-import { addStreamer, addCampaign, updateCampaign, deleteCampaign, updateContactStatus, getStreamers, updateLastLive } from '../lib/data'
-import { fetchTwitchUser, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
+import { addCampaign, updateCampaign, deleteCampaign, updateContactStatus, getStreamers } from '../lib/data'
+import { prepareStreamerData, registerStreamer } from '../lib/registration'
 import { streamers, campaigns, editingCampaignId, setCampaigns, setEditingCampaignId, setStreamers } from '../state'
-import { showToast, confirmAction, fmtDate, fmtCurrency, langToCountry, sanitizeCurrencyInput } from '../utils'
+import { showToast, confirmAction, fmtDate, fmtCurrency, sanitizeCurrencyInput } from '../utils'
 import { renderCampaigns } from '../ui/campaigns'
 import { campaignSchema } from '../lib/validators'
 import { logError, setButtonLoading } from '../lib/logger'
@@ -317,28 +316,21 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
     catch { showToast('Erro ao salvar status', 'error'); return }
 
     // Auto-register streamer when confirmed
+    let autoRegisterWarning = false
     if (newStatus === 'confirmado') {
       if (!streamers.some(st => st.name.toLowerCase() === s.streamer_name.toLowerCase())) {
         try {
-          // fetchInitialStats não depende do resultado de fetchTwitchUser, dispara em paralelo
-          const [user, stats] = await Promise.all([
-            fetchTwitchUser(s.streamer_name),
-            fetchInitialStats(s.streamer_name)
-          ])
-          if (user) {
-            const lang = user.broadcaster_language?.split('-')[0]
-            await addStreamer({ name: user.display_name, country: (lang && langToCountry[lang]) || '', avg_viewers: stats?.avg_viewers || 0, peak_viewers: stats?.peak_viewers || 0, hours_watched: stats?.hours_watched || 0, hours_streamed: stats?.hours_streamed || 0 })
-            const lastLive = await fetchLastLiveDate(user.id, user.login)
-            if (lastLive) {
-              const added = (await supabase.from('streamers').select('id').eq('name', user.display_name).single()).data
-              if (added) await updateLastLive(added.id, lastLive)
-            }
-            setStreamers(await getStreamers())
-          }
-        } catch { /* ignora */ }
+          const { lastLiveSaved } = await registerStreamer(await prepareStreamerData(s.streamer_name))
+          setStreamers(await getStreamers())
+          if (!lastLiveSaved) { autoRegisterWarning = true; showToast('Streamer cadastrado, mas sem data de última live', 'error') }
+        } catch (err) {
+          logError(err, 'Cadastro automático ao confirmar falhou')
+          autoRegisterWarning = true
+          showToast(`Status salvo, mas não foi possível cadastrar ${s.streamer_name} automaticamente`, 'error')
+        }
       }
     }
-    showToast('Status atualizado!')
+    if (!autoRegisterWarning) showToast('Status atualizado!')
   }
 }
 

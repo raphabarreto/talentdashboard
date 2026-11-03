@@ -34,6 +34,12 @@ export async function deleteStreamer(id: string) {
   if (error) throw error
 }
 
+export async function deleteStreamers(ids: string[]) {
+  if (!ids.length) return
+  const { error } = await supabase.from('streamers').delete().in('id', ids)
+  if (error) throw error
+}
+
 export async function updateLastLive(streamerId: string, lastLiveAt: string) {
   const { data: { session } } = await supabase.auth.getSession()
   const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-last-live`, {
