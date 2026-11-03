@@ -97,13 +97,23 @@ Baixa
 3. Migrations: `migration_*.sql` da raiz movidos para `docs/migrations-aplicadas/` (histórico; fora de `supabase/migrations/` de propósito, para a CLI não reaplicar). Itens 1 e 2 feitos.
 
 ## Tarefa atual
-Nenhuma correção em andamento. Pendências: os itens de baixa prioridade já foram resolvidos ou decididos; restam só os "a verificar" abaixo.
+Nenhuma em andamento (sessão encerrada em 03/11; main limpa e igual ao remoto, último deploy de produção com sucesso).
+
+## Feito em 03/11
+- Teste de XSS automatizado (`src/__tests__/xss-render.test.ts`): nomes maliciosos em cards, tabela e campanhas não viram código. Corrigida a inicial do nome no card da Visão Geral, que não era escapada (PR #64).
+- Prospecção: removidos "Copiar nomes selecionados" e as caixas de seleção da Minha Lista; "Copiar Lista" mantido (PR #66).
+- Opcionais da auditoria encerrados (PR #65).
+
+## Pendências (a verificar, sem urgência)
+- 403 direto do `twitch-proxy` com conta fora da allowlist: precisa de uma segunda conta Google e das chaves de produção; o login já barra essas contas.
+- Ganho percebido do autocompletar de categoria: depende da impressão de uso.
+- Opcionais nunca pedidos: túnel do Sentry pelo próprio domínio; remover a coluna `campaign_streamers.email` (exige autorização explícita de SQL em produção).
 
 ## Próximo passo sugerido
-Teste de XSS automatizado (03/11): nomes maliciosos (`<img onerror>`, `<script>`, `<svg onload>`) nos cards, tabela e campanhas não viram elementos (`src/__tests__/xss-render.test.ts`); achada e corrigida a inicial do nome no card da Visão Geral, que não era escapada. Prospecção (03/11): removidos o botão "Copiar nomes selecionados" e as caixas de seleção da Minha Lista (não tinham outro uso; "Copiar Lista" mantido). Opcionais encerrados (03/11): o 403 direto do `twitch-proxy` [a verificar] não é testável sem a URL/chave de produção e uma segunda conta Google fora da allowlist; a checagem `is_allowed_user()` está no código e o login já barra essas contas (risco baixo). O ganho percebido do autocompletar de categoria depende só da impressão de uso do usuário. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
+Sem item obrigatório. Aguardar novas features ou correções visuais do usuário. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
 
-## Testes (main @ 06d2b85)
-- [ok] `vitest run`: 11 arquivos, 48 testes passando (revisão: `campaigns.test.ts` removido; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
+## Testes (main @ cba9c2f)
+- [ok] `vitest run`: 21 arquivos, 101 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
