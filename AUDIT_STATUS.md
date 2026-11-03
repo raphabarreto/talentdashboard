@@ -76,6 +76,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Refatoração da Prospecção: `src/ui/prospecting.ts` (494 linhas, `setupProspecting` com 218) dividido em `src/ui/prospecting/` (categories, shortlist, email, layout, render, state, types, index). Código movido sem mudar comportamento (ids e classes do HTML conferidos idênticos); funções puras ganharam testes. [ok] testes 77/77, `tsc`, build. [a verificar] Prospecção no navegador (buscar, selecionar, adicionar à lista, copiar, enviar e-mail, remover). Reversão: revert do PR.
 
+- Refatoração dos eventos de campanha: `src/events/campaigns.ts` (388 linhas, `setupCampaignsEvents` com 194) dividido em `src/events/campaigns/` (index, form, details, streamerAutocomplete, parse). Código movido sem mudar comportamento (ids e classes conferidos idênticos); `any` trocado por `ContactStatus`; conversões de valor e de linhas de streamers viraram funções puras com teste. [ok] testes 82/82, `tsc`, build. [a verificar] campanhas no navegador (criar/editar, detalhes, mudar status, remover). Reversão: revert do PR.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
