@@ -14,7 +14,9 @@ export function log(level: LogLevel, message: string, context?: LogContext) {
     console.error(prefix, message, context || '')
     // Enviar para Sentry em produção
     if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
-      Sentry.captureException(new Error(message), { extra: context })
+      // Preserva o erro original (com stack) quando houver; a mensagem do log vai junto como contexto.
+      const original = context?.error instanceof Error ? context.error : null
+      Sentry.captureException(original ?? new Error(message), { extra: { ...context, log_message: message } })
     }
   } else if (level === 'warn') {
     console.warn(prefix, message, context || '')
