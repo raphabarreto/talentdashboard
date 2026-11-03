@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ ca525cf. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ fb4bbb4. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -30,7 +30,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   card (`src/ui/overview.ts`) trocado por listener. (PR #13) [ok] na main, testes 44/44, `tsc` e build; [ok] deploy
   Vercel de produção e cabeçalhos confirmados via `curl` (02/11). [usuário] console em produção mostrou 1
   violação: `unsafe-eval` (Zod testa `new Function`; tem fallback, não precisa liberar eval). Correção:
-  `z.config({ jitless: true })` em `src/lib/validators.ts` + teste (PR #16), **em PR, sem merge**.
+  `z.config({ jitless: true })` em `src/lib/validators.ts` + teste (PR #16) [ok] na main; [ok] deploy Vercel de produção com sucesso (03/11). [a verificar] aviso sumiu do console.
   [a verificar] demais violações e domínio do Sentry (`*.ingest.sentry.io` presumido); depois trocar para
   `Content-Security-Policy` (bloqueante) em PR separado.
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
@@ -52,17 +52,17 @@ Baixa
 7. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-PR #16 (`fix/csp-zod-jitless-v2`) aberto, aguardando autorização. Depois: reconferir o console e tornar a CSP bloqueante.
+PR `chore/remove-dead-test` aberto (remove `campaigns.test.ts`, que testava cópia de função fora do app), aguardando autorização.
 
 ## Próximo passo sugerido
 Após aprovar e observar o console em produção: tornar a CSP bloqueante. Depois, item 1 (`set search_path` em `is_allowed_user()`; exige SQL no Supabase de produção, só com sua aprovação).
 
-## Testes (branch fix/csp-zod-jitless-v2)
-- [ok] `vitest run`: 10 arquivos, 45 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
+## Testes (branch chore/remove-dead-test)
+- [ok] `vitest run`: 9 arquivos, 41 testes passando (revisão: mantidos os de segurança e dados; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #13 mesclados. `gh` instalado e autenticado.
+- PRs #1 a #13 e #16 mesclados (#14 e #15 fechados, substituídos). `gh` instalado e autenticado.
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
