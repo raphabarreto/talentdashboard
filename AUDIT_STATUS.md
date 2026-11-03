@@ -64,7 +64,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 ## Pendente (por prioridade)
 Baixa
-1. [feito] Zod das functions unificado em 4.6.7 (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
+1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [a verificar] busca de streamer e cadastro em produção com Zod 4) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
 3. Migrations: `migration_*.sql` da raiz movidos para `docs/migrations-aplicadas/` (histórico; fora de `supabase/migrations/` de propósito, para a CLI não reaplicar). Itens 1 e 2 feitos.
 
 ## Tarefa atual
