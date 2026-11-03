@@ -21,7 +21,7 @@ export function renderResults() {
   const paged = visible.slice((ps.page - 1) * PROSPECT_PAGE_SIZE, ps.page * PROSPECT_PAGE_SIZE)
 
   if (!visible.length) {
-    body.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400">Nenhum streamer encontrado.</td></tr>'
+    body.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">Nenhum streamer encontrado.</td></tr>'
     renderPagination(0)
     return
   }
@@ -40,9 +40,6 @@ export function renderResults() {
       </td>
       <td class="p-4">
         <span class="text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${esc(r.email) || '-'}</span>
-      </td>
-      <td class="p-4">
-        ${r.email ? `<a href="#" class="prospect-mail-link text-indigo-400 hover:text-indigo-300 font-semibold text-sm" data-login="${esc(r.user_login)}" data-email="${esc(r.email)}"><i class="fas fa-paper-plane mr-1"></i>Enviar</a>` : ''}
       </td>
     </tr>
   `}).join('')

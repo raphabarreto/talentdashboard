@@ -80,6 +80,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - CSS externo com SRI: Font Awesome 6.5.2 e flag-icons 7.0.0 em `index.html` com `integrity` (sha384) e `crossorigin`; hashes calculados do arquivo entregue pela CDN (estável em 2 leituras) e CORS `*` confirmado. [ok] testes, `tsc`, build. [a verificar] ícones e bandeiras aparecem em produção. Se sumirem: reverter o PR. Atualizar a versão exige recalcular o hash.
 
+- Prospecção: removido o envio de e-mail (coluna Ações/botão Enviar, campo Empresa, modelos PT/ES, código que abria o Gmail e o teste). Mantidos a coluna Email e o filtro "Só com email". Nenhum outro modelo de texto no projeto (`streamerActionsTemplate` é só um bloco de botões escondido na aba Streamers). [ok] testes 79/79, `tsc`, build. Coluna `email` de `campaign_streamers` no banco não foi tocada. Reversão: revert do PR.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).

@@ -5,7 +5,7 @@ import { streamers } from '../../state'
 import { prospectingHtml, getElements, type Els } from './layout'
 import { searchCategoriesCached, isCategoryCached } from './categories'
 import { shortlist, setShortlist, saveShortlist, loadShortlistFromDb, formatShortlistForCopy } from './shortlist'
-import { extractEmail, getCompany, buildProposal } from './email'
+import { extractEmail } from './email'
 import { ps } from './state'
 import { getVisibleResults, renderResults, renderShortlist, updateActions } from './render'
 
@@ -87,10 +87,9 @@ function setupSearch(els: Els) {
   })
 
   els.onlyEmail.addEventListener('change', () => { ps.page = 1; renderResults() })
-  els.company.addEventListener('input', (e) => { localStorage.setItem('prospectCompany', (e.target as HTMLInputElement).value) })
 }
 
-// Tabela de resultados: seleção, adicionar à lista e envio de e-mail.
+// Tabela de resultados: seleção e adicionar à lista.
 function setupResultsTable(els: Els) {
   els.selectAll.addEventListener('change', (e) => {
     const checked = (e.target as HTMLInputElement).checked
@@ -108,21 +107,6 @@ function setupResultsTable(els: Els) {
     renderResults()
     renderShortlist()
     showToast(`${toAdd.length} adicionados à lista!`)
-  })
-
-  els.prospectBody.addEventListener('click', (e) => {
-    const link = (e.target as HTMLElement).closest('.prospect-mail-link') as HTMLElement
-    if (link) {
-      e.preventDefault()
-      const login = link.dataset.login!
-      const email = link.dataset.email!
-      const r = ps.results.find(s => s.user_login === login)
-      if (!r) return
-      const company = getCompany()
-      if (!company) { showToast('Preencha o campo Empresa', 'error'); return }
-      const { subject, body } = buildProposal(r, company)
-      window.open(`https://mail.google.com/mail/?view=cm&to=${email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank')
-    }
   })
 
   els.prospectBody.addEventListener('change', (e) => {
