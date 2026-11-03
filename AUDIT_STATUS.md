@@ -58,7 +58,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   da allowlist (não testado).
 - Favicon/manifest: `favicon.png` e `manifest.json` movidos para `public/` (antes davam 404 em produção; o manifest nem entrava no build). [ok] testes 48/48, `tsc` e build (dist contém ambos). [ok] PR #31 na main; deploy Vercel de produção com sucesso e `/favicon.png` e `/manifest.json` respondem 200 (03/11). Reversão: revert do PR.
 
-- Loop de login para e-mail fora da allowlist (login.html <-> home alternando): `getSession` agora desloga quem não está em `VITE_ALLOWED_EMAILS` (`src/lib/auth.ts`, + teste). Dados já eram bloqueados pelo banco; era só tela. [ok] testes 51/51, `tsc` e build. [a verificar] testar o loop com e-mail realmente fora da lista (gamingraphaguiba) após o deploy. Reversão: revert do PR.
+- Loop de login para e-mail fora da allowlist (login.html <-> home alternando): `getSession` agora desloga quem não está em `VITE_ALLOWED_EMAILS` (`src/lib/auth.ts`, + teste). Dados já eram bloqueados pelo banco; era só tela. [ok] testes 51/51, `tsc` e build. [usuário] testado em produção com e-mail fora da lista: não entra e fica no login, sem loop (03/11). Sem mensagem de erro, por decisão (uso individual). Reversão: revert do PR.
 
 - Conferência de acesso (03/11, leitura apenas no Dash Lugs): corpo de `is_allowed_user()` compara `auth.jwt()->>email` com `allowed_users`; 5 policies usam a função; site de produção aponta para o projeto correto. Alarme falso: o e-mail testado estava na lista.
 
@@ -72,7 +72,7 @@ Baixa
 Nenhuma correção em andamento. Pendências restantes são itens aceitos (Zod 3/4, deno.json, nomes de migrations) e verificações manuais "a verificar".
 
 ## Próximo passo sugerido
-Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navegar por todas as abas), 403 de conta fora da allowlist, `update-last-live` e `GRANT UPDATE`. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
+Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navegar por todas as abas), `update-last-live` e `GRANT UPDATE`. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
 
 ## Testes (main @ 06d2b85)
 - [ok] `vitest run`: 11 arquivos, 48 testes passando (revisão: `campaigns.test.ts` removido; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
