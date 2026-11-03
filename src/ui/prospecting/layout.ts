@@ -1,5 +1,3 @@
-import { escapeHtml as esc } from '../../lib/escape'
-
 export function prospectingHtml(): string {
   return `
     <div class="space-y-6">
@@ -16,10 +14,6 @@ export function prospectingHtml(): string {
             <option value="es">Espanhol</option>
             <option value="">Todos</option>
           </select>
-        </div>
-        <div>
-          <label class="text-sm font-semibold text-white block mb-1">Empresa</label>
-          <input id="prospectCompany" type="text" placeholder="Nome da empresa..." value="${esc(localStorage.getItem('prospectCompany') || '')}" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[200px]">
         </div>
         <div>
           <label class="text-sm font-semibold text-white block mb-1">Viewers mín.</label>
@@ -46,7 +40,6 @@ export function prospectingHtml(): string {
                 <th class="p-4 w-[20%]">Categoria</th>
                 <th class="p-4 w-[80px] text-center">Viewers</th>
                 <th class="p-4 w-[25%]">Email</th>
-                <th class="p-4 w-[80px]">Ações</th>
               </tr>
             </thead>
             <tbody id="prospectBody" class="divide-y divide-slate-700"></tbody>
@@ -95,7 +88,6 @@ export function getElements() {
     language: document.getElementById('prospectLanguage') as HTMLSelectElement,
     minViewers: document.getElementById('prospectMinViewers') as HTMLInputElement,
     onlyEmail: document.getElementById('prospectOnlyEmail') as HTMLInputElement,
-    company: document.getElementById('prospectCompany') as HTMLInputElement,
     selectAll: document.getElementById('prospectSelectAll') as HTMLInputElement,
     addToListBtn: document.getElementById('addToListBtn')!,
     copyListBtn: document.getElementById('copyListBtn')!,
