@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ f581567. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ 0aba0df. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -48,6 +48,9 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 - Docs de banco: `schema.sql` reescrito espelhando a produção (tabelas, `streamer_history`, `allowed_users`, funções,
   policies com `is_allowed_user()`; antes trazia as policies antigas inseguras) e `docs/DATABASE.md` alinhado. Conferido
   por consultas somente leitura ao Dash Lugs. Nenhuma alteração no banco. Reversão: revert do PR.
+- `twitchtracker` (`fetchInitialStats`): nome codificado na URL, tempo limite de 8 s (`AbortController`) e falhas registradas
+  como aviso (continua retornando `null`, sem quebrar o cadastro). Mantido no navegador (API não oficial; mover para o servidor
+  não compensa). [ok] testes 48/48 (4 novos), `tsc` e build. [a verificar] cadastro de streamer novo no navegador.
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -59,15 +62,14 @@ Baixa
 1. Zod 3.23.8 nas functions vs Zod 4 no front (aceito: versões já fixas; unificar só se necessário).
 2. `deno.json` das functions com imports não usados (aceito: inofensivo; remover mexeria no empacotamento do deploy sem ganho).
 3. Migrations sem padrão de nome (`migration_*.sql` na raiz vs `supabase/migrations/`); apenas organização, sem risco.
-4. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-Docs de banco em PR. Próximo: `twitchtracker.com` chamado direto do navegador (último item "Baixa").
+Nenhuma correção em andamento. Pendências restantes são itens aceitos (Zod 3/4, deno.json, nomes de migrations) e verificações manuais "a verificar".
 
 ## Próximo passo sugerido
-Após o PR #19: itens "Baixa" na ordem; `favicon.png` 404 (manifest aponta para /favicon.png, arquivo está em `src/`; só PWA). Alterações no Supabase de produção só com autorização explícita (CLI autenticado nesta máquina; usar `--remote=<ref>`, ref do Dash Lugs em `supabase/.temp/project-ref`).
+Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navegar por todas as abas), PDF, cadastro de streamer, 403 de conta fora da allowlist, `update-last-live` e `GRANT UPDATE`. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
 
-## Testes (main @ f581567)
+## Testes (branch fix/twitchtracker-errors)
 - [ok] `vitest run`: 9 arquivos, 41 testes passando (revisão: mantidos os de segurança e dados; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
