@@ -72,6 +72,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Limpeza: removidos exports sem uso (`updateStreamer`, `logInfo`, `logWarn`, `PRODUCTION_URL`, `statusColors`, `selectColors`, `campaignStreamerSchema`); README (estrutura de pastas) e DATABASE.md atualizados; cron confirmado pelo usuário em 15 min; `CHANGELOG.md` removido (o histórico fica nos PRs). [ok] testes 66/66, `tsc`, build. Reversão: revert do PR.
 
+- Sentry: DSN (região US) presente no site publicado e CSP libera `*.sentry.io`. `logger` agora envia o erro original (com stack) em vez de recriar só a mensagem. [ok] testes 70/70 (4 novos), `tsc`, build. [a verificar] evento chegando no painel do Sentry (teste no console do navegador). Reversão: revert do PR.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
