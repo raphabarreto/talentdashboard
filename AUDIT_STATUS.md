@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ f3dc2b3. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ f581567. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -27,7 +27,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   Twitch e responde 502 (antes devolvia lista vazia). [ok] testes 44/44 (5 novos), `tsc` e build.
   (PR #11) [ok] na main; [ok] job "Deploy Edge Functions" com sucesso (02/11). [a verificar] busca de streamer em produção. Efeito: em falha da Twitch o cron não grava aquela rodada (lacuna, não dado falso).
 - Headers de segurança (`vercel.json`): nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy, HSTS
-  (1 ano) e CSP em modo **Report-Only** (não bloqueia, só registra no console). `onclick` inline do menu do
+  (1 ano) e CSP (Report-Only no PR #13; bloqueante no PR #22). `onclick` inline do menu do
   card (`src/ui/overview.ts`) trocado por listener. (PR #13) [ok] na main, testes 44/44, `tsc` e build; [ok] deploy
   Vercel de produção e cabeçalhos confirmados via `curl` (02/11). [usuário] console em produção mostrou 1
   violação: `unsafe-eval` (Zod testa `new Function`; tem fallback, não precisa liberar eval). Correção:
@@ -54,17 +54,17 @@ Baixa
 6. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-PR #19 (`fix/csp-enforce`, CSP bloqueante) aguardando autorização do usuário. Banco: nenhuma outra alteração pendente.
+CSP bloqueante (PR #22) publicada; verificar headers em produção. Rollback: voltar a chave para `Content-Security-Policy-Report-Only` (revert do PR). Funcionalidades com CSP bloqueante: [a verificar] pelo usuário (PDF, Prospecção, novo streamer, detalhes de campanha foram testados só em Report-Only, sem violações).
 
 ## Próximo passo sugerido
 Após o PR #19: itens "Baixa" na ordem; `favicon.png` 404 (manifest aponta para /favicon.png, arquivo está em `src/`; só PWA). Alterações no Supabase de produção só com autorização explícita (CLI autenticado nesta máquina; usar `--remote=<ref>`, ref do Dash Lugs em `supabase/.temp/project-ref`).
 
-## Testes (main @ f3dc2b3)
+## Testes (main @ f581567)
 - [ok] `vitest run`: 9 arquivos, 41 testes passando (revisão: mantidos os de segurança e dados; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #13, #16 e #17 mesclados (#14 e #15 fechados, substituídos). `gh` instalado e autenticado.
+- PRs #1 a #13, #16 a #18, #20 e #21 mesclados (#14 e #15 fechados, substituídos). `gh` instalado e autenticado.
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
