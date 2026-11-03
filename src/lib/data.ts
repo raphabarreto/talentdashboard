@@ -92,3 +92,25 @@ export async function updateContactStatus(id: string, status: ContactStatus) {
   const { error } = await supabase.from('campaign_streamers').update({ contact_status: status }).eq('id', id)
   if (error) throw error
 }
+// --- PROSPECÇÃO (lista salva) ---
+export interface ProspectRow { user_login: string; data: Record<string, unknown> }
+
+export async function getProspectShortlist() {
+  const { data, error } = await supabase.from('prospect_shortlist').select('user_login, data')
+  if (error) throw error
+  return (data || []) as ProspectRow[]
+}
+
+// Grava a lista inteira: upsert dos itens atuais e remove os que saíram.
+export async function replaceProspectShortlist(rows: ProspectRow[]) {
+  if (rows.length) {
+    const { error } = await supabase.from('prospect_shortlist').upsert(rows, { onConflict: 'user_login' })
+    if (error) throw error
+  }
+  const logins = rows.map(r => r.user_login)
+  const del = supabase.from('prospect_shortlist').delete()
+  const { error: delErr } = logins.length
+    ? await del.not('user_login', 'in', `(${logins.map(l => `"${l.replace(/"/g, '')}"`).join(',')})`)
+    : await del.neq('user_login', '')
+  if (delErr) throw delErr
+}
