@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ 0aba0df. Sem segredos neste arquivo.
+Atualizado em 2026-11-02. Base: main @ 06d2b85. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -69,12 +69,12 @@ Nenhuma correção em andamento. Pendências restantes são itens aceitos (Zod 3
 ## Próximo passo sugerido
 Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navegar por todas as abas), PDF, cadastro de streamer, 403 de conta fora da allowlist, `update-last-live` e `GRANT UPDATE`. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
 
-## Testes (branch fix/twitchtracker-errors)
-- [ok] `vitest run`: 9 arquivos, 41 testes passando (revisão: mantidos os de segurança e dados; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
+## Testes (main @ 06d2b85)
+- [ok] `vitest run`: 11 arquivos, 48 testes passando (revisão: `campaigns.test.ts` removido; `calculations` mantido, cobre regras reais do `campaignSchema`); [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #13, #16 a #18, #20 e #21 mesclados (#14 e #15 fechados, substituídos). `gh` instalado e autenticado.
+- PRs #1 a #28 mesclados (exceto #14, #15 e #19, fechados e substituídos). Branches mescladas podem ser apagadas no GitHub (limpeza opcional).
 - Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
   `chore/claude-instructions`, `fix/update-last-live-authz`.
 
@@ -86,3 +86,6 @@ Verificações manuais pelo usuário (ver "a verificar"): CSP bloqueante (navega
 - [ok] Vercel (produção), merge do PR #9 (02/11): deploy concluído com sucesso.
 - [ok] Workflow, merge do PR #11 (02/11): `collect-snapshots` e `twitch-proxy` publicadas com sucesso.
 - [ok] Vercel (produção), merge do PR #13 (02/11): deploy concluído; headers de segurança presentes.
+- [ok] Vercel (produção), PRs #22 (CSP bloqueante), #24 (Node), #26–#28: deploys com sucesso (03/11). CSP confirmada via `curl`.
+- [ok] Workflow de Edge Functions, PRs #23 (`consolidate-daily`) e #25 (`supabase-js` 2.118.0): sucesso; 4 funções respondem 401 sem credenciais.
+- [ok] Banco (Dash Lugs), 03/11, com autorização: `is_allowed_user()` com `search_path` fixo, validado. Rollback fora do repositório.
