@@ -6,3 +6,6 @@ dist
 .vercel
 .kiro
 .vscode
+
+# Estado local do Supabase CLI (nao versionar)
+supabase/.temp/

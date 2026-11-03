@@ -43,6 +43,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   vitest e happy-dom instalados. [ok] testes 44/44 e build local (Node 26); [a verificar] `test.yml` no CI com Node 22 (roda no PR).
 - `supabase-js` fixado em `2.118.0` nas 4 Edge Functions (era `@2` flutuante; `@2` já resolvia para essa versão no
   esm.sh, sem mudança de comportamento). [ok] testes 44/44, `tsc` e build. Reversão: revert do PR.
+- `supabase/.temp/` removido do Git e adicionado ao `.gitignore` (estado local do CLI; o workflow de deploy usa o
+  secret `SUPABASE_PROJECT_ID`, não esses arquivos). Reversão: revert do PR.
 - `twitch-proxy`: exige `is_allowed_user()` via RPC com o JWT do usuário (403 se fora da allowlist) e
   encode/regex de `language`/`game_id`/`after`/`user_id` (PR #4): [ok] na main, testes 36/36, build e
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
@@ -52,12 +54,12 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 ## Pendente (por prioridade)
 Baixa
 1. Zod 3.23.8 nas functions vs Zod 4 no front (aceito: versões já fixas; unificar só se necessário).
-2. `supabase/.temp/` versionado (10 arquivos); `deno.json` com imports não usados.
+2. `deno.json` das functions com imports não usados (aceito: inofensivo; remover mexeria no empacotamento do deploy sem ganho).
 3. `schema.sql`/`docs/DATABASE.md`/migrations desatualizados e sem padrão de nome.
 4. `twitchtracker.com` chamado direto do navegador (API não oficial, erro engolido).
 
 ## Tarefa atual
-Pin do supabase-js em PR. Próximo: `supabase/.temp/` versionado e `deno.json` com imports não usados.
+Untrack de `supabase/.temp` em PR. Próximo: `schema.sql`/docs/migrations desatualizados e `twitchtracker`.
 
 ## Próximo passo sugerido
 Após o PR #19: itens "Baixa" na ordem; `favicon.png` 404 (manifest aponta para /favicon.png, arquivo está em `src/`; só PWA). Alterações no Supabase de produção só com autorização explícita (CLI autenticado nesta máquina; usar `--remote=<ref>`, ref do Dash Lugs em `supabase/.temp/project-ref`).
