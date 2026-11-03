@@ -56,7 +56,7 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   `tsc` ok, job "Deploy Edge Functions" com sucesso (02/11). [usuário] `is_allowed_user()` executável por
   `authenticated` (true) e busca de streamers funcionando em produção. [a verificar] 403 com conta fora
   da allowlist (não testado).
-- Favicon/manifest: `favicon.png` e `manifest.json` movidos para `public/` (antes davam 404 em produção; o manifest nem entrava no build). [ok] testes 48/48, `tsc` e build (dist contém ambos). [a verificar] ícone na aba após o deploy. Reversão: revert do PR.
+- Favicon/manifest: `favicon.png` e `manifest.json` movidos para `public/` (antes davam 404 em produção; o manifest nem entrava no build). [ok] testes 48/48, `tsc` e build (dist contém ambos). [ok] PR #31 na main; deploy Vercel de produção com sucesso e `/favicon.png` e `/manifest.json` respondem 200 (03/11). Reversão: revert do PR.
 
 ## Pendente (por prioridade)
 Baixa
