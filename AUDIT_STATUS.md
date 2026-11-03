@@ -58,7 +58,9 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
   da allowlist (não testado).
 - Favicon/manifest: `favicon.png` e `manifest.json` movidos para `public/` (antes davam 404 em produção; o manifest nem entrava no build). [ok] testes 48/48, `tsc` e build (dist contém ambos). [ok] PR #31 na main; deploy Vercel de produção com sucesso e `/favicon.png` e `/manifest.json` respondem 200 (03/11). Reversão: revert do PR.
 
-- Loop de login para e-mail fora da allowlist (login.html <-> home alternando): `getSession` agora desloga quem não está em `VITE_ALLOWED_EMAILS` (`src/lib/auth.ts`, + teste). Dados já eram bloqueados pelo banco; era só tela. [ok] testes 51/51, `tsc` e build. [a verificar] repetir com o e-mail não cadastrado após o deploy. Reversão: revert do PR.
+- Loop de login para e-mail fora da allowlist (login.html <-> home alternando): `getSession` agora desloga quem não está em `VITE_ALLOWED_EMAILS` (`src/lib/auth.ts`, + teste). Dados já eram bloqueados pelo banco; era só tela. [ok] testes 51/51, `tsc` e build. [a verificar] testar o loop com e-mail realmente fora da lista (gamingraphaguiba) após o deploy. Reversão: revert do PR.
+
+- Conferência de acesso (03/11, leitura apenas no Dash Lugs): corpo de `is_allowed_user()` compara `auth.jwt()->>email` com `allowed_users`; 5 policies usam a função; site de produção aponta para o projeto correto. Alarme falso: o e-mail testado estava na lista.
 
 ## Pendente (por prioridade)
 Baixa
