@@ -17,6 +17,7 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
     environment: 'production',
+    tunnel: '/api/sentry-tunnel', // envia pelo próprio domínio (bloqueadores de anúncio barram *.sentry.io)
     tracesSampleRate: 0.1, // 10% das transações
   })
 }
