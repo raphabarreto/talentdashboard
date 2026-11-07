@@ -54,3 +54,23 @@ describe('Tabela de Dados: coluna Links', () => {
     })
   })
 })
+
+describe('Tabela de Dados: indicador ao vivo', () => {
+  it('mostra a bolinha vermelha só em quem está ao vivo (is_live do banco)', () => {
+    setStreamers([{ ...streamer('1', 'Toniki', 2387), is_live: true }, streamer('2', 'XAROLA_', 2340)])
+    renderTable()
+    const [live, off] = rows()
+    expect(live.querySelector('.animate-pulse.bg-red-500')).not.toBeNull()
+    expect(off.querySelector('.animate-pulse.bg-red-500')).toBeNull()
+  })
+
+  it('ícones com área clicável de 36 px, sem aumentar a altura da linha (margem negativa)', () => {
+    rows().forEach(r => {
+      r.querySelectorAll('a.table-link-twitch, a.table-link-sully').forEach(a => {
+        expect(a.className).toMatch(/\bw-9\b/)
+        expect(a.className).toMatch(/\bh-9\b/)
+        expect(a.className).toMatch(/-my-1\b/)
+      })
+    })
+  })
+})

@@ -26,9 +26,9 @@ export function renderTable() {
       </td>
       <td class="p-4">${fmt(s.avg_viewers)}</td>
       <td class="p-4">
-        <div class="flex items-center gap-1">
-          <a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" class="table-link-twitch inline-flex items-center justify-center w-8 h-8 rounded-md text-indigo-400 hover:text-indigo-300 hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors" title="Abrir Twitch" aria-label="Abrir Twitch de ${esc(s.name)}"><i class="fab fa-twitch" aria-hidden="true"></i></a>
-          <a href="https://sullygnome.com/channel/${esc(s.name.toLowerCase())}/30" target="_blank" class="table-link-sully inline-flex items-center justify-center w-8 h-8 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors" title="Abrir SullyGnome" aria-label="Abrir SullyGnome de ${esc(s.name)}"><i class="fas fa-chart-simple" aria-hidden="true"></i></a>
+        <div class="flex items-center gap-2">
+          <a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" class="table-link-twitch inline-flex items-center justify-center w-9 h-9 -my-1 rounded-md text-indigo-400 hover:text-indigo-300 hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors" title="Abrir Twitch" aria-label="Abrir Twitch de ${esc(s.name)}"><i class="fab fa-twitch" aria-hidden="true"></i></a>
+          <a href="https://sullygnome.com/channel/${esc(s.name.toLowerCase())}/30" target="_blank" class="table-link-sully inline-flex items-center justify-center w-9 h-9 -my-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors" title="Abrir SullyGnome" aria-label="Abrir SullyGnome de ${esc(s.name)}"><i class="fas fa-chart-simple" aria-hidden="true"></i></a>
         </div>
       </td>
       <td class="p-4 text-center"><button class="text-slate-400 hover:text-red-400 transition-colors delete-btn" data-id="${s.id}" title="Remover" aria-label="Remover ${esc(s.name)}"><i class="fas fa-trash" aria-hidden="true"></i></button></td>
