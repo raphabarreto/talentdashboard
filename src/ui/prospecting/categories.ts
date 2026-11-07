@@ -45,3 +45,17 @@ export async function searchCategoriesCached(query: string): Promise<Category[]>
 export function isCategoryCached(query: string) {
   return categorySearchCache.has(query.toLowerCase())
 }
+
+// Sugestões provisórias, instantâneas: categorias de buscas anteriores (memória + 7 dias salvos) cujo nome
+// contém o texto digitado. Servem só enquanto a busca real na Twitch não chega; depois são substituídas.
+export function findCachedCategories(query: string, limit = 10): Category[] {
+  const q = query.toLowerCase()
+  const found = new Map<string, Category>()
+  const add = (cats: Category[]) => cats.forEach(c => { if (found.size < limit && c.name.toLowerCase().includes(q)) found.set(c.id, c) })
+  categorySearchCache.forEach(add)
+  try {
+    const all = JSON.parse(localStorage.getItem(CATEGORY_CACHE_KEY) || '{}')
+    Object.values<{ t: number; cats: Category[] }>(all).forEach(hit => { if (Date.now() - hit.t < CATEGORY_CACHE_TTL) add(hit.cats) })
+  } catch { /* cache é só otimização */ }
+  return [...found.values()]
+}

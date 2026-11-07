@@ -1,16 +1,20 @@
 import { fetchStreamsByGame, fetchTwitchUser } from '../../lib/twitch'
-import { PROSPECT_FETCH_LIMIT } from '../../constants'
+import { PROSPECT_FETCH_LIMIT, PROSPECT_DEFAULT_MIN_VIEWERS } from '../../constants'
 import { escapeHtml as esc } from '../../lib/escape'
 import { showToast, confirmAction } from '../../utils'
 import { streamers } from '../../state'
 import { prospectingHtml, getElements, type Els } from './layout'
-import { searchCategoriesCached, isCategoryCached } from './categories'
+import { searchCategoriesCached, isCategoryCached, findCachedCategories } from './categories'
 import { shortlist, setShortlist, saveShortlist, loadShortlistFromDb, formatShortlistForCopy } from './shortlist'
 import { extractEmail } from './email'
 import { ps } from './state'
 import { getVisibleResults, renderResults, renderShortlist, updateActions } from './render'
 
 export { searchCategoriesCached } from './categories'
+
+function renderSuggestions(cats: Array<{ id: string; name: string }>) {
+  return cats.map(c => `<div class="px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm text-white" data-id="${esc(c.id)}" data-name="${esc(c.name)}">${esc(c.name)}</div>`).join('')
+}
 
 // Campo de categoria com autocompletar.
 function setupCategoryInput(els: Els) {
@@ -23,17 +27,19 @@ function setupCategoryInput(els: Els) {
       const q = els.input.value.trim()
       if (q.length < 2) { els.suggestions.classList.add('hidden'); return }
       if (!isCategoryCached(q)) {
-        els.suggestions.innerHTML = '<div class="px-3 py-2 text-sm text-slate-400">Buscando categorias...</div>'
+        // Mostra já o que conhecemos de buscas anteriores; a busca real substitui em seguida.
+        const known = findCachedCategories(q)
+        els.suggestions.innerHTML = known.length ? renderSuggestions(known) : '<div class="px-3 py-2 text-sm text-slate-400">Buscando categorias...</div>'
         els.suggestions.classList.remove('hidden')
       }
       try {
         const cats = await searchCategoriesCached(q)
         if (els.input.value.trim() !== q) return // resposta antiga: o texto já mudou
         if (!cats.length) { els.suggestions.classList.add('hidden'); return }
-        els.suggestions.innerHTML = cats.map(c => `<div class="px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm text-white" data-id="${esc(c.id)}" data-name="${esc(c.name)}">${esc(c.name)}</div>`).join('')
+        els.suggestions.innerHTML = renderSuggestions(cats)
         els.suggestions.classList.remove('hidden')
       } catch { els.suggestions.classList.add('hidden') }
-    }, 200)
+    }, 120)
   })
 
   els.suggestions.addEventListener('click', (e) => {
@@ -69,7 +75,8 @@ function setupSearch(els: Els) {
     els.searchBtn.textContent = 'Buscando...'
     try {
       const language = els.language.value
-      const minViewers = parseInt(els.minViewers.value) || 0
+      const parsedMin = parseInt(els.minViewers.value)
+      const minViewers = Number.isNaN(parsedMin) ? PROSPECT_DEFAULT_MIN_VIEWERS : Math.max(0, parsedMin) // vazio = padrão
       const streams = await fetchStreamsByGame(ps.gameId, PROSPECT_FETCH_LIMIT, language)
       ps.loaded = streams.length
       ps.results = streams.map(s => ({

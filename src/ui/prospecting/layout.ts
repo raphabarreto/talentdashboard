@@ -4,21 +4,18 @@ export function prospectingHtml(): string {
       <div>
         <div class="flex flex-wrap gap-3 items-end">
           <div class="relative">
-            <label class="text-xs text-slate-400 block mb-1">Categoria</label>
-            <input id="prospectCategoryInput" type="text" placeholder="Ex.: VALORANT" class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[260px]">
+            <input id="prospectCategoryInput" type="text" placeholder="Categoria (ex.: VALORANT)" aria-label="Categoria" class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[260px]">
             <div id="prospectCategorySuggestions" class="absolute z-50 mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg shadow-lg hidden max-h-48 overflow-y-auto"></div>
           </div>
           <div>
-            <label class="text-xs text-slate-400 block mb-1">Idioma</label>
-            <select id="prospectLanguage" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[150px]">
+            <select id="prospectLanguage" aria-label="Idioma" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[150px]">
               <option value="pt">Português</option>
               <option value="es">Espanhol</option>
               <option value="">Todos</option>
             </select>
           </div>
           <div>
-            <label class="text-xs text-slate-400 block mb-1">Viewers mín.</label>
-            <input id="prospectMinViewers" type="number" value="50" class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[110px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            <input id="prospectMinViewers" type="number" min="0" placeholder="Viewers mín." aria-label="Viewers mínimos" class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[130px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
           </div>
           <button id="prospectSearchBtn" class="h-10 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-search text-xs"></i>Buscar</button>
         </div>
