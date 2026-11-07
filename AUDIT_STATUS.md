@@ -114,7 +114,6 @@ Nenhuma em andamento. Sessão encerrada em 07/11: main @ bb1e721 igual ao remoto
 ## Próximo passo sugerido
 1. Mesclar o PR de fechamento da sessão (só `AUDIT_STATUS.md`) quando o usuário autorizar.
 2. Sem conferências obrigatórias pendentes.
-3. Depois de confirmado o túnel: opcionalmente remover `https://*.ingest.sentry.io https://*.sentry.io` do `connect-src` da CSP (PR próprio).
 4. Sem item obrigatório além disso: aguardar novas features/ajustes do usuário; revisão periódica com `npm audit`; deslogar o Supabase CLI se não for usar.
 
 ## Feito em 07/11
@@ -137,6 +136,9 @@ Nenhuma em andamento. Sessão encerrada em 07/11: main @ bb1e721 igual ao remoto
 - `twitch-proxy` (08/11, autorizado pelo usuário): `getUser` e `is_allowed_user` agora rodam em paralelo (antes em fila), para encurtar cada busca (~0,1–0,2 s). Mesmas respostas: 401 token inválido, 403 fora da allowlist, ambos sem chamar a Twitch (2 testes novos). [ok] testes 137/137, `tsc`, build. [a verificar] efeito em produção após o deploy da Edge Function. Reversão: revert do PR (redeploy automático).
 - Confirmações de remoção/exclusão (PR #91 e ajuste de botões, 08/11): janela única `confirmAction` redesenhada (título + descrição com nomes reais, Cancelar neutro, ação vermelha; Sair em azul), foco em Cancelar, Esc/clique fora cancelam, foco preso e devolvido, texto via `textContent`; botões centralizados e de mesma largura. Lógica de exclusão, Supabase e RLS intactos; nenhuma confirmação criada/removida. [ok] testes, `tsc`, build. [usuário] aprovado no localhost. Reversão: revert do PR.
 - Visão Geral, modo de seleção (08/11): botão "Selecionar" → caixas no cabeçalho dos cards, clicar no card marca/desmarca (fora de links/menus/caixa), borda roxa, barra compacta acima dos cards (N selecionado(s), Selecionar esta página, Limpar seleção, Remover (N) desativado sem seleção), "Sair da seleção" limpa tudo. Remoção em massa usa a mesma confirmação e `removeSelected` (mesma lógica da Tabela de Dados; seleção compartilhada). Corrigida grade de cards duplicada no HTML durante o desenvolvimento. [ok] testes 151/151, `tsc`, build. [usuário] aprovado no localhost. Reversão: revert do PR.
+
+- CSP (08/11, autorizado): removidos `https://*.ingest.sentry.io` e `https://*.sentry.io` do `connect-src` (o navegador só fala com o próprio domínio; o Sentry vai pelo túnel `/api/sentry-tunnel`). [ok] testes, `tsc`, build. [a verificar] após o deploy: reenviar um erro pelo console e ver chegar ao Sentry. Reversão: revert do PR (devolve os dois domínios).
+- [usuário] Detalhes da campanha (ícone do olho) conferidos em tela de PC: tudo ok (08/11).
 
 ## Testes (07/11)
 - [ok] `vitest run`: 28 arquivos, 135 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
