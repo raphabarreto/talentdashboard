@@ -139,6 +139,11 @@ Nenhuma em andamento. Sessão encerrada em 07/11: main @ bb1e721 igual ao remoto
 
 - CSP (08/11, autorizado): removidos `https://*.ingest.sentry.io` e `https://*.sentry.io` do `connect-src` (o navegador só fala com o próprio domínio; o Sentry vai pelo túnel `/api/sentry-tunnel`). [ok] testes, `tsc`, build. [a verificar] após o deploy: reenviar um erro pelo console e ver chegar ao Sentry. Reversão: revert do PR (devolve os dois domínios).
 - [usuário] Detalhes da campanha (ícone do olho) conferidos em tela de PC: tudo ok (08/11).
+- Aba Campanhas (08/11, aprovado pelo usuário no localhost, só apresentação; sem mudança em dados, financeiro ou Supabase):
+  - Tabela em 5 colunas: Empresa | Período (sem ano; mantém anos se atravessar anos) | Meu Valor (com "Pagamento: dd/mm" e "Não lançado") | Streamers | Ações (botão "Gerenciar", lápis, menu ⋮ com "Excluir campanha" e confirmação). Cada campanha segue sendo um contrato independente (sem agrupar). Ordem: início mais recente primeiro, com desempate fixo por criação (`getCampaigns`, só leitura).
+  - Formulário: rótulo "Empresa" acima do campo.
+  - Modal "Gerenciar Campanha": coluna única (cabeçalho com X, card único "Resumo da campanha", seção Streamers com badge de total, Fechar). Até 5 streamers: lista direta com status abaixo do nome, sem busca; 6+: busca + grupos por status recolhidos (Contatados, Pendentes, Sem resposta, Confirmados, Recusados; vazios ocultos; busca abre os grupos com resultado), sem filtros horizontais; lista com altura máx. ~380 px e rolagem interna. Botão "Marcar contato" (ação para pendente → contatado, mesma transição), "Reverter status" com tooltip. Valor em dólar exibido com vírgula. Regras de status e Recusado inalterados.
+  - [ok] testes 180/180, `tsc`, build. [a verificar] em produção: uso real do modal com a OperaGX (45 streamers). Reversão: revert do PR.
 
 ## Testes (07/11)
 - [ok] `vitest run`: 28 arquivos, 135 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.

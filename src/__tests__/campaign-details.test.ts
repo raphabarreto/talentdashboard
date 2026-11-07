@@ -2,17 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../lib/data', () => ({ updateContactStatus: vi.fn(), getStreamers: vi.fn() }))
 vi.mock('../lib/registration', () => ({ prepareStreamerData: vi.fn(), registerStreamer: vi.fn() }))
-vi.mock('../ui/campaigns', () => ({ renderCampaigns: vi.fn() }))
+vi.mock('../ui/campaigns', () => ({ renderCampaigns: vi.fn(), formatPeriod: (a: string, b: string) => `${a}|${b}` }))
 
-import { openDetailsModal } from '../events/campaigns/details'
+import { openDetailsModal, FILTERS_MIN_STREAMERS } from '../events/campaigns/details'
 
-const ids = ['detailsTitle', 'detailsCompany', 'detailsPeriod', 'detailsCampaignValue', 'detailsCommission', 'detailsPaymentDate', 'detailsProgressText', 'detailsStatusChips', 'detailsStreamers']
+const ids = ['detailsTitle', 'detailsPeriod', 'detailsCampaignValue', 'detailsCommission', 'detailsPaymentDate', 'detailsParticipants', 'detailsStreamers']
 
 function mountDom() {
   document.body.innerHTML = `
     ${ids.map(id => `<div id="${id}"></div>`).join('')}
-    <div id="detailsProgressBar"></div>
-    <input id="detailsSearch" value="">
+    <div id="detailsFilters" class="hidden"><input id="detailsSearch" value=""></div>
     <p id="detailsEmptyState" class="hidden"></p>
     <div id="campaignDetailsModal" class="hidden"></div>`
 }
@@ -22,43 +21,86 @@ const campaign = (streamers: ReturnType<typeof st>[]) => ({
   id: 'c1', company: 'Acme', start_date: '2026-01-01', end_date: '2026-01-31', total_received: 100, my_commission: 10,
   currency: 'USD', payment_date: null, created_at: '', campaign_streamers: streamers,
 } as unknown as Parameters<typeof openDetailsModal>[0])
+const many = (n: number, status?: string) => Array.from({ length: n }, (_, i) => st(String(i + 1), `s${i + 1}`, status))
 
 beforeEach(mountDom)
 
-const chipText = () => [...document.querySelectorAll('#detailsStatusChips .status-filter-btn')].map(b => `${b.getAttribute('data-filter')}:${b.textContent?.trim()}`)
-const rows = () => [...document.querySelectorAll('#detailsStreamers [data-id]')].map(r => r.textContent!.replace(/\s+/g, ' ').trim())
+const rows = () => [...document.querySelectorAll('#detailsStreamers [data-id]')]
+const filtersHidden = () => document.getElementById('detailsFilters')!.classList.contains('hidden')
+const nextOf = (id: string) => [...document.querySelectorAll(`#detailsStreamers [data-id="${id}"] .quick-status-btn`)].map(b => b.getAttribute('data-next'))
 
-describe('detalhes da campanha', () => {
-  const c = campaign([st('1', 'ana'), st('2', 'bob', 'contatado'), st('3', 'caio', 'confirmado'), st('4', 'dani', 'recusado'), st('5', 'eva', 'pendente')])
+describe('detalhes da campanha: resumo e cabeçalho', () => {
+  it('título, período e os três valores do resumo', () => {
+    openDetailsModal(campaign([st('1', 'ana')]))
+    expect(document.getElementById('detailsTitle')!.textContent).toBe('Acme')
+    expect(document.getElementById('detailsPeriod')!.textContent).toBe('2026-01-01|2026-01-31')
+    expect(document.getElementById('detailsCampaignValue')!.textContent).toBe('US$ 100,00')
+    expect(document.getElementById('detailsPaymentDate')!.textContent).toBe('Pendente')
+  })
 
-  it('mostra todas as etapas com a contagem, mesmo as vazias, e o total', () => {
+  it('não existe mais barra nem texto de progresso', () => {
+    openDetailsModal(campaign(many(3, 'contatado')))
+    expect(document.getElementById('detailsProgressBar')).toBeNull()
+    expect(document.getElementById('detailsProgressText')).toBeNull()
+  })
+
+  it('contador só com o número, ao lado do título; escondido com 1 streamer só', () => {
+    openDetailsModal(campaign(many(1)))
+    expect(document.getElementById('detailsParticipants')!.classList.contains('hidden')).toBe(true)
+    expect(filtersHidden()).toBe(true)
+    openDetailsModal(campaign(many(2)))
+    expect(document.getElementById('detailsParticipants')!.classList.contains('hidden')).toBe(false)
+    expect(document.getElementById('detailsParticipants')!.textContent).toBe('2')
+  })
+})
+
+describe('detalhes da campanha: poucos streamers (janela enxuta)', () => {
+  it('sem busca/filtros e com todos os streamers na lista, mesmo com pendentes', () => {
+    openDetailsModal(campaign([st('1', 'ana'), st('2', 'bob', 'contatado'), st('3', 'caio', 'confirmado')]))
+    expect(filtersHidden()).toBe(true)
+    expect(rows()).toHaveLength(3)
+  })
+
+  it('cada streamer é um cartão com avatar da inicial, nome, status por escrito com ícone; ações por etapa', () => {
+    openDetailsModal(campaign([st('1', 'ana'), st('2', 'bob', 'contatado'), st('3', 'caio', 'confirmado'), st('4', 'dani', 'nao_respondeu')]))
+    const text = (id: string) => document.querySelector(`#detailsStreamers [data-id="${id}"]`)!.textContent!.replace(/\s+/g, ' ').trim()
+    expect(text('1')).toContain('ana')
+    expect(text('1')).toContain('Pendente')
+    expect(text('4')).toContain('Não respondeu')
+    expect(rows()).toHaveLength(4)
+    expect(document.querySelectorAll('#detailsStreamers .rounded-full').length).toBe(4) // avatar redondo em cada cartão
+    expect(document.querySelector('#detailsStreamers [data-id="1"] .rounded-full')!.textContent).toBe('A')
+    expect(nextOf('1')).toEqual(['contatado', 'recusado'])
+    const mark = document.querySelector('#detailsStreamers [data-id="1"] [data-next="contatado"]') as HTMLElement
+    expect(mark.textContent!.trim()).toBe('Marcar contato') // ação, não rótulo de status
+    expect(mark.querySelector('i')).toBeNull() // sem ícone de avião
+    expect(mark.className).not.toContain('amber')
+    expect(nextOf('2')).toEqual(['confirmado', 'nao_respondeu', 'recusado'])
+    expect(nextOf('3')).toEqual(['pendente']) // reverter status
+    expect(document.querySelector('[data-id="3"] .quick-status-btn')!.getAttribute('title')).toBe('Reverter status')
+  })
+})
+
+describe('detalhes da campanha: muitos streamers (busca e grupos, sem filtros horizontais)', () => {
+  const c = campaign([...many(FILTERS_MIN_STREAMERS - 3), st('a', 'x', 'contatado'), st('b', 'y', 'confirmado'), st('c', 'z', 'recusado')])
+
+  it('a busca aparece e não existe mais a barra de filtros por status', () => {
     openDetailsModal(c)
-    expect(chipText()).toEqual([
-      'all:5 no total', 'pendente:2 pendentes', 'contatado:1 contatados', 'confirmado:1 confirmados', 'nao_respondeu:0 não respondeu', 'recusado:1 recusados',
-    ])
-    expect(document.querySelector('[data-filter="nao_respondeu"]')!.className).toContain('opacity-50')
-    expect(document.getElementById('detailsProgressText')!.textContent).toBe('3 de 5 já contatados')
+    expect(filtersHidden()).toBe(false)
+    expect(document.getElementById('detailsStatusChips')).toBeNull()
+    expect(document.querySelector('.status-filter-btn')).toBeNull()
   })
 
-  it('abre filtrando os pendentes e mantém as ações de cada etapa', () => {
+  it('abre sempre agrupado (tudo recolhido), mesmo com pendentes', () => {
     openDetailsModal(c)
-    expect(rows()).toHaveLength(2)
-    const nextOf = (name: string) => [...document.querySelectorAll('#detailsStreamers [data-id]')]
-      .find(r => r.textContent!.includes(name))!.querySelectorAll('.quick-status-btn')
-    expect([...nextOf('ana')].map(b => b.getAttribute('data-next'))).toEqual(['contatado', 'recusado'])
+    expect(document.querySelectorAll('#detailsStreamers .group-toggle').length).toBeGreaterThan(0)
+    expect(rows()).toHaveLength(0)
   })
 
-  it('sem pendentes abre em "no total"; cada linha tem a bolinha de status e a ação de desfazer', () => {
-    openDetailsModal(campaign([st('1', 'ana', 'confirmado'), st('2', 'bob', 'recusado')]))
-    expect(rows()).toHaveLength(2)
-    expect(document.querySelectorAll('#detailsStreamers .rounded-full').length).toBe(2)
-    expect(document.querySelector('[data-id="1"] .quick-status-btn')!.getAttribute('data-next')).toBe('pendente')
-  })
-
-  it('streamer contatado oferece confirmar, não respondeu e recusar', () => {
-    openDetailsModal(campaign([st('1', 'ana', 'contatado')]))
-    // abre em "no total" porque não há pendentes
-    const next = [...document.querySelectorAll('[data-id="1"] .quick-status-btn')].map(b => b.getAttribute('data-next'))
-    expect(next).toEqual(['confirmado', 'nao_respondeu', 'recusado'])
+  it('30 streamers: lista vertical de uma coluna (grupos recolhidos)', () => {
+    openDetailsModal(campaign(many(30, 'contatado')))
+    expect(document.querySelector('[data-group="contatado"]')!.textContent).toContain('30')
+    expect(document.getElementById('detailsParticipants')!.textContent).toBe('30')
+    expect(document.getElementById('detailsStreamers')!.className).not.toContain('grid')
   })
 })
