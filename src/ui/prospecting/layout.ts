@@ -1,8 +1,7 @@
 export function prospectingHtml(): string {
   return `
     <div class="space-y-6">
-      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-        <h3 class="text-white font-semibold text-sm mb-3"><i class="fas fa-satellite-dish mr-2 text-indigo-400"></i>Buscar streamers ao vivo</h3>
+      <div>
         <div class="flex flex-wrap gap-3 items-end">
           <div class="relative">
             <label class="text-xs text-slate-400 block mb-1">Categoria</label>
@@ -60,7 +59,7 @@ export function prospectingHtml(): string {
           <button id="clearListBtn" class="h-10 sm:ml-auto flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 rounded-lg text-sm transition-colors cursor-pointer" title="Apaga todos os streamers da Minha Lista"><i class="fas fa-trash text-xs"></i>Limpar lista</button>
         </div>
         <div class="rounded-lg border border-slate-700 bg-slate-800">
-          <div class="overflow-x-auto overflow-y-auto max-h-[480px]">
+          <div class="overflow-x-auto">
             <table class="w-full text-left">
               <thead class="border-b border-slate-700 text-sm text-slate-400 sticky top-0 bg-slate-800">
                 <tr>
