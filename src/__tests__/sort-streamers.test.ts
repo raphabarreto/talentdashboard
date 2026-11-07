@@ -20,3 +20,25 @@ describe('ordenação da tabela', () => {
     expect(names({ key: 'avg_viewers', order: 'asc' })).toEqual(['Alfa', 'zeus', 'beto', 'Ábaco'])
   })
 })
+
+describe('seta de ordenação no título da coluna', () => {
+  it('mostra ▲/▼ só na coluna ordenada e atualiza aria-sort', async () => {
+    const { updateSortIndicators } = await import('../ui/table')
+    const { currentSort } = await import('../state')
+    document.body.innerHTML = `<table><thead><tr>
+      <th data-sort="name">Nome<span class="sort-indicator"></span></th>
+      <th data-sort="avg_viewers">Média<span class="sort-indicator"></span></th></tr></thead></table>`
+    const [nameTh, avgTh] = [...document.querySelectorAll('th')]
+    currentSort.key = 'avg_viewers'; currentSort.order = 'desc'
+    updateSortIndicators()
+    expect(avgTh.querySelector('.sort-indicator')!.textContent).toBe('▼')
+    expect(avgTh.getAttribute('aria-sort')).toBe('descending')
+    expect(nameTh.querySelector('.sort-indicator')!.textContent).toBe('')
+    expect(nameTh.getAttribute('aria-sort')).toBe('none')
+    currentSort.key = 'name'; currentSort.order = 'asc'
+    updateSortIndicators()
+    expect(nameTh.querySelector('.sort-indicator')!.textContent).toBe('▲')
+    expect(avgTh.querySelector('.sort-indicator')!.textContent).toBe('')
+    currentSort.key = 'avg_viewers'; currentSort.order = 'desc'
+  })
+})

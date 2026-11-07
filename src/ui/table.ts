@@ -1,5 +1,5 @@
 import { escapeHtml as esc } from '../lib/escape'
-import { tablePage, setTablePage, selectedStreamers, PAGE_SIZE } from '../state'
+import { tablePage, setTablePage, selectedStreamers, PAGE_SIZE, currentSort } from '../state'
 import { fmt } from '../utils'
 import { getFilteredStreamers } from './filters'
 
@@ -56,6 +56,7 @@ export function renderTable() {
   }
 
   updateSelectionButtons()
+  updateSortIndicators()
 }
 
 export function updateSelectionButtons() {
@@ -66,4 +67,14 @@ export function updateSelectionButtons() {
   document.getElementById('selectedCount')!.textContent = String(count)
   document.getElementById('selectedCountCsv')!.textContent = String(count)
   document.getElementById('selectedCountRemove')!.textContent = String(count)
+}
+
+// Seta ▲/▼ no título da coluna ordenada (e aria-sort para leitores de tela).
+export function updateSortIndicators() {
+  document.querySelectorAll<HTMLElement>('th[data-sort]').forEach(th => {
+    const active = th.dataset.sort === currentSort.key
+    const indicator = th.querySelector('.sort-indicator')
+    if (indicator) indicator.textContent = active ? (currentSort.order === 'asc' ? '▲' : '▼') : ''
+    th.setAttribute('aria-sort', active ? (currentSort.order === 'asc' ? 'ascending' : 'descending') : 'none')
+  })
 }
