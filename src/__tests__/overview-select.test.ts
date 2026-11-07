@@ -10,7 +10,7 @@ vi.mock('../ui/filters', () => ({
   ],
 }))
 
-import { renderOverview, updateOverviewSelection, setSelectionMode } from '../ui/overview'
+import { renderOverview, updateOverviewSelection, setSelectionMode, getOverviewPageStreamers } from '../ui/overview'
 import { selectedStreamers } from '../state'
 
 beforeEach(() => {
@@ -35,7 +35,7 @@ describe('modo de seleção na Visão Geral', () => {
     expect(document.querySelectorAll('.card-checkbox').length).toBe(2)
     expect(card('a').querySelector('.card-checkbox')!.parentElement!.classList.contains('flex')).toBe(true)
     expect(bar().classList.contains('hidden')).toBe(false)
-    expect(document.querySelector('#overviewSelectModeBtn span')!.textContent).toBe('Cancelar')
+    expect(document.querySelector('#overviewSelectModeBtn span')!.textContent).toBe('Sair da seleção')
   })
 
   it('marcados ganham borda roxa, contam na barra e liberam o botão Remover', () => {
@@ -53,6 +53,16 @@ describe('modo de seleção na Visão Geral', () => {
     expect(selectedStreamers.has('a')).toBe(true)
     ;(card('b').querySelector('a') as HTMLElement).click()
     expect(selectedStreamers.has('b')).toBe(false)
+  })
+
+  it('a página da seleção traz só os streamers visíveis (busca/filtro/paginação)', () => {
+    expect(getOverviewPageStreamers().map(s => s.id)).toEqual(['a', 'b'])
+  })
+
+  it('a barra vem antes da grade de cards', () => {
+    document.body.innerHTML = '<div id="overviewSelectionBar"></div><div id="overview-grid"></div>'
+    const pos = document.getElementById('overviewSelectionBar')!.compareDocumentPosition(document.getElementById('overview-grid')!)
+    expect(pos & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('sair do modo limpa a seleção e restaura os cards', () => {

@@ -16,7 +16,7 @@ export function setSelectionMode(on: boolean) {
   if (!on) selectedStreamers.clear() // sair do modo limpa a seleção
   const btn = document.getElementById('overviewSelectModeBtn')
   btn?.setAttribute('aria-pressed', String(on))
-  const label = btn?.querySelector('span'); if (label) label.textContent = on ? 'Cancelar' : 'Selecionar'
+  const label = btn?.querySelector('span'); if (label) label.textContent = on ? 'Sair da seleção' : 'Selecionar'
   renderOverview()
 }
 
