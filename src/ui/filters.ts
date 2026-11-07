@@ -14,11 +14,17 @@ export function getFilteredStreamers(prefix: string): Streamer[] {
       if (status === 'live') return s.is_live
       return status === 'active' ? isActive(s) : !isActive(s)
     })
-    .sort((a, b) => {
-      const aVal = a[currentSort.key as keyof Streamer] as number
-      const bVal = b[currentSort.key as keyof Streamer] as number
-      return currentSort.order === 'desc' ? bVal - aVal : aVal - bVal
-    })
+    .sort((a, b) => compareStreamers(a, b, currentSort))
+}
+
+// Números comparam por valor; textos (ex.: nome) em ordem alfabética, sem diferenciar maiúsculas/acentos.
+export function compareStreamers(a: Streamer, b: Streamer, sort: { key: string; order: 'asc' | 'desc' }): number {
+  const aVal = a[sort.key as keyof Streamer]
+  const bVal = b[sort.key as keyof Streamer]
+  const diff = typeof aVal === 'string' || typeof bVal === 'string'
+    ? String(aVal ?? '').localeCompare(String(bVal ?? ''), 'pt-BR', { sensitivity: 'base' })
+    : (Number(aVal) || 0) - (Number(bVal) || 0)
+  return sort.order === 'desc' ? -diff : diff
 }
 
 export function getExistingCompanies(): string[] {

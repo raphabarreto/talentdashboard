@@ -65,7 +65,7 @@ export function setupFiltersAndSort() {
     th.addEventListener('click', () => {
       const key = (th as HTMLElement).dataset.sort!
       if (currentSort.key === key) currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc'
-      else { currentSort.key = key; currentSort.order = 'desc' }
+      else { currentSort.key = key; currentSort.order = key === 'name' ? 'asc' : 'desc' } // nome começa de A a Z; números do maior para o menor
       renderTable()
     })
   })
