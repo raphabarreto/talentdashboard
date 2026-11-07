@@ -81,7 +81,7 @@ describe('Prospecção: contador da busca e Minha Lista', () => {
     expect(resultsCounterText(24, 5, 60)).toBe('24 streamers encontrados • 5 com email')
     expect(resultsCounterText(1, 0, 10)).toBe('1 streamer encontrado')
     expect(resultsCounterText(0, 0, 0)).toBe('0 streamers encontrados')
-    expect(resultsCounterText(80, 3, 100)).toBe('80 streamers encontrados • 3 com email (entre as 100 lives com mais viewers; pode haver mais)')
+    expect(resultsCounterText(10, 5, 197)).toBe('10 streamers encontrados • 5 com email · de 197 lives carregadas')
   })
 
   it('controles da Minha Lista na ordem pedida, Limpar junto (sem empurrar para a direita)', () => {
