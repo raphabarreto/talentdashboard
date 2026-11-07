@@ -1,4 +1,5 @@
 import { fetchStreamsByGame, fetchTwitchUser } from '../../lib/twitch'
+import { PROSPECT_FETCH_LIMIT } from '../../constants'
 import { escapeHtml as esc } from '../../lib/escape'
 import { showToast, confirmAction } from '../../utils'
 import { streamers } from '../../state'
@@ -69,7 +70,8 @@ function setupSearch(els: Els) {
     try {
       const language = els.language.value
       const minViewers = parseInt(els.minViewers.value) || 0
-      const streams = await fetchStreamsByGame(ps.gameId, 100, language)
+      const streams = await fetchStreamsByGame(ps.gameId, PROSPECT_FETCH_LIMIT, language)
+      ps.loaded = streams.length
       ps.results = streams.map(s => ({
         user_login: s.user_login,
         user_name: s.user_name,

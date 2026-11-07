@@ -6,4 +6,5 @@ export const ps = {
   selected: new Set<string>(),
   page: 1,
   gameId: '',
+  loaded: 0, // transmissões ao vivo carregadas da Twitch (antes dos filtros)
 }
