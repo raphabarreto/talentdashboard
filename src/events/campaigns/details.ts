@@ -55,7 +55,9 @@ function renderDetailsList(c: typeof campaigns[number]) {
   const buildRow = (s: NonNullable<typeof c.campaign_streamers>[number]) => {
     const st = s.contact_status || 'pendente'
     const row = document.createElement('div')
-    row.className = 'flex items-center justify-between gap-3 bg-slate-700/40 hover:bg-slate-700/60 rounded-xl px-3 py-2 transition-colors'
+    // Dentro dos grupos (6+ streamers) os cartões ficam mais compactos; na lista direta mantêm o tamanho de sempre.
+    const compact = groupingEnabled
+    row.className = `flex items-center justify-between gap-3 bg-slate-700/40 hover:bg-slate-700/60 rounded-xl px-3 ${compact ? 'py-1' : 'py-2'} transition-colors`
     row.dataset.id = s.id
 
     let actions = ''
@@ -72,13 +74,13 @@ function renderDetailsList(c: typeof campaigns[number]) {
       `
     } else {
       actions = `
-        <button data-next="pendente" class="quick-status-btn w-9 h-9 inline-flex items-center justify-center rounded-lg border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors" title="Reverter status" aria-label="Reverter status"><i class="fas fa-undo" aria-hidden="true"></i></button>
+        <button data-next="pendente" class="quick-status-btn ${compact ? 'w-8 h-8' : 'w-9 h-9'} inline-flex items-center justify-center rounded-lg border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors" title="Reverter status" aria-label="Reverter status"><i class="fas fa-undo" aria-hidden="true"></i></button>
       `
     }
 
     // Nos grupos por status o cabeçalho já diz o status; na lista direta ele continua abaixo do nome.
     const statusLine = groupingEnabled ? '' : `<span class="block text-xs mt-0.5 ${statusTextClass[st] || 'text-slate-400'}"><i class="${statusIcon[st] || 'far fa-circle'} mr-1" aria-hidden="true"></i>${statusName(st)}</span>`
-    row.innerHTML = `<span class="flex items-center gap-3 min-w-0"><span class="w-10 h-10 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold shrink-0" aria-hidden="true">${esc(s.streamer_name.charAt(0).toUpperCase())}</span><span class="min-w-0"><span class="block text-white font-semibold truncate" title="${esc(s.streamer_name)}">${esc(s.streamer_name)}</span>${statusLine}</span></span><span class="flex items-center gap-1.5 shrink-0">${actions}</span>`
+    row.innerHTML = `<span class="flex items-center gap-3 min-w-0"><span class="${compact ? 'w-8 h-8 text-sm' : 'w-10 h-10'} rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold shrink-0" aria-hidden="true">${esc(s.streamer_name.charAt(0).toUpperCase())}</span><span class="min-w-0"><span class="block text-white font-semibold truncate" title="${esc(s.streamer_name)}">${esc(s.streamer_name)}</span>${statusLine}</span></span><span class="flex items-center gap-1.5 shrink-0">${actions}</span>`
     return row
   }
 
@@ -97,7 +99,7 @@ function renderDetailsList(c: typeof campaigns[number]) {
     if (open) {
       const body = document.createElement('div')
       body.id = `group-${k}`
-      body.className = 'flex flex-col gap-1.5 mt-1 mb-0.5'
+      body.className = 'flex flex-col gap-1 mt-1 mb-0.5'
       items.forEach(s => body.appendChild(buildRow(s)))
       section.appendChild(body)
     }

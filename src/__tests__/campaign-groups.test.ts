@@ -67,6 +67,19 @@ describe('grupos por status (campanhas com 6+ streamers)', () => {
     expect(document.querySelectorAll('#detailsStreamers [data-id="1"] .block').length).toBe(2) // nome + status
   })
 
+  it('cartões dentro dos grupos são compactos (avatar 32 px, menos padding); a lista direta mantém o tamanho de sempre', () => {
+    open(base())
+    group('contatado')!.click()
+    const card = document.querySelector('#detailsStreamers [data-id="1"]')!
+    expect(card.className).toContain('py-1')
+    expect(card.className).not.toContain('py-2')
+    expect(card.querySelector('.rounded-full')!.className).toContain('w-8 h-8')
+    open([st('1', 'ana', 'contatado'), st('2', 'bia', 'confirmado')])
+    const flat = document.querySelector('#detailsStreamers [data-id="1"]')!
+    expect(flat.className).toContain('py-2')
+    expect(flat.querySelector('.rounded-full')!.className).toContain('w-10 h-10')
+  })
+
   it('cabeçalho do grupo: bolinha e nome à esquerda; contador e seta em colunas fixas à direita', () => {
     open(base())
     const g = group('contatado')!
