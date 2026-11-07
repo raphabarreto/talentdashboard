@@ -108,7 +108,7 @@ Nenhuma em andamento (07/11: main @ b790c60 limpa e igual ao remoto, último dep
 - 403 direto do `twitch-proxy` com conta fora da allowlist: precisa de uma segunda conta Google e das chaves de produção; o login já barra essas contas.
 - Ganho percebido do autocompletar de categoria: depende da impressão de uso.
 - Visual a conferir no navegador: alinhamento das duas tabelas da Prospecção (PR #75); Tabela de Dados (coluna Links, setas de ordenação) e um clique no ícone do SullyGnome (o site bloqueia verificação automática); modal de detalhes da campanha (olho) no computador e em tela pequena.
-- Ambiente local: `.env` com as 3 variáveis públicas e CLI da Vercel logada nesta máquina; servidor de teste (`npm run dev`, porta 8000) pode ser desligado quando não for usado.
+- Ambiente local limpo (07/11): servidor de teste desligado, `.env` e `.vercel/` removidos, CLI da Vercel deslogada (continua instalada). Para testar de novo: recriar `.env` com as 3 variáveis `VITE_*` públicas (as da Vercel são "sensíveis" e não vêm no `vercel env pull`).
 - Opcionais nunca pedidos: túnel do Sentry pelo próprio domínio; remover a coluna `campaign_streamers.email` (exige autorização explícita de SQL em produção).
 
 ## Próximo passo sugerido
