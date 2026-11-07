@@ -29,13 +29,40 @@ export function setupLookupModal(
     document.getElementById('shortlistSection')?.scrollIntoView({ behavior: 'smooth' })
   })
 
-  document.getElementById('openLookup')?.addEventListener('click', () => {
+  // Abre a janela; com um nome, já dispara a busca.
+  function openLookup(name = '') {
     document.getElementById('lookupResult')!.classList.add('hidden')
     document.getElementById('lookupError')!.classList.add('hidden')
     document.getElementById('lookupActions')!.classList.add('hidden')
     document.getElementById('closeLookupModalAlt')!.classList.remove('hidden')
-    ;(document.getElementById('lookupInput') as HTMLInputElement).value = ''
+    ;(document.getElementById('lookupInput') as HTMLInputElement).value = name
     document.getElementById('lookupModal')!.classList.remove('hidden')
+    if (name) doLookup()
+  }
+
+  // Barra "Consultar streamer na Twitch..." no topo: Enter abre a janela já com o resultado.
+  const headerInput = document.getElementById('headerLookupInput') as HTMLInputElement | null
+  headerInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const name = headerInput.value.trim()
+      if (!name) return
+      headerInput.value = ''
+      headerInput.blur()
+      openLookup(name)
+    } else if (e.key === 'Escape') {
+      headerInput.value = ''
+      headerInput.blur()
+    }
+  })
+
+  // Atalho "/": leva o cursor para a barra (exceto quando já se está digitando em outro campo).
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return
+    const t = e.target as HTMLElement | null
+    if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return
+    if (!document.getElementById('lookupModal')!.classList.contains('hidden')) return
+    e.preventDefault()
+    headerInput?.focus()
   })
 
   document.getElementById('closeLookupModal')?.addEventListener('click', () => {
