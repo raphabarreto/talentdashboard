@@ -54,6 +54,7 @@ export async function getCampaigns() {
     .from('campaigns')
     .select('*, campaign_streamers(*)')
     .order('start_date', { ascending: false })
+    .order('created_at', { ascending: false }) // desempate fixo: contratos com a mesma data de início não trocam de lugar
   if (error) throw error
   return data as Campaign[]
 }

@@ -3,6 +3,7 @@ import { campaigns, setCampaigns } from '../../state'
 import { showToast, confirmAction } from '../../utils'
 import { openEditModal, setupCampaignForm } from './form'
 import { openDetailsModal, setupDetailsModal } from './details'
+import { toggleCampaignMenu, closeCampaignMenus } from '../../ui/campaigns'
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void }
 
@@ -10,6 +11,9 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
   // Cliques delegados nos botões de cada campanha (editar, detalhes, remover)
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement
+
+    const menuBtn = target.closest('.campaign-menu-btn') as HTMLElement | null
+    if (menuBtn) { toggleCampaignMenu(menuBtn); return }
 
     const editBtn = target.closest('.edit-campaign-btn') as HTMLElement | null
     if (editBtn) {
@@ -27,6 +31,7 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
 
     const deleteCampaignBtn = target.closest('.delete-campaign-btn') as HTMLElement | null
     if (deleteCampaignBtn) {
+      closeCampaignMenus()
       const id = deleteCampaignBtn.dataset.id!
       const name = campaigns.find(c => c.id === id)?.company
       const message = name ? `Tem certeza de que deseja excluir a campanha ${name}?` : 'Tem certeza de que deseja excluir esta campanha?'
@@ -37,6 +42,11 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       deleteCampaign(id).catch(() => showToast('Erro ao remover do banco', 'error'))
     }
   })
+
+  // Teclado: Esc fecha o menu e devolve o foco ao botão; rolagem/redimensionar fecham (o menu é fixo na tela)
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCampaignMenus(true) }, true)
+  window.addEventListener('resize', () => closeCampaignMenus())
+  document.addEventListener('scroll', () => closeCampaignMenus(), true)
 
   setupCampaignForm({ loadData, renderAll })
   setupDetailsModal()

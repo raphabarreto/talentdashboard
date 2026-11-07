@@ -3,118 +3,105 @@ import { updateContactStatus, getStreamers } from '../../lib/data'
 import { prepareStreamerData, registerStreamer } from '../../lib/registration'
 import { streamers, campaigns, setStreamers } from '../../state'
 import { showToast, fmtDate, fmtCurrency } from '../../utils'
-import { renderCampaigns } from '../../ui/campaigns'
+import { renderCampaigns, formatPeriod } from '../../ui/campaigns'
 import { logError } from '../../lib/logger'
 import type { ContactStatus } from '../../types/index'
 
 // Estado local do modal de detalhes (não precisa ser global)
-let detailsActiveFilter: string = 'pendente'
+// Agrupamento (accordion) por status: só no filtro "Todos" de campanhas com vários streamers.
+let groupingEnabled = false
+const openGroups = new Set<string>() // todos os grupos começam recolhidos
+const groupOrder = ['contatado', 'pendente', 'nao_respondeu', 'confirmado', 'recusado']
+const groupLabel: Record<string, string> = { contatado: 'Contatados', pendente: 'Pendentes', nao_respondeu: 'Sem resposta', confirmado: 'Confirmados', recusado: 'Recusados' }
+const groupDot: Record<string, string> = { pendente: 'bg-slate-400', contatado: 'bg-amber-400', confirmado: 'bg-emerald-400', recusado: 'bg-red-400', nao_respondeu: 'bg-orange-400' }
 let detailsCampaignId: string | null = null
 function setDetailsCampaignId(id: string | null) { detailsCampaignId = id }
 
-const statusFinalBadge: Record<string, string> = {
-  confirmado: 'bg-emerald-500/20 text-emerald-400',
-  recusado: 'bg-red-500/20 text-red-400',
-  nao_respondeu: 'bg-orange-500/20 text-orange-400'
+const statusTextClass: Record<string, string> = {
+  pendente: 'text-slate-400',
+  contatado: 'text-amber-400',
+  confirmado: 'text-emerald-400',
+  recusado: 'text-red-400',
+  nao_respondeu: 'text-orange-400'
 }
-const statusChipClass: Record<string, string> = {
-  all: 'bg-slate-700 text-slate-200',
-  pendente: 'bg-slate-500/20 text-slate-300',
-  contatado: 'bg-amber-500/20 text-amber-400',
-  confirmado: 'bg-emerald-500/20 text-emerald-400',
-  recusado: 'bg-red-500/20 text-red-400',
-  nao_respondeu: 'bg-orange-500/20 text-orange-400'
+const statusIcon: Record<string, string> = {
+  pendente: 'far fa-circle',
+  contatado: 'fas fa-paper-plane',
+  confirmado: 'far fa-circle-check',
+  recusado: 'far fa-circle-xmark',
+  nao_respondeu: 'far fa-clock'
 }
-const statusChipLabel: Record<string, string> = {
-  all: 'no total',
-  pendente: 'pendentes',
-  contatado: 'contatados',
-  confirmado: 'confirmados',
-  recusado: 'recusados',
-  nao_respondeu: 'não respondeu'
-}
-// Bolinha de cor ao lado do nome: mostra o status de cada streamer mesmo com o filtro "todos".
-const statusDot: Record<string, string> = {
-  pendente: 'bg-slate-400',
-  contatado: 'bg-amber-400',
-  confirmado: 'bg-emerald-400',
-  recusado: 'bg-red-400',
-  nao_respondeu: 'bg-orange-400'
-}
-const statusOutline: Record<string, string> = {
-  pendente: 'outline-slate-400',
-  contatado: 'outline-amber-400',
-  confirmado: 'outline-emerald-400',
-  recusado: 'outline-red-400',
-  nao_respondeu: 'outline-orange-400',
-  all: 'outline-slate-400'
-}
+const statusName = (st: string) => st === 'nao_respondeu' ? 'Não respondeu' : st.charAt(0).toUpperCase() + st.slice(1)
+// Até FILTERS_MIN_STREAMERS - 1 streamers a janela fica enxuta (sem busca/filtros); a partir daí eles aparecem.
+export const FILTERS_MIN_STREAMERS = 6
 
-function renderDetailsChips(c: typeof campaigns[number]) {
-  const order = ['pendente', 'contatado', 'confirmado', 'nao_respondeu', 'recusado']
-  const counts: Record<string, number> = { pendente: 0, contatado: 0, confirmado: 0, recusado: 0, nao_respondeu: 0 }
-  c.campaign_streamers?.forEach(s => { counts[s.contact_status || 'pendente']++ })
-  const container = document.getElementById('detailsStatusChips')!
-  const total = c.campaign_streamers?.length || 0
-  // Todas as etapas aparecem sempre (as vazias ficam apagadas), com a contagem em destaque.
-  container.innerHTML = ['all', ...order].map(k => {
-    const n = k === 'all' ? total : counts[k]
-    const dim = k !== 'all' && n === 0 ? ' opacity-50' : ''
-    return `<button data-filter="${k}" class="status-filter-btn px-3 py-1.5 rounded text-sm ${statusChipClass[k]}${dim}"><span class="font-bold">${n}</span> ${statusChipLabel[k]}</button>`
-  }).join('')
 
-  const jaContatados = total - counts.pendente
-  document.getElementById('detailsProgressText')!.textContent = total > 0 ? `${jaContatados} de ${total} já contatados` : ''
-  ;(document.getElementById('detailsProgressBar') as HTMLElement).style.width = total > 0 ? `${Math.round((jaContatados / total) * 100)}%` : '0%'
-  highlightActiveChip()
-}
 
-function highlightActiveChip() {
-  document.querySelectorAll('.status-filter-btn').forEach(b => b.classList.remove('outline', 'outline-2', 'outline-slate-400', 'outline-amber-400', 'outline-emerald-400', 'outline-red-400', 'outline-orange-400'))
-  const active = document.querySelector(`.status-filter-btn[data-filter="${detailsActiveFilter}"]`)
-  active?.classList.add('outline', 'outline-2', statusOutline[detailsActiveFilter])
-}
 
 function renderDetailsList(c: typeof campaigns[number]) {
   const search = (document.getElementById('detailsSearch') as HTMLInputElement).value.toLowerCase()
   const list = document.getElementById('detailsStreamers')!
   const all = c.campaign_streamers || []
   const filtered = all.filter(s => {
-    const st = s.contact_status || 'pendente'
-    const matchStatus = detailsActiveFilter === 'all' || st === detailsActiveFilter
     const matchSearch = !search || s.streamer_name.toLowerCase().includes(search)
-    return matchStatus && matchSearch
+    return matchSearch
   })
   list.innerHTML = ''
+  // Grupos um pouco mais juntos (gap-1); lista direta mantém o espaço de sempre (gap-1.5).
+  list.classList.toggle('gap-1', groupingEnabled)
+  list.classList.toggle('gap-1.5', !groupingEnabled)
   document.getElementById('detailsEmptyState')!.classList.toggle('hidden', filtered.length > 0)
 
-  filtered.forEach(s => {
+  const buildRow = (s: NonNullable<typeof c.campaign_streamers>[number]) => {
     const st = s.contact_status || 'pendente'
     const row = document.createElement('div')
-    row.className = 'flex items-center justify-between gap-2 bg-slate-700/40 hover:bg-slate-700/70 rounded-lg px-3 py-1.5 transition-colors'
+    row.className = 'flex items-center justify-between gap-3 bg-slate-700/40 hover:bg-slate-700/60 rounded-xl px-3 py-2 transition-colors'
     row.dataset.id = s.id
 
     let actions = ''
     if (st === 'pendente') {
       actions = `
-        <button data-next="contatado" class="quick-status-btn text-sm font-semibold px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 whitespace-nowrap" title="Marcar como contatado"><i class="fas fa-paper-plane mr-1"></i>Contatado</button>
-        <button data-next="recusado" class="quick-status-btn text-sm px-2 py-1 rounded bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400" title="Recusado"><i class="fas fa-times"></i></button>
+        <button data-next="contatado" class="quick-status-btn text-sm font-semibold px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-200 hover:bg-slate-700 hover:text-white whitespace-nowrap" title="Marcar como contatado" aria-label="Marcar como contatado">Marcar contato</button>
+        <button data-next="recusado" class="quick-status-btn text-sm px-2 py-1 rounded bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400" title="Recusado" aria-label="Marcar como recusado"><i class="fas fa-times" aria-hidden="true"></i></button>
       `
     } else if (st === 'contatado') {
       actions = `
-        <button data-next="confirmado" class="quick-status-btn text-sm font-semibold px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 whitespace-nowrap" title="Marcar como confirmado"><i class="fas fa-check mr-1"></i>Confirmado</button>
-        <button data-next="nao_respondeu" class="quick-status-btn text-sm px-2 py-1 rounded bg-slate-700 text-slate-400 hover:bg-orange-500/20 hover:text-orange-400" title="Não respondeu"><i class="fas fa-clock"></i></button>
-        <button data-next="recusado" class="quick-status-btn text-sm px-2 py-1 rounded bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400" title="Recusado"><i class="fas fa-times"></i></button>
+        <button data-next="confirmado" class="quick-status-btn text-sm font-semibold px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 whitespace-nowrap" title="Marcar como confirmado" aria-label="Marcar como confirmado"><i class="fas fa-check mr-1" aria-hidden="true"></i>Confirmado</button>
+        <button data-next="nao_respondeu" class="quick-status-btn text-sm px-2 py-1 rounded bg-slate-700 text-slate-400 hover:bg-orange-500/20 hover:text-orange-400" title="Não respondeu" aria-label="Marcar como não respondeu"><i class="fas fa-clock" aria-hidden="true"></i></button>
+        <button data-next="recusado" class="quick-status-btn text-sm px-2 py-1 rounded bg-slate-700 text-slate-400 hover:bg-red-500/20 hover:text-red-400" title="Recusado" aria-label="Marcar como recusado"><i class="fas fa-times" aria-hidden="true"></i></button>
       `
     } else {
       actions = `
-        <span class="text-sm font-semibold px-2.5 py-1 rounded ${statusFinalBadge[st] || 'bg-slate-500/20 text-slate-300'}">${st === 'nao_respondeu' ? 'Não respondeu' : st.charAt(0).toUpperCase() + st.slice(1)}</span>
-        <button data-next="pendente" class="quick-status-btn text-xs px-2 py-1 rounded text-slate-500 hover:text-slate-300" title="Desfazer"><i class="fas fa-undo"></i></button>
+        <button data-next="pendente" class="quick-status-btn w-9 h-9 inline-flex items-center justify-center rounded-lg border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors" title="Reverter status" aria-label="Reverter status"><i class="fas fa-undo" aria-hidden="true"></i></button>
       `
     }
 
-    row.innerHTML = `<span class="flex items-center gap-2 min-w-0"><span class="w-2 h-2 rounded-full shrink-0 ${statusDot[st] || 'bg-slate-400'}" title="${st === 'nao_respondeu' ? 'Não respondeu' : st}"></span><span class="text-white text-sm font-medium truncate" title="${esc(s.streamer_name)}">${esc(s.streamer_name)}</span></span><span class="flex items-center gap-1.5 shrink-0">${actions}</span>`
-    list.appendChild(row)
+    // Nos grupos por status o cabeçalho já diz o status; na lista direta ele continua abaixo do nome.
+    const statusLine = groupingEnabled ? '' : `<span class="block text-xs mt-0.5 ${statusTextClass[st] || 'text-slate-400'}"><i class="${statusIcon[st] || 'far fa-circle'} mr-1" aria-hidden="true"></i>${statusName(st)}</span>`
+    row.innerHTML = `<span class="flex items-center gap-3 min-w-0"><span class="w-10 h-10 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold shrink-0" aria-hidden="true">${esc(s.streamer_name.charAt(0).toUpperCase())}</span><span class="min-w-0"><span class="block text-white font-semibold truncate" title="${esc(s.streamer_name)}">${esc(s.streamer_name)}</span>${statusLine}</span></span><span class="flex items-center gap-1.5 shrink-0">${actions}</span>`
+    return row
+  }
+
+  if (!groupingEnabled) {
+    filtered.forEach(s => list.appendChild(buildRow(s)))
+    return
+  }
+
+  // Grupos por status (vazios não aparecem). Com busca ativa, só aparecem os grupos com resultado, já abertos.
+  groupOrder.forEach(k => {
+    const items = filtered.filter(s => (s.contact_status || 'pendente') === k)
+    if (items.length === 0) return
+    const open = !!search || openGroups.has(k)
+    const section = document.createElement('div')
+    section.innerHTML = `<button type="button" data-group="${k}" aria-expanded="${open}" aria-controls="group-${k}" class="group-toggle w-full grid grid-cols-[auto_minmax(0,1fr)_auto_1rem] items-center gap-x-2.5 px-3 py-1.5 rounded-xl bg-slate-700/40 hover:bg-slate-700/60 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><span class="w-2.5 h-2.5 rounded-full ${groupDot[k]}" aria-hidden="true"></span><span class="text-sm font-semibold text-white truncate">${groupLabel[k]}</span><span class="min-w-[1.75rem] px-2 py-0.5 rounded-full bg-slate-700 text-xs font-semibold text-slate-200 text-center tabular-nums">${items.length}</span><i class="fas fa-chevron-down text-xs text-slate-400 text-center transition-transform ${open ? 'rotate-180' : ''}" aria-hidden="true"></i></button>`
+    if (open) {
+      const body = document.createElement('div')
+      body.id = `group-${k}`
+      body.className = 'flex flex-col gap-1.5 mt-1 mb-0.5'
+      items.forEach(s => body.appendChild(buildRow(s)))
+      section.appendChild(body)
+    }
+    list.appendChild(section)
   })
 }
 
@@ -122,35 +109,40 @@ function renderDetailsList(c: typeof campaigns[number]) {
 export function openDetailsModal(c: typeof campaigns[number]) {
   setDetailsCampaignId(c.id)
   document.getElementById('detailsTitle')!.textContent = c.company
-  document.getElementById('detailsCompany')!.textContent = c.company
-  document.getElementById('detailsPeriod')!.textContent = `${fmtDate(c.start_date)} a ${fmtDate(c.end_date)}`
+  document.getElementById('detailsPeriod')!.textContent = formatPeriod(c.start_date, c.end_date)
   const totalReceived = c.total_received || 0
   const myCommission = c.my_commission || 0
-  const valueTxt = c.currency === 'USD' ? `US$ ${totalReceived.toFixed(2)}` : fmtCurrency(totalReceived)
+  const valueTxt = c.currency === 'USD' ? `US$ ${totalReceived.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : fmtCurrency(totalReceived)
   document.getElementById('detailsCampaignValue')!.textContent = valueTxt
   document.getElementById('detailsCommission')!.textContent = fmtCurrency(myCommission)
   document.getElementById('detailsPaymentDate')!.textContent = c.payment_date ? fmtDate(c.payment_date) : 'Pendente'
 
-  const hasPending = c.campaign_streamers?.some(s => (s.contact_status || 'pendente') === 'pendente')
-  detailsActiveFilter = hasPending ? 'pendente' : 'all'
+  const total = c.campaign_streamers?.length || 0
+  const showFilters = total >= FILTERS_MIN_STREAMERS // poucos streamers: lista simples; muitos: busca e filtros
+  groupingEnabled = showFilters
+  openGroups.clear()
+  document.getElementById('detailsParticipants')!.textContent = String(total)
+  document.getElementById('detailsFilters')!.classList.toggle('hidden', !showFilters)
+  document.getElementById('detailsParticipants')!.classList.toggle('hidden', total <= 1) // 1 streamer: sem contador
   ;(document.getElementById('detailsSearch') as HTMLInputElement).value = ''
-  renderDetailsChips(c)
   renderDetailsList(c)
   document.getElementById('campaignDetailsModal')!.classList.remove('hidden')
 }
 
 // Eventos do modal de detalhes (filtros, busca e troca de status).
 export function setupDetailsModal() {
-  document.getElementById('closeDetailsModal')?.addEventListener('click', () => document.getElementById('campaignDetailsModal')!.classList.add('hidden'))
+  const closeDetails = () => document.getElementById('campaignDetailsModal')!.classList.add('hidden')
+  document.getElementById('closeDetailsModal')?.addEventListener('click', closeDetails)
+  document.getElementById('closeDetailsX')?.addEventListener('click', closeDetails)
 
   document.getElementById('campaignDetailsModal')?.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement
 
-    // Filtro por chip de status
-    const filterBtn = target.closest('.status-filter-btn') as HTMLElement | null
-    if (filterBtn) {
-      detailsActiveFilter = filterBtn.dataset.filter!
-      highlightActiveChip()
+    // Grupo (accordion) do filtro "Todos": abre/recolhe
+    const groupBtn = target.closest('.group-toggle') as HTMLElement | null
+    if (groupBtn) {
+      const k = groupBtn.dataset.group!
+      openGroups.has(k) ? openGroups.delete(k) : openGroups.add(k)
       const c = campaigns.find(cp => cp.id === detailsCampaignId)
       if (c) renderDetailsList(c)
       return
@@ -178,7 +170,6 @@ export function setupDetailsModal() {
     s.contact_status = newStatus
 
     const c = campaigns[idx]
-    renderDetailsChips(c)
     renderDetailsList(c)
     renderCampaigns()
 
