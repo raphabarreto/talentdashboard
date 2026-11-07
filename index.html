@@ -148,13 +148,13 @@
                 <p class="mt-1 text-slate-400">Gerencie e analise o desempenho dos seus streamers.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 sm:mt-0">
-                <button id="logoutBtn" class="text-slate-500 hover:text-slate-300 p-2.5 rounded-lg transition-colors" title="Sair"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+                <button id="logoutBtn" class="flex items-center gap-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 py-2 px-3 rounded-lg transition-colors" title="Sair"><span>Sair</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
             </div>
         </header>
 
         <!-- Botões de ação de streamers: movidos via JS para dentro da view ativa (Overview/Tabela) -->
         <div id="streamerActionsTemplate" class="hidden flex flex-wrap gap-2 items-center">
-            <button id="openLookup" class="text-slate-400 hover:text-white p-2.5 rounded-lg transition-colors" title="Lookup de streamer"><i class="fas fa-search"></i></button>
+            <button id="openLookup" class="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white border border-slate-600 hover:border-slate-500 hover:bg-slate-800 py-2.5 px-4 rounded-lg transition-colors" title="Consultar um streamer qualquer direto na Twitch"><i class="fas fa-search"></i><span>Consultar na Twitch</span></button>
             <button id="addMultipleBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Streamer</button>
         </div>
 
@@ -178,6 +178,7 @@
                 </div>
                 <div id="streamerActionsSlot-overview" class="flex flex-wrap gap-2"></div>
             </div>
+            <p class="text-xs text-slate-400 -mt-3 mb-4"><i class="far fa-calendar mr-1"></i>Médias, pico e horas referentes aos últimos 30 dias</p>
             <div id="overview-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 content-start"></div>
         </section>
 
