@@ -40,9 +40,11 @@ export function renderOverview() {
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
             <a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors truncate">${esc(s.name)}</a>
-            ${s.is_live ? '<span class="flex items-center justify-center w-2 h-2 bg-red-600 rounded-full animate-pulse flex-shrink-0" title="AO VIVO"></span>' : ''}
           </div>
-          <span class="text-xs text-slate-400 flex items-center gap-1">${flagHtml}</span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 flex items-center gap-1">${flagHtml}</span>
+            ${s.is_live ? '<span class="live-badge flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold tracking-wide flex-shrink-0"><span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>AO VIVO</span>' : ''}
+          </div>
         </div>
       </div>
       <div class="bg-slate-900/60 rounded-lg px-4 py-3 mb-3 flex items-center justify-between">
@@ -50,9 +52,9 @@ export function renderOverview() {
         <span class="text-2xl font-extrabold text-indigo-400">${fmt(s.avg_viewers)}</span>
       </div>
       <div class="grid grid-cols-3 gap-2 text-center">
-        <div><p class="text-[11px] text-slate-500">Pico</p><p class="text-sm font-semibold text-white">${fmt(s.peak_viewers)}</p></div>
-        <div><p class="text-[11px] text-slate-500">H. Assistidas</p><p class="text-sm font-semibold text-white">${fmt(s.hours_watched)}</p></div>
-        <div><p class="text-[11px] text-slate-500">H. Transmitidas</p><p class="text-sm font-semibold text-white">${fmt(s.hours_streamed)}</p></div>
+        <div class="flex flex-col justify-end"><p class="text-xs leading-tight text-slate-400">Pico</p><p class="text-sm font-semibold text-white">${fmt(s.peak_viewers)}</p></div>
+        <div class="flex flex-col justify-end"><p class="text-xs leading-tight text-slate-400">Horas assistidas</p><p class="text-sm font-semibold text-white">${fmt(s.hours_watched)}</p></div>
+        <div class="flex flex-col justify-end"><p class="text-xs leading-tight text-slate-400">Horas em live</p><p class="text-sm font-semibold text-white">${fmt(s.hours_streamed)}</p></div>
       </div>
     `
     // Sem onclick inline (bloqueado por CSP sem 'unsafe-inline').
