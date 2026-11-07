@@ -102,6 +102,12 @@ export async function getProspectShortlist() {
   return (data || []) as ProspectRow[]
 }
 
+// Acrescenta (ou atualiza) um único item, sem apagar nada do resto da lista.
+export async function addProspectRow(row: ProspectRow) {
+  const { error } = await supabase.from('prospect_shortlist').upsert([row], { onConflict: 'user_login' })
+  if (error) throw error
+}
+
 // Grava a lista inteira: upsert dos itens atuais e remove os que saíram.
 export async function replaceProspectShortlist(rows: ProspectRow[]) {
   if (rows.length) {

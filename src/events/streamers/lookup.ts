@@ -1,6 +1,8 @@
 import { registerStreamer, type PreparedStreamer } from '../../lib/registration'
 import { streamers } from '../../state'
 import { showToast, fmt } from '../../utils'
+import { addToShortlist, isInShortlist, prospectFromLookup } from '../../ui/prospecting/shortlist'
+import { renderShortlist } from '../../ui/prospecting/render'
 
 type PrepareStreamerData = (name: string) => Promise<PreparedStreamer>
 
@@ -10,6 +12,13 @@ export function setupLookupModal(
 ) {
   const { loadData, renderAll } = callbacks
   let lookupData: Awaited<ReturnType<PrepareStreamerData>> | null = null
+
+  const shortlistBtn = () => document.getElementById('lookupShortlistBtn') as HTMLButtonElement
+  function setShortlistBtn(inList: boolean) {
+    const b = shortlistBtn()
+    b.disabled = inList
+    b.textContent = inList ? '✓ Já está na Minha Lista' : '+ Minha Lista (Prospecção)'
+  }
 
   document.getElementById('openLookup')?.addEventListener('click', () => {
     document.getElementById('lookupResult')!.classList.add('hidden')
@@ -59,6 +68,7 @@ export function setupLookupModal(
       document.getElementById('lookupPeakViewers')!.textContent = fmt(streamerData.peak_viewers)
       document.getElementById('lookupHoursWatched')!.textContent = fmt(streamerData.hours_watched)
       document.getElementById('lookupHoursStreamed')!.textContent = fmt(streamerData.hours_streamed)
+      setShortlistBtn(isInShortlist(user.login))
       document.getElementById('lookupResult')!.classList.remove('hidden')
       
       const alreadyAdded = streamers.some(s => s.name.toLowerCase() === user.display_name.toLowerCase())
@@ -104,7 +114,23 @@ export function setupLookupModal(
       showToast(err instanceof Error ? err.message : 'Erro', 'error')
     } finally {
       btn.disabled = false
-      btn.textContent = '+ Adicionar'
+      btn.textContent = '+ Adicionar ao Dashboard'
+    }
+  })
+
+  document.getElementById('lookupShortlistBtn')?.addEventListener('click', async () => {
+    if (!lookupData) return
+    const b = shortlistBtn()
+    b.disabled = true
+    b.textContent = 'Adicionando...'
+    try {
+      const result = await addToShortlist(prospectFromLookup(lookupData.user))
+      setShortlistBtn(true)
+      renderShortlist()
+      showToast(result === 'added' ? 'Adicionado à Minha Lista da Prospecção!' : 'Já estava na Minha Lista')
+    } catch (err: unknown) {
+      setShortlistBtn(false)
+      showToast(err instanceof Error ? err.message : 'Erro ao adicionar à lista', 'error')
     }
   })
 }
