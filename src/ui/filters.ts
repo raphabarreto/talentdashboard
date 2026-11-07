@@ -33,7 +33,7 @@ export function populateFilters() {
   ;['country-filter', 'country-filter-table'].forEach(id => {
     const el = document.getElementById(id) as HTMLSelectElement
     const val = el.value
-    el.innerHTML = '<option value="all">Todos os Países</option>'
+    el.innerHTML = '<option value="all">Todos os países</option>'
     countries.forEach(c => { el.innerHTML += `<option value="${esc(c)}">${esc(countryNames[c] || c.toUpperCase())}</option>` })
     el.value = val || 'all'
   })

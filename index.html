@@ -148,11 +148,6 @@
                 <p class="mt-1 text-slate-400">Gerencie e analise o desempenho dos seus streamers.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 sm:mt-0">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
-                    <input id="headerLookupInput" type="text" autocomplete="off" placeholder="Consultar streamer na Twitch..." title="Digite o nome e aperte Enter (atalho: /)" class="h-10 w-72 pl-10 pr-10 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                    <kbd class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 border border-slate-600 rounded px-1.5 py-0.5 pointer-events-none">/</kbd>
-                </div>
                 <button id="logoutBtn" class="flex items-center gap-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 py-2 px-3 rounded-lg transition-colors" title="Sair"><span>Sair</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
             </div>
         </header>
@@ -174,13 +169,21 @@
         <section id="view-overview" class="view">
             <div class="flex flex-wrap gap-3 mb-6 items-center">
                 <div class="flex flex-wrap gap-3">
-                    <input id="search-overview" type="text" placeholder="Nome do streamer..." class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
-                    <select id="country-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os Países</option></select>
+                    <input id="search-overview" type="text" placeholder="Filtrar cadastrados..." class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
+                    <select id="country-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os países</option></select>
                     <select id="status-filter-overview" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
                         <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
                     </select>
                 </div>
                 <div id="streamerActionsSlot-overview" class="flex flex-wrap gap-2"></div>
+                <!-- Campo "Consultar Twitch": movido via JS para a aba ativa (lookupSlot-<aba>) -->
+                <div id="lookupSlot-overview">
+                    <div id="lookupBar" class="relative">
+                        <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+                        <input id="headerLookupInput" type="text" autocomplete="off" placeholder="Consultar Twitch..." title="Digite o nome e aperte Enter (atalho: /)" class="h-10 w-56 pl-10 pr-9 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <kbd class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 border border-slate-600 rounded px-1.5 py-0.5 pointer-events-none">/</kbd>
+                    </div>
+                </div>
             </div>
             <p class="text-xs text-slate-400 -mt-3 mb-4"><i class="far fa-calendar mr-1"></i>Médias, pico e horas referentes aos últimos 30 dias</p>
             <div id="overview-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 content-start"></div>
@@ -190,13 +193,14 @@
         <section id="view-table" class="view hidden">
             <div class="flex flex-wrap gap-3 mb-6 items-center">
                 <div class="flex flex-wrap gap-3">
-                    <input id="search-table" type="text" placeholder="Nome do streamer..." class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
-                    <select id="country-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os Países</option></select>
+                    <input id="search-table" type="text" placeholder="Filtrar cadastrados..." class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
+                    <select id="country-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os países</option></select>
                     <select id="status-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
                         <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
                     </select>
                 </div>
                 <div id="streamerActionsSlot-table" class="flex flex-wrap gap-2"></div>
+                <div id="lookupSlot-table"></div>
             </div>
             <div class="flex gap-3 mb-4">
                 <button id="generatePdfBtn" class="hidden bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md text-sm transition-colors"><i class="fas fa-file-pdf"></i> Gerar PDF (<span id="selectedCount">0</span>)</button>
@@ -227,7 +231,10 @@
                     <select id="month-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-auto"><option value="all">Todos os Meses</option></select>
                     <select id="year-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-auto"><option value="all">Todos os Anos</option></select>
                 </div>
-                <button id="openAddCampaignInline" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Campanha</button>
+                <div class="flex flex-wrap gap-3 items-center">
+                    <button id="openAddCampaignInline" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Campanha</button>
+                    <div id="lookupSlot-campaigns"></div>
+                </div>
             </div>
             <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-6">
                 <p id="monthly-total-label" class="text-slate-400 text-sm">Meu Valor Total do Mês</p>

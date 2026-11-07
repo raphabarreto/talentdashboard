@@ -28,6 +28,7 @@ export function setupNav() {
       } else {
         actionsGroup.classList.add('hidden')
       }
+      placeLookupBar(viewId)
     })
   })
   const saved = sessionStorage.getItem('activeTab')
@@ -100,4 +101,12 @@ export function setupGlobalEvents() {
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     if (await confirmAction('Deseja sair?', 'Sair')) signOut()
   })
+}
+
+// Campo "Consultar Twitch" acompanha a aba ativa (lookupSlot-<aba>). Sem argumento, usa a aba marcada no menu.
+export function placeLookupBar(viewId?: string) {
+  const view = viewId ?? (document.querySelector('.nav-link.border-indigo-500') as HTMLElement | null)?.dataset.view
+  const bar = document.getElementById('lookupBar')
+  const slot = view ? document.getElementById(`lookupSlot-${view}`) : null
+  if (bar && slot) slot.appendChild(bar)
 }
