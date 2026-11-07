@@ -109,7 +109,7 @@ Nenhuma em andamento (07/11: main @ b790c60 limpa e igual ao remoto, último dep
 - Ganho percebido do autocompletar de categoria: depende da impressão de uso.
 - Visual a conferir no navegador: alinhamento das duas tabelas da Prospecção (PR #75); Tabela de Dados (coluna Links, setas de ordenação) e um clique no ícone do SullyGnome (o site bloqueia verificação automática); modal de detalhes da campanha (olho) no computador e em tela pequena.
 - Ambiente local limpo (07/11): servidor de teste desligado, `.env` e `.vercel/` removidos, CLI da Vercel deslogada (continua instalada). Para testar de novo: recriar `.env` com as 3 variáveis `VITE_*` públicas (as da Vercel são "sensíveis" e não vêm no `vercel env pull`).
-- Opcional: túnel do Sentry pelo próprio domínio (autorizado pelo usuário em 07/11; a planejar em PR próprio).
+- Túnel do Sentry: ver "Feito em 07/11" (conferir com bloqueador de anúncios ligado).
 
 ## Próximo passo sugerido
 Sem item obrigatório. Aguardar novas features ou correções visuais do usuário. Revisão periódica: `npm audit`. Considerar `supabase logout` ao encerrar.
@@ -127,9 +127,10 @@ Sem item obrigatório. Aguardar novas features ou correções visuais do usuári
 - Tabela de Dados: seta ▲/▼ no título da coluna ordenada ("Nome do Streamer" ou "Média de Viewers") e `aria-sort` para leitores de tela. [ok] testes 127/127, `tsc`, build. Reversão: revert do PR.
 - Teste local: `.env` (ignorado pelo Git) com as 3 variáveis públicas `VITE_*`; as da Vercel são "sensíveis" e o `vercel env pull` não entrega o valor. CLI da Vercel instalada e logada (07/11). Preview da Vercel fica preso no carregamento (variáveis só em produção).
 - Banco (Dash Lugs), 07/11, com autorização: removida a coluna sem uso `campaign_streamers.email` (`alter table ... drop column email`). Antes: 194 linhas, todas vazias; sem views/funções/policies dependentes; front e Edge Functions não usavam. Validado: coluna ausente, 194 linhas, RLS ativa, 1 policy; consulta `campaigns?select=*,campaign_streamers(*)` responde 200. `schema.sql`, `DATABASE.md` e tipo `CampaignStreamer` atualizados; SQL e rollback em `docs/migrations-aplicadas/migration_drop_campaign_streamers_email.sql`. [usuário] campanhas funcionando em produção após a remoção (07/11).
+- Sentry pelo próprio domínio: função `api/sentry-tunnel.ts` (Vercel) recebe os envelopes do navegador e repassa só para o projeto do DSN configurado no servidor (`SENTRY_DSN` ou `VITE_SENTRY_DSN`); destino montado a partir desse DSN; recusa outros (403), corpo > 1 MB (413), sem DSN (503). `Sentry.init({ tunnel })` em `main.ts`. CSP inalterada (`connect-src` já tem `self`; liberação de `*.sentry.io` mantida por enquanto). [ok] testes 135/135 (8 novos), `tsc` (src e api), build. [usuário] a verificar: erro de teste chegando ao painel com bloqueador ligado. Reversão: revert do PR.
 
 ## Testes (07/11)
-- [ok] `vitest run`: 27 arquivos, 127 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
+- [ok] `vitest run`: 28 arquivos, 135 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
