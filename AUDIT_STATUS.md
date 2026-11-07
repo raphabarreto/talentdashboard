@@ -109,7 +109,7 @@ Nenhuma em andamento (07/11: main @ b790c60 limpa e igual ao remoto, último dep
 - Ganho percebido do autocompletar de categoria: depende da impressão de uso.
 - Visual a conferir no navegador: alinhamento das duas tabelas da Prospecção (PR #75); Tabela de Dados (coluna Links, setas de ordenação) e um clique no ícone do SullyGnome (o site bloqueia verificação automática); modal de detalhes da campanha (olho) no computador e em tela pequena.
 - Ambiente local limpo (07/11): servidor de teste desligado, `.env` e `.vercel/` removidos, CLI da Vercel deslogada (continua instalada). Para testar de novo: recriar `.env` com as 3 variáveis `VITE_*` públicas (as da Vercel são "sensíveis" e não vêm no `vercel env pull`).
-- Opcionais nunca pedidos: túnel do Sentry pelo próprio domínio; remover a coluna `campaign_streamers.email` (exige autorização explícita de SQL em produção).
+- Opcional: túnel do Sentry pelo próprio domínio (autorizado pelo usuário em 07/11; a planejar em PR próprio).
 
 ## Próximo passo sugerido
 Sem item obrigatório. Aguardar novas features ou correções visuais do usuário. Revisão periódica: `npm audit`. Considerar `supabase logout` ao encerrar.
@@ -126,6 +126,7 @@ Sem item obrigatório. Aguardar novas features ou correções visuais do usuári
 - Tabela de Dados, ícones de Links: área clicável 36 px (`w-9 h-9 -my-1`, sem aumentar a linha) e espaço `gap-2`. Indicador ao vivo conferido: código igual ao anterior (vem de `is_live` do banco, atualizado pela coleta a cada 15 min; diferença entre abas é de momento de carregamento) + teste. Links: Twitch conferido via `curl` (título "Toniki - Twitch"); SullyGnome bloqueia acesso automatizado (403/Cloudflare), URL igual à anterior e coberta por teste. [ok] testes 123/123, `tsc`, build.
 - Tabela de Dados: seta ▲/▼ no título da coluna ordenada ("Nome do Streamer" ou "Média de Viewers") e `aria-sort` para leitores de tela. [ok] testes 127/127, `tsc`, build. Reversão: revert do PR.
 - Teste local: `.env` (ignorado pelo Git) com as 3 variáveis públicas `VITE_*`; as da Vercel são "sensíveis" e o `vercel env pull` não entrega o valor. CLI da Vercel instalada e logada (07/11). Preview da Vercel fica preso no carregamento (variáveis só em produção).
+- Banco (Dash Lugs), 07/11, com autorização: removida a coluna sem uso `campaign_streamers.email` (`alter table ... drop column email`). Antes: 194 linhas, todas vazias; sem views/funções/policies dependentes; front e Edge Functions não usavam. Validado: coluna ausente, 194 linhas, RLS ativa, 1 policy; consulta `campaigns?select=*,campaign_streamers(*)` responde 200. `schema.sql`, `DATABASE.md` e tipo `CampaignStreamer` atualizados; SQL e rollback em `docs/migrations-aplicadas/migration_drop_campaign_streamers_email.sql`. [a verificar] campanhas abrindo normalmente no navegador.
 
 ## Testes (07/11)
 - [ok] `vitest run`: 27 arquivos, 127 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
@@ -145,3 +146,4 @@ Sem item obrigatório. Aguardar novas features ou correções visuais do usuári
 - [ok] Vercel (produção), PRs #22 (CSP bloqueante), #24 (Node), #26–#28: deploys com sucesso (03/11). CSP confirmada via `curl`.
 - [ok] Workflow de Edge Functions, PRs #23 (`consolidate-daily`) e #25 (`supabase-js` 2.118.0): sucesso; 4 funções respondem 401 sem credenciais.
 - [ok] Banco (Dash Lugs), 03/11, com autorização: `is_allowed_user()` com `search_path` fixo, validado. Rollback fora do repositório.
+- [ok] Banco (Dash Lugs), 07/11, com autorização: `drop column campaign_streamers.email`, validado.

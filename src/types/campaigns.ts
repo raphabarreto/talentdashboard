@@ -21,5 +21,4 @@ export interface CampaignStreamer {
   payment: number
   payment_date: string | null
   contact_status?: ContactStatus
-  email?: string
 }

@@ -105,7 +105,6 @@ Streamers associados a cada campanha.
 | `payment` | numeric(10,2) | Valor pago ao streamer (opcional) |
 | `payment_date` | date | Data do pagamento ao streamer |
 | `contact_status` | text | Status: `pendente`, `contatado`, `nao_respondeu`, `confirmado`, `recusado` |
-| `email` | text | Email do streamer (opcional) |
 
 **Auto-registro:** Quando um streamer é marcado como `confirmado`, ele é automaticamente adicionado à tabela `streamers` (se ainda não existir).
 
