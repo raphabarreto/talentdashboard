@@ -99,7 +99,7 @@ export function setupGlobalEvents() {
 
   // Logout
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-    if (await confirmAction('Deseja sair?', 'Sair')) signOut()
+    if (await confirmAction('Você precisará entrar com o Google novamente para voltar.', 'Sair', { title: 'Deseja sair?', danger: false })) signOut()
   })
 }
 
