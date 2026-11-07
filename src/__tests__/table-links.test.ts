@@ -1,0 +1,56 @@
+import { describe, it, expect, beforeEach } from 'vitest'
+import { setStreamers } from '../state'
+import { renderTable } from '../ui/table'
+import type { Streamer } from '../types/index'
+
+const streamer = (id: string, name: string, avg: number) => ({ id, name, country: 'br', avg_viewers: avg, peak_viewers: 1, hours_watched: 1, hours_streamed: 1, last_live_at: null, created_at: '', is_live: false }) as Streamer
+
+beforeEach(() => {
+  document.body.innerHTML = `
+    <div><div class="overflow-x-auto"><table><tbody id="table-body"></tbody></table></div></div>
+    <div id="generatePdfBtn"></div><div id="exportCsvBtn"></div><div id="removeSelectedBtn"></div>
+    <span id="selectedCount"></span><span id="selectedCountCsv"></span><span id="selectedCountRemove"></span>`
+  setStreamers([streamer('1', 'Toniki', 2387), streamer('2', 'XAROLA_', 2340)])
+  renderTable()
+})
+
+const rows = () => [...document.querySelectorAll('#table-body tr')]
+
+describe('Tabela de Dados: coluna Links', () => {
+  it('cada linha tem: seleção, nome, média, links e ações (5 colunas)', () => {
+    rows().forEach(r => expect(r.querySelectorAll('td')).toHaveLength(5))
+  })
+
+  it('ícone da Twitch abre o canal certo de cada streamer, em nova aba', () => {
+    const hrefs = rows().map(r => r.querySelector<HTMLAnchorElement>('a.table-link-twitch')!)
+    expect(hrefs.map(a => a.getAttribute('href'))).toEqual(['https://twitch.tv/toniki', 'https://twitch.tv/xarola_'])
+    hrefs.forEach(a => {
+      expect(a.target).toBe('_blank')
+      expect(a.title).toBe('Abrir Twitch')
+      expect(a.getAttribute('aria-label')).toMatch(/^Abrir Twitch de /)
+    })
+  })
+
+  it('ícone de gráfico abre o SullyGnome certo (30 dias), em nova aba', () => {
+    const links = rows().map(r => r.querySelector<HTMLAnchorElement>('a.table-link-sully')!)
+    expect(links.map(a => a.getAttribute('href'))).toEqual(['https://sullygnome.com/channel/toniki/30', 'https://sullygnome.com/channel/xarola_/30'])
+    links.forEach(a => {
+      expect(a.target).toBe('_blank')
+      expect(a.title).toBe('Abrir SullyGnome')
+      expect(a.getAttribute('aria-label')).toMatch(/^Abrir SullyGnome de /)
+    })
+  })
+
+  it('não repete mais os textos longos', () => {
+    const text = document.getElementById('table-body')!.textContent!
+    expect(text).not.toContain('twitch.tv/')
+    expect(text).not.toContain('Ver no SullyGnome')
+  })
+
+  it('caixa de seleção e botão remover continuam em cada linha', () => {
+    rows().forEach(r => {
+      expect(r.querySelector('input.streamer-checkbox')).not.toBeNull()
+      expect(r.querySelector('button.delete-btn')).not.toBeNull()
+    })
+  })
+})
