@@ -9,10 +9,13 @@ export function getVisibleResults(): ProspectStream[] {
 }
 
 // Bandeira pelo idioma (ícone do flag-icons; emoji de bandeira vira "BR"/"ES" no Windows).
+// O idioma vem da configuração do canal na Twitch (não do país do streamer).
 export function langFlag(language: string): string {
-  if (language === 'pt') return '<span class="fi fi-br rounded-sm" title="Português"></span>'
-  if (language === 'es') return '<span class="fi fi-es rounded-sm" title="Espanhol"></span>'
-  return '<i class="fas fa-globe text-slate-500" title="Outro idioma"></i>'
+  const lang = (language || '').toLowerCase().split('-')[0]
+  if (lang === 'pt') return '<span class="fi fi-br rounded-sm" title="Português"></span>'
+  if (lang === 'es') return '<span class="fi fi-es rounded-sm" title="Espanhol"></span>'
+  const code = lang && /^[a-z]{2,3}$/.test(lang) ? lang.toUpperCase() : '?'
+  return `<span class="text-[10px] font-bold text-slate-300 bg-slate-700 rounded px-1 py-0.5 leading-none" title="Idioma do canal na Twitch: ${code === '?' ? 'não informado' : code}">${code}</span>`
 }
 
 export function renderResults() {

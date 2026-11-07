@@ -52,6 +52,8 @@ describe('Prospecção', () => {
   it('bandeiras usam ícone (não emoji, que vira "BR" no Windows)', () => {
     expect(langFlag('pt')).toContain('fi-br')
     expect(langFlag('es')).toContain('fi-es')
-    expect(langFlag('en')).toContain('fa-globe')
+    expect(langFlag('pt-br')).toContain('fi-br')
+    expect(langFlag('en')).toContain('>EN<')
+    expect(langFlag('')).toContain('>?<')
   })
 })

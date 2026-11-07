@@ -142,7 +142,7 @@ function setupShortlistActions(els: Els) {
     try {
       const u = await fetchTwitchUser(login)
       if (!u) { showToast('Streamer não encontrado'); return }
-      shortlist.push({ user_login: u.login, user_name: u.display_name, viewer_count: 0, game_name: u.game_name || '', email: extractEmail(u.description || ''), description: u.description || '', language: u.broadcaster_language || '' })
+      shortlist.push({ user_login: u.login, user_name: u.display_name, viewer_count: 0, game_name: u.game_name || '', email: extractEmail(u.description || ''), description: u.description || '', language: (u.broadcaster_language || '').toLowerCase().split('-')[0] })
       saveShortlist()
       renderShortlist()
       if (ps.results.length) renderResults()
