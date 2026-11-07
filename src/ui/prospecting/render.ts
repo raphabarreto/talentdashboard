@@ -5,8 +5,17 @@ import { ps } from './state'
 import type { ProspectStream } from './types'
 
 export function getVisibleResults(): ProspectStream[] {
-  const onlyEmail = (document.getElementById('prospectOnlyEmail') as HTMLInputElement)?.checked
-  return onlyEmail ? ps.results.filter(r => r.email) : ps.results
+  return ps.results
+}
+
+// Bandeira pelo idioma (ícone do flag-icons; emoji de bandeira vira "BR"/"ES" no Windows).
+// O idioma vem da configuração do canal na Twitch (não do país do streamer).
+export function langFlag(language: string): string {
+  const lang = (language || '').toLowerCase().split('-')[0]
+  if (lang === 'pt') return '<span class="fi fi-br rounded-sm" title="Português"></span>'
+  if (lang === 'es') return '<span class="fi fi-es rounded-sm" title="Espanhol"></span>'
+  const code = lang && /^[a-z]{2,3}$/.test(lang) ? lang.toUpperCase() : '?'
+  return `<span class="text-[10px] font-bold text-slate-300 bg-slate-700 rounded px-1 py-0.5 leading-none" title="Idioma do canal na Twitch: ${code === '?' ? 'não informado' : code}">${code}</span>`
 }
 
 export function renderResults() {
@@ -61,9 +70,11 @@ function renderPagination(totalPages: number) {
 }
 
 export function updateActions() {
-  const actions = document.getElementById('prospectActions')!
+  // Botão sempre visível (não desloca a tela); só fica ativo com alguém marcado.
+  const btn = document.getElementById('addToListBtn') as HTMLButtonElement
   const count = ps.selected.size
-  actions.classList.toggle('hidden', count === 0)
+  btn.disabled = count === 0
+  btn.title = count === 0 ? 'Marque streamers na tabela abaixo' : ''
   document.getElementById('prospectSelectedCount')!.textContent = String(count)
 }
 
@@ -78,7 +89,7 @@ export function renderShortlist() {
       <td class="p-3">
         <a href="https://www.twitch.tv/${esc(r.user_login)}/about" target="_blank" rel="noopener" class="text-white hover:text-indigo-400 font-semibold" title="Abrir a página Sobre do canal">${esc(r.user_name)}</a>
       </td>
-      <td class="p-3 text-sm text-slate-400">${r.language === 'pt' ? '🇧🇷' : r.language === 'es' ? '🇪🇸' : '🌐'} ${esc(r.game_name)}</td>
+      <td class="p-3 text-sm text-slate-400"><span class="inline-flex items-center gap-2">${langFlag(r.language)}${esc(r.game_name) || '-'}</span></td>
       <td class="p-3 text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${esc(r.email) || '-'}</td>
       <td class="p-3">
         <button class="shortlist-remove text-slate-400 hover:text-red-400 transition-colors cursor-pointer" data-login="${esc(r.user_login)}" title="Remover"><i class="fas fa-trash"></i></button>

@@ -62,9 +62,10 @@ export async function loadShortlistFromDb(onLoaded: () => void) {
 // Texto agrupado por país para copiar e colar.
 export function formatShortlistForCopy(list: ProspectStream[]): string {
   const line = (r: ProspectStream) => `• ${r.user_name} — https://www.twitch.tv/${r.user_login}`
-  const br = list.filter(r => r.language === 'pt')
-  const es = list.filter(r => r.language === 'es')
-  const other = list.filter(r => r.language !== 'pt' && r.language !== 'es')
+  const lang = (r: ProspectStream) => (r.language || '').toLowerCase().split('-')[0]
+  const br = list.filter(r => lang(r) === 'pt')
+  const es = list.filter(r => lang(r) === 'es')
+  const other = list.filter(r => lang(r) !== 'pt' && lang(r) !== 'es')
   let out = ''
   if (br.length) out += `🇧🇷 Brazil\n${br.map(line).join('\n')}\n\n`
   if (es.length) out += `🇪🇸 Spain\n${es.map(line).join('\n')}\n\n`

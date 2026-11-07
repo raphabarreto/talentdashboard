@@ -1,6 +1,6 @@
 import { fetchStreamsByGame, fetchTwitchUser } from '../../lib/twitch'
 import { escapeHtml as esc } from '../../lib/escape'
-import { showToast } from '../../utils'
+import { showToast, confirmAction } from '../../utils'
 import { streamers } from '../../state'
 import { prospectingHtml, getElements, type Els } from './layout'
 import { searchCategoriesCached, isCategoryCached } from './categories'
@@ -86,7 +86,6 @@ function setupSearch(els: Els) {
     finally { els.searchBtn.disabled = false; els.searchBtn.textContent = 'Buscar' }
   })
 
-  els.onlyEmail.addEventListener('change', () => { ps.page = 1; renderResults() })
 }
 
 // Tabela de resultados: seleção e adicionar à lista.
@@ -126,7 +125,9 @@ function setupShortlistActions(els: Els) {
     showToast(`Lista copiada! (${shortlist.length} streamers)`)
   })
 
-  els.clearListBtn.addEventListener('click', () => {
+  els.clearListBtn.addEventListener('click', async () => {
+    if (!shortlist.length) return
+    if (!await confirmAction(`Apagar os ${shortlist.length} streamers da Minha Lista? Isso não pode ser desfeito.`, 'Apagar lista')) return
     setShortlist([])
     saveShortlist()
     renderShortlist()
@@ -141,7 +142,7 @@ function setupShortlistActions(els: Els) {
     try {
       const u = await fetchTwitchUser(login)
       if (!u) { showToast('Streamer não encontrado'); return }
-      shortlist.push({ user_login: u.login, user_name: u.display_name, viewer_count: 0, game_name: u.game_name || '', email: extractEmail(u.description || ''), description: u.description || '', language: u.broadcaster_language || '' })
+      shortlist.push({ user_login: u.login, user_name: u.display_name, viewer_count: 0, game_name: u.game_name || '', email: extractEmail(u.description || ''), description: u.description || '', language: (u.broadcaster_language || '').toLowerCase().split('-')[0] })
       saveShortlist()
       renderShortlist()
       if (ps.results.length) renderResults()
