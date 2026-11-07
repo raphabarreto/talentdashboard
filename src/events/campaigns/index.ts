@@ -27,8 +27,10 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
 
     const deleteCampaignBtn = target.closest('.delete-campaign-btn') as HTMLElement | null
     if (deleteCampaignBtn) {
-      if (!await confirmAction('Você tem certeza que deseja remover esta campanha?')) return
       const id = deleteCampaignBtn.dataset.id!
+      const name = campaigns.find(c => c.id === id)?.company
+      const message = name ? `Tem certeza de que deseja excluir a campanha ${name}?` : 'Tem certeza de que deseja excluir esta campanha?'
+      if (!await confirmAction(message, 'Excluir', { title: 'Excluir campanha?' })) return
       setCampaigns(campaigns.filter(c => c.id !== id))
       renderAll()
       showToast('Campanha removida!')

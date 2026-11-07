@@ -136,7 +136,7 @@ function setupShortlistActions(els: Els) {
 
   els.clearListBtn.addEventListener('click', async () => {
     if (!shortlist.length) return
-    if (!await confirmAction(`Apagar os ${shortlist.length} streamers da Minha Lista? Isso não pode ser desfeito.`, 'Apagar lista')) return
+    if (!await confirmAction(`Tem certeza de que deseja apagar os ${shortlist.length} streamers da Minha Lista? Isso não pode ser desfeito.`, 'Apagar lista', { title: 'Limpar Minha Lista?' })) return
     setShortlist([])
     saveShortlist()
     renderShortlist()

@@ -20,7 +20,9 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     const deleteBtn = target.closest('.delete-btn') as HTMLElement | null
     if (deleteBtn) {
       const id = deleteBtn.dataset.id!
-      if (!await confirmAction('Você tem certeza que deseja remover este streamer?')) return
+      const name = streamers.find(s => s.id === id)?.name
+      const message = name ? `Tem certeza de que deseja remover ${name} da sua lista?` : 'Tem certeza de que deseja remover este streamer da sua lista?'
+      if (!await confirmAction(message, 'Remover', { title: 'Remover streamer?' })) return
       selectedStreamers.delete(id)
       setStreamers(streamers.filter(s => s.id !== id))
       renderAll()
@@ -127,7 +129,10 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
 
   // Remove selected
   document.getElementById('removeSelectedBtn')?.addEventListener('click', async () => {
-    if (!await confirmAction(`Remover ${selectedStreamers.size} streamers?`)) return
+    const n = selectedStreamers.size
+    const names = streamers.filter(s => selectedStreamers.has(s.id)).map(s => s.name)
+    const detail = names.length <= 3 ? `: ${names.join(', ')}` : ''
+    if (!await confirmAction(`Tem certeza de que deseja remover ${n === 1 ? '1 streamer selecionado' : `os ${n} streamers selecionados`} da sua lista${detail}?`, 'Remover', { title: n === 1 ? 'Remover streamer?' : `Remover ${n} streamers?` })) return
     const ids = [...selectedStreamers]
     selectedStreamers.clear()
     setStreamers(streamers.filter(s => !ids.includes(s.id)))
