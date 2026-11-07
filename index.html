@@ -180,8 +180,15 @@
                     <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
                 </select>
                 <div id="streamerActionsSlot-overview" class="flex flex-wrap gap-2"></div>
+                <button id="overviewSelectModeBtn" type="button" aria-pressed="false" class="h-10 px-4 flex items-center gap-2 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-semibold transition-colors"><i class="far fa-square-check" aria-hidden="true"></i><span>Selecionar</span></button>
             </div>
             <p class="text-xs text-slate-400 -mt-3 mb-4"><i class="far fa-calendar mr-1"></i>Médias, pico e horas referentes aos últimos 30 dias</p>
+            <div id="overviewSelectionBar" class="hidden flex flex-wrap items-center gap-x-4 gap-y-2 mb-4 px-4 py-2.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm" role="region" aria-label="Seleção de streamers">
+                <span class="text-slate-300"><span id="overviewSelectedCount" class="font-semibold text-white">0</span> selecionado(s)</span>
+                <button id="overviewSelectPageBtn" type="button" class="text-slate-400 hover:text-white transition-colors">Selecionar esta página</button>
+                <button id="overviewClearSelectionBtn" type="button" class="text-slate-400 hover:text-white transition-colors">Limpar seleção</button>
+                <button id="overviewRemoveSelectedBtn" type="button" class="ml-auto h-8 px-3 rounded-lg bg-red-600/90 hover:bg-red-600 text-white font-semibold transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed" disabled><i class="fas fa-trash text-xs" aria-hidden="true"></i>Remover (<span id="overviewRemoveCount">0</span>)</button>
+            </div>
             <div id="overview-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 content-start"></div>
         </section>
 

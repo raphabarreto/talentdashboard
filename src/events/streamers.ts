@@ -4,12 +4,26 @@ import { fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate } from '../lib/t
 import { streamers, selectedStreamers, setStreamers } from '../state'
 import { showToast, confirmAction, fmt } from '../utils'
 import { getTablePageStreamers } from '../ui/table'
+import { getOverviewPageStreamers, updateOverviewSelection, isSelectionMode, setSelectionMode } from '../ui/overview'
 import { setupLookupModal } from './streamers/lookup'
 import { MAX_STREAMERS_BATCH, TWITCH_API_BATCH_SIZE } from '../constants'
 
 type TwitchUser = Awaited<ReturnType<typeof fetchTwitchUsers>>[number]
 
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void; renderTable: () => void }
+
+async function removeSelected(renderAll: () => void) {
+  const n = selectedStreamers.size
+  const names = streamers.filter(s => selectedStreamers.has(s.id)).map(s => s.name)
+  const detail = names.length <= 3 ? `: ${names.join(', ')}` : ''
+  if (!await confirmAction(`Tem certeza de que deseja remover ${n === 1 ? '1 streamer selecionado' : `os ${n} streamers selecionados`} da sua lista${detail}?`, 'Remover', { title: n === 1 ? 'Remover streamer?' : `Remover ${n} streamers?` })) return
+  const ids = [...selectedStreamers]
+  selectedStreamers.clear()
+  setStreamers(streamers.filter(s => !ids.includes(s.id)))
+  renderAll()
+  showToast('Streamers removidos!')
+  deleteStreamers(ids).catch(() => showToast('Erro ao remover do banco', 'error'))
+}
 
 export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callbacks) {
   // Configurar modais (extraídos para arquivos separados)
@@ -37,13 +51,35 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     if (target.classList.contains('streamer-checkbox')) {
       target.checked ? selectedStreamers.add(target.dataset.id!) : selectedStreamers.delete(target.dataset.id!)
       renderTable()
+      updateOverviewSelection()
     }
+  })
+  // Visão Geral: caixa de cada card e barra de seleção (mesma seleção da Tabela de Dados)
+  document.addEventListener('change', (e) => {
+    const box = e.target as HTMLInputElement
+    if (!box.classList?.contains('card-checkbox')) return
+    box.checked ? selectedStreamers.add(box.dataset.id!) : selectedStreamers.delete(box.dataset.id!)
+    updateOverviewSelection()
+  })
+  document.getElementById('overviewSelectModeBtn')?.addEventListener('click', () => {
+    setSelectionMode(!isSelectionMode())
+    renderTable() // sair do modo limpa a seleção (compartilhada com a Tabela de Dados)
+  })
+  document.getElementById('overviewSelectPageBtn')?.addEventListener('click', () => {
+    getOverviewPageStreamers().forEach(s => selectedStreamers.add(s.id))
+    updateOverviewSelection()
+  })
+  document.getElementById('overviewClearSelectionBtn')?.addEventListener('click', () => {
+    selectedStreamers.clear()
+    updateOverviewSelection()
+    renderTable()
   })
   document.getElementById('selectAll')?.addEventListener('change', (e) => {
     // Só a página atual: marca/desmarca os streamers visíveis, sem mexer na seleção das outras páginas.
     const checked = (e.target as HTMLInputElement).checked
     getTablePageStreamers().forEach(s => checked ? selectedStreamers.add(s.id) : selectedStreamers.delete(s.id))
     renderTable()
+    updateOverviewSelection()
   })
 
   // Add Multiple
@@ -128,18 +164,8 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
   })
 
   // Remove selected
-  document.getElementById('removeSelectedBtn')?.addEventListener('click', async () => {
-    const n = selectedStreamers.size
-    const names = streamers.filter(s => selectedStreamers.has(s.id)).map(s => s.name)
-    const detail = names.length <= 3 ? `: ${names.join(', ')}` : ''
-    if (!await confirmAction(`Tem certeza de que deseja remover ${n === 1 ? '1 streamer selecionado' : `os ${n} streamers selecionados`} da sua lista${detail}?`, 'Remover', { title: n === 1 ? 'Remover streamer?' : `Remover ${n} streamers?` })) return
-    const ids = [...selectedStreamers]
-    selectedStreamers.clear()
-    setStreamers(streamers.filter(s => !ids.includes(s.id)))
-    renderAll()
-    showToast('Streamers removidos!')
-    deleteStreamers(ids).catch(() => showToast('Erro ao remover do banco', 'error'))
-  })
+  document.getElementById('removeSelectedBtn')?.addEventListener('click', () => removeSelected(renderAll))
+  document.getElementById('overviewRemoveSelectedBtn')?.addEventListener('click', () => removeSelected(renderAll))
 
   // Generate PDF
   document.getElementById('generatePdfBtn')?.addEventListener('click', async () => {
