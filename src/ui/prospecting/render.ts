@@ -70,9 +70,11 @@ function renderPagination(totalPages: number) {
 }
 
 export function updateActions() {
-  const actions = document.getElementById('prospectActions')!
+  // Botão sempre visível (não desloca a tela); só fica ativo com alguém marcado.
+  const btn = document.getElementById('addToListBtn') as HTMLButtonElement
   const count = ps.selected.size
-  actions.classList.toggle('hidden', count === 0)
+  btn.disabled = count === 0
+  btn.title = count === 0 ? 'Marque streamers na tabela abaixo' : ''
   document.getElementById('prospectSelectedCount')!.textContent = String(count)
 }
 

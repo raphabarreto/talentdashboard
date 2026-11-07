@@ -57,3 +57,20 @@ describe('Prospecção', () => {
     expect(langFlag('')).toContain('>?<')
   })
 })
+
+describe('Prospecção: "Adicionar à Minha Lista"', () => {
+  it('fica sempre na tela (sem deslocar a página) e só ativa com alguém marcado', async () => {
+    const { updateActions } = await import('../ui/prospecting/render')
+    const { ps } = await import('../ui/prospecting/state')
+    const btn = document.getElementById('addToListBtn') as HTMLButtonElement
+    ps.selected.clear()
+    updateActions()
+    expect(btn.disabled).toBe(true)
+    expect(document.getElementById('prospectActions')!.classList.contains('hidden')).toBe(false)
+    ps.selected.add('alguem')
+    updateActions()
+    expect(btn.disabled).toBe(false)
+    expect(document.getElementById('prospectSelectedCount')!.textContent).toBe('1')
+    ps.selected.clear()
+  })
+})

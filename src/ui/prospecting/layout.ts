@@ -25,10 +25,10 @@ export function prospectingHtml(): string {
       </div>
 
       <div id="prospectResults" class="hidden">
-        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div class="flex flex-wrap items-center gap-4 mb-3">
           <p id="prospectCounter" class="text-sm text-slate-400"></p>
-          <div id="prospectActions" class="hidden">
-            <button id="addToListBtn" class="h-10 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-plus text-xs"></i>Adicionar à Minha Lista (<span id="prospectSelectedCount">0</span>)</button>
+          <div id="prospectActions">
+            <button id="addToListBtn" disabled title="Marque streamers na tabela abaixo" class="h-10 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 rounded-lg text-sm transition-colors cursor-pointer disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"><i class="fas fa-plus text-xs"></i><span>Adicionar à Minha Lista (<span id="prospectSelectedCount">0</span>)</span></button>
           </div>
         </div>
         <div class="overflow-x-auto rounded-lg border border-slate-700 bg-slate-800">
