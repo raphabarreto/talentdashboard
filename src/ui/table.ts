@@ -17,17 +17,21 @@ export function renderTable() {
     const row = document.createElement('tr')
     row.className = 'hover:bg-slate-700/50 transition-colors'
     row.innerHTML = `
-      <td class="p-4"><input type="checkbox" class="streamer-checkbox w-4 h-4 rounded" data-id="${s.id}" ${selectedStreamers.has(s.id) ? 'checked' : ''}></td>
+      <td class="p-4"><input type="checkbox" class="streamer-checkbox w-4 h-4 rounded" data-id="${s.id}" aria-label="Selecionar ${esc(s.name)}" ${selectedStreamers.has(s.id) ? 'checked' : ''}></td>
       <td class="p-4 font-medium">
-        <div class="flex items-center gap-2">
-          ${s.is_live ? '<span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>' : ''}
-          <span class="text-white">${esc(s.name)}</span>
+        <div class="flex items-center gap-2 min-w-0">
+          ${s.is_live ? '<span class="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0"></span>' : ''}
+          <span class="text-white truncate">${esc(s.name)}</span>
         </div>
       </td>
       <td class="p-4">${fmt(s.avg_viewers)}</td>
-      <td class="p-4"><a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" class="text-indigo-400 hover:underline">twitch.tv/${esc(s.name.toLowerCase())}</a></td>
-      <td class="p-4"><a href="https://sullygnome.com/channel/${esc(s.name.toLowerCase())}/30" target="_blank" class="text-indigo-400 hover:underline">Ver no SullyGnome</a></td>
-      <td class="p-4"><button class="text-slate-400 hover:text-red-400 transition-colors delete-btn" data-id="${s.id}" title="Remover"><i class="fas fa-trash"></i></button></td>
+      <td class="p-4">
+        <div class="flex items-center gap-1">
+          <a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" class="table-link-twitch inline-flex items-center justify-center w-8 h-8 rounded-md text-indigo-400 hover:text-indigo-300 hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors" title="Abrir Twitch" aria-label="Abrir Twitch de ${esc(s.name)}"><i class="fab fa-twitch" aria-hidden="true"></i></a>
+          <a href="https://sullygnome.com/channel/${esc(s.name.toLowerCase())}/30" target="_blank" class="table-link-sully inline-flex items-center justify-center w-8 h-8 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors" title="Abrir SullyGnome" aria-label="Abrir SullyGnome de ${esc(s.name)}"><i class="fas fa-chart-simple" aria-hidden="true"></i></a>
+        </div>
+      </td>
+      <td class="p-4 text-center"><button class="text-slate-400 hover:text-red-400 transition-colors delete-btn" data-id="${s.id}" title="Remover" aria-label="Remover ${esc(s.name)}"><i class="fas fa-trash" aria-hidden="true"></i></button></td>
     `
     fragment.appendChild(row)
   })
