@@ -115,9 +115,12 @@ Sem item obrigatório. Aguardar novas features ou correções visuais do usuári
 ## Feito em 07/11
 - Ferramentas de teste (só dev): `vitest`/`@vitest/ui` 4.1.9→4.1.12 e `happy-dom` 20→21.0.4. `npm audit`: 0 vulnerabilidades (antes 4). Sem versão maior do vitest. [ok] testes 101/101, `tsc`, build. Reversão: revert do PR.
 - Branches já mescladas apagadas (local e GitHub); fica só a `main`.
+- Visão Geral (PR #69): selo "AO VIVO" ao lado do país (sem borda vermelha), aviso "últimos 30 dias", legendas legíveis ("Horas em live"), controles com 40 px e seta própria nos seletores (`.filter-select`). [usuário] aprovado no localhost; [ok] deploy de produção.
+- Consultar Streamer + Minha Lista (PR #70): botão "+ Minha Lista (Prospecção)" no modal de consulta, gravando só 1 linha (`addProspectRow`, upsert; nunca regrava/apaga a lista) e faixa verde "Na sua Minha Lista · Ver lista". Botão "Consultar Streamer" (atalho `/`) acompanha a aba ativa (inclusive Campanhas e Prospecção). Filtro de país removido; busca "Buscar na lista..."; "+ Adicionar"; Sair só com ícone. [usuário] testado no localhost. [ok] testes 109/109, `tsc`, build. Reversão: revert do PR.
+- Teste local: `.env` (ignorado pelo Git) com as 3 variáveis públicas `VITE_*`; as da Vercel são "sensíveis" e o `vercel env pull` não entrega o valor. CLI da Vercel instalada e logada (07/11). Preview da Vercel fica preso no carregamento (variáveis só em produção).
 
 ## Testes (07/11)
-- [ok] `vitest run`: 21 arquivos, 101 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
+- [ok] `vitest run`: 24 arquivos, 109 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches

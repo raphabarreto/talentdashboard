@@ -21,6 +21,7 @@ export function prospectingHtml(): string {
         </div>
         <button id="prospectSearchBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-6 rounded-lg text-sm transition-colors cursor-pointer">Buscar</button>
         <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none"><input type="checkbox" id="prospectOnlyEmail" class="w-4 h-4 rounded accent-indigo-500"> Só com email</label>
+        <div id="lookupSlot-prospecting"></div>
       </div>
 
       <div id="prospectActions" class="flex gap-3 hidden">

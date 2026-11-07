@@ -4,9 +4,9 @@ import { setStreamers, setCampaigns } from './state'
 import { renderOverview } from './ui/overview'
 import { renderTable } from './ui/table'
 import { renderCampaigns } from './ui/campaigns'
-import { populateFilters, setupAutocomplete, getExistingCompanies } from './ui/filters'
+import { setupAutocomplete, getExistingCompanies } from './ui/filters'
 import { setupProspecting } from './ui/prospecting'
-import { setupNav, setupFiltersAndSort, setupGlobalEvents } from './events/navigation'
+import { setupNav, setupFiltersAndSort, setupGlobalEvents, placeLookupBar } from './events/navigation'
 import { setupStreamersEvents } from './events/streamers'
 import { setupCampaignsEvents } from './events/campaigns'
 import * as Sentry from '@sentry/browser'
@@ -28,7 +28,6 @@ async function loadData() {
 }
 
 function renderAll() {
-  populateFilters()
   renderOverview()
   renderTable()
   renderCampaigns()
@@ -44,6 +43,7 @@ async function init() {
   setupStreamersEvents({ loadData, renderAll, renderTable })
   setupCampaignsEvents({ loadData, renderAll })
   setupProspecting()
+  placeLookupBar() // a aba Prospecção só existe agora; reposiciona o campo se ela estiver ativa
   setupAutocomplete('companyInput', 'companySuggestions', getExistingCompanies)
   renderAll()
   document.getElementById('loading-overlay')?.classList.add('hidden')

@@ -145,21 +145,20 @@
         <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-white">Dashboard de Talentos Twitch</h1>
-                <p class="mt-1 text-slate-400">Gerencie e analise o desempenho dos seus streamers.</p>
+                <p class="mt-1 text-sm text-slate-400">Gerencie e analise o desempenho dos seus streamers.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 sm:mt-0">
-                <button id="logoutBtn" class="flex items-center gap-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 py-2 px-3 rounded-lg transition-colors" title="Sair"><span>Sair</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+                <button id="logoutBtn" class="h-10 w-10 flex items-center justify-center rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors" title="Sair" aria-label="Sair"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
             </div>
         </header>
 
         <!-- Botões de ação de streamers: movidos via JS para dentro da view ativa (Overview/Tabela) -->
         <div id="streamerActionsTemplate" class="hidden flex flex-wrap gap-2 items-center">
-            <button id="openLookup" class="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white border border-slate-600 hover:border-slate-500 hover:bg-slate-800 h-10 px-4 rounded-lg transition-colors" title="Consultar um streamer qualquer direto na Twitch"><i class="fas fa-search"></i><span>Consultar na Twitch</span></button>
-            <button id="addMultipleBtn" class="flex items-center h-10 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 rounded-lg transition-colors">+ Adicionar Streamer</button>
+            <button id="addMultipleBtn" class="flex items-center h-10 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 rounded-lg transition-colors" title="Adicionar streamer ao dashboard"><i class="fas fa-plus text-xs mr-2"></i>Adicionar</button>
         </div>
 
         <!-- Navigation -->
-        <nav class="flex items-center border-b border-slate-700 mb-4">
+        <nav class="flex flex-wrap items-center border-b border-slate-700 mb-4">
             <button data-view="overview" class="nav-link py-3 px-6 font-medium text-indigo-400 border-b-2 border-indigo-500 transition-colors cursor-pointer">Visão Geral</button>
             <button data-view="table" class="nav-link py-3 px-6 font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors cursor-pointer">Tabela de Dados</button>
             <button data-view="campaigns" class="nav-link py-3 px-6 font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors cursor-pointer">Campanhas</button>
@@ -168,14 +167,18 @@
 
         <!-- View: Overview -->
         <section id="view-overview" class="view">
-            <div class="flex flex-wrap gap-3 mb-6 items-center justify-between">
-                <div class="flex flex-wrap gap-3">
-                    <input id="search-overview" type="text" placeholder="Nome do streamer..." class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
-                    <select id="country-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os Países</option></select>
-                    <select id="status-filter-overview" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
-                        <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
-                    </select>
+            <div class="flex flex-wrap gap-3 mb-6 items-center">
+                <div class="relative w-full sm:w-72">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+                    <input id="search-overview" type="text" placeholder="Buscar na lista..." class="h-10 w-full pl-10 pr-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
+                <!-- Botão "Consultar Streamer": movido via JS para a aba ativa (lookupSlot-<aba>) -->
+                <div id="lookupSlot-overview">
+                    <button id="lookupBar" class="h-10 px-4 flex items-center gap-2 rounded-lg border border-indigo-500/70 text-indigo-200 hover:text-white hover:bg-indigo-500/15 text-sm font-semibold transition-colors" title="Consultar um streamer na Twitch (atalho: /)"><i class="fas fa-search text-xs"></i>Consultar Streamer</button>
+                </div>
+                <select id="status-filter-overview" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
+                    <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
+                </select>
                 <div id="streamerActionsSlot-overview" class="flex flex-wrap gap-2"></div>
             </div>
             <p class="text-xs text-slate-400 -mt-3 mb-4"><i class="far fa-calendar mr-1"></i>Médias, pico e horas referentes aos últimos 30 dias</p>
@@ -184,14 +187,15 @@
 
         <!-- View: Table -->
         <section id="view-table" class="view hidden">
-            <div class="flex flex-wrap gap-3 mb-6 items-center justify-between">
-                <div class="flex flex-wrap gap-3">
-                    <input id="search-table" type="text" placeholder="Nome do streamer..." class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
-                    <select id="country-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os Países</option></select>
-                    <select id="status-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
-                        <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
-                    </select>
+            <div class="flex flex-wrap gap-3 mb-6 items-center">
+                <div class="relative w-full sm:w-72">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+                    <input id="search-table" type="text" placeholder="Buscar na lista..." class="h-10 w-full pl-10 pr-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
+                <div id="lookupSlot-table"></div>
+                <select id="status-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
+                    <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
+                </select>
                 <div id="streamerActionsSlot-table" class="flex flex-wrap gap-2"></div>
             </div>
             <div class="flex gap-3 mb-4">
@@ -223,7 +227,10 @@
                     <select id="month-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-auto"><option value="all">Todos os Meses</option></select>
                     <select id="year-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-auto"><option value="all">Todos os Anos</option></select>
                 </div>
-                <button id="openAddCampaignInline" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Campanha</button>
+                <div class="flex flex-wrap gap-3 items-center">
+                    <button id="openAddCampaignInline" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Campanha</button>
+                    <div id="lookupSlot-campaigns"></div>
+                </div>
             </div>
             <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-6">
                 <p id="monthly-total-label" class="text-slate-400 text-sm">Meu Valor Total do Mês</p>
@@ -387,7 +394,7 @@
     <!-- Modal: Lookup Streamer -->
     <div id="lookupModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-search mr-2"></i>Lookup Streamer</h3>
+            <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-search mr-2"></i>Consultar na Twitch</h3>
             <div class="mb-4 space-y-3">
                 <input id="lookupInput" type="text" placeholder="Nome do streamer na Twitch" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <button id="lookupSearchBtn" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
@@ -417,14 +424,19 @@
                         <p id="lookupHoursWatched" class="text-white font-bold text-lg"></p>
                     </div>
                     <div class="bg-slate-700/50 rounded-lg p-3 text-center">
-                        <p class="text-xs text-slate-400">Horas Transmitidas</p>
+                        <p class="text-xs text-slate-400">Horas em live</p>
                         <p id="lookupHoursStreamed" class="text-white font-bold text-lg"></p>
                     </div>
+                </div>
+                <button id="lookupShortlistBtn" class="w-full py-2 border border-emerald-600 text-emerald-400 hover:bg-emerald-600/10 font-semibold rounded-lg transition-colors disabled:border-slate-600 disabled:text-slate-400 disabled:hover:bg-transparent disabled:cursor-not-allowed">+ Minha Lista (Prospecção)</button>
+                <div id="lookupShortlistStatus" class="hidden flex items-center justify-between gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm">
+                    <span class="text-emerald-400 font-medium"><i class="fas fa-check-circle mr-1.5"></i>Na sua Minha Lista de Prospecção</span>
+                    <button id="lookupGoShortlist" class="text-emerald-300 hover:text-white font-semibold whitespace-nowrap transition-colors">Ver lista →</button>
                 </div>
             </div>
             <p id="lookupError" class="hidden text-red-400 text-sm mt-2"></p>
             <div id="lookupActions" class="hidden flex gap-3 mt-4">
-                <button id="lookupAddBtn" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">+ Adicionar</button>
+                <button id="lookupAddBtn" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">+ Adicionar ao Dashboard</button>
                 <button id="closeLookupModal" class="flex-1 py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>
             </div>
             <button id="closeLookupModalAlt" class="mt-4 w-full py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>

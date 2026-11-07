@@ -1,6 +1,34 @@
 import { showToast } from '../../utils'
-import { getProspectShortlist, replaceProspectShortlist } from '../../lib/data'
+import { getProspectShortlist, replaceProspectShortlist, addProspectRow } from '../../lib/data'
 import type { ProspectStream } from './types'
+
+// Monta um item da Minha Lista a partir do resultado do "Consultar na Twitch" (o canal pode estar offline).
+export function prospectFromLookup(user: { login: string; display_name: string; broadcaster_language?: string; game_name?: string }): ProspectStream {
+  return {
+    user_login: user.login.toLowerCase(),
+    user_name: user.display_name,
+    viewer_count: 0,
+    game_name: user.game_name || '',
+    email: null,
+    description: '',
+    language: (user.broadcaster_language || '').split('-')[0],
+  }
+}
+
+export function isInShortlist(login: string) {
+  const l = login.toLowerCase()
+  return shortlist.some(s => s.user_login.toLowerCase() === l)
+}
+
+// Acrescenta um item: grava só ele no banco (não regrava a lista inteira, então não apaga nada).
+export async function addToShortlist(item: ProspectStream): Promise<'added' | 'exists'> {
+  if (isInShortlist(item.user_login)) return 'exists'
+  const entry = { ...item, added_at: new Date().toISOString() }
+  await addProspectRow({ user_login: entry.user_login, data: { ...entry } })
+  shortlist.push(entry)
+  localStorage.setItem('prospectShortlist', JSON.stringify(shortlist))
+  return 'added'
+}
 
 // Lista salva da Prospecção. Importadores leem `shortlist` (binding vivo) e alteram via setShortlist/push.
 export let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')

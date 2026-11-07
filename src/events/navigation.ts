@@ -28,6 +28,7 @@ export function setupNav() {
       } else {
         actionsGroup.classList.add('hidden')
       }
+      placeLookupBar(viewId)
     })
   })
   const saved = sessionStorage.getItem('activeTab')
@@ -42,14 +43,14 @@ export function setupFiltersAndSort() {
 
   // Overview filters
   document.getElementById('search-overview')?.addEventListener('input', debouncedRenderOverview)
-  ;['country-filter', 'status-filter-overview'].forEach(id => {
+  ;['status-filter-overview'].forEach(id => {
     const el = document.getElementById(id)
     el?.addEventListener('change', () => { setOverviewPage(1); renderOverview() })
   })
   
   // Table filters
   document.getElementById('search-table')?.addEventListener('input', debouncedRenderTable)
-  ;['country-filter-table', 'status-filter-table'].forEach(id => {
+  ;['status-filter-table'].forEach(id => {
     const el = document.getElementById(id)
     el?.addEventListener('change', () => { setTablePage(1); renderTable() })
   })
@@ -100,4 +101,12 @@ export function setupGlobalEvents() {
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     if (await confirmAction('Deseja sair?', 'Sair')) signOut()
   })
+}
+
+// Campo "Consultar Streamer" acompanha a aba ativa (lookupSlot-<aba>). Sem argumento, usa a aba marcada no menu.
+export function placeLookupBar(viewId?: string) {
+  const view = viewId ?? (document.querySelector('.nav-link.border-indigo-500') as HTMLElement | null)?.dataset.view
+  const bar = document.getElementById('lookupBar')
+  const slot = view ? document.getElementById(`lookupSlot-${view}`) : null
+  if (bar && slot) slot.appendChild(bar)
 }
