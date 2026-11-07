@@ -16,8 +16,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 - CLAUDE.md criado (PR #2).
 - XSS: `escapeHtml` (`src/lib/escape.ts`, com teste) aplicado nos campos de texto interpolados em
   `innerHTML` (`src/ui`, `src/events/campaigns.ts`) (PR #7): [ok] na main, testes, tsc e build; [ok] deploy Vercel de produção com sucesso (02/11).
-  Não escapados: `id` (UUID do banco) e constantes. [a verificar] teste manual no navegador com nome
-  malicioso (teste visual pendente); `src/lib/logger.ts` usa só HTML estático.
+  Não escapados: `id` (UUID do banco) e constantes. [ok] coberto por teste automatizado de renderização com nomes
+  maliciosos (`xss-render.test.ts`, PR #64); `src/lib/logger.ts` usa só HTML estático.
 - Dependências (`npm audit fix`, sem `--force`): `dompurify` 3.4.11→3.4.17, `zod` 4.4.3→4.6.7, `vite`,
   `postcss`, `nanoid`, `source-map-js` atualizados (só `package-lock.json`). [ok] testes 39/39, `tsc` e build.
   Restam 4 (3 moderadas, 1 alta), só dev: `vitest`/`@vitest/mocker`/`happy-dom`; exigem `--force` (versão
@@ -97,7 +97,7 @@ Baixa
 3. Migrations: `migration_*.sql` da raiz movidos para `docs/migrations-aplicadas/` (histórico; fora de `supabase/migrations/` de propósito, para a CLI não reaplicar). Itens 1 e 2 feitos.
 
 ## Tarefa atual
-Nenhuma em andamento (sessão encerrada em 03/11; main limpa e igual ao remoto, último deploy de produção com sucesso).
+Nenhuma em andamento (07/11: main @ c65ac76 limpa e igual ao remoto, último deploy de produção com sucesso; `npm audit` 0 vulnerabilidades).
 
 ## Feito em 03/11
 - Teste de XSS automatizado (`src/__tests__/xss-render.test.ts`): nomes maliciosos em cards, tabela e campanhas não viram código. Corrigida a inicial do nome no card da Visão Geral, que não era escapada (PR #64).
@@ -107,6 +107,8 @@ Nenhuma em andamento (sessão encerrada em 03/11; main limpa e igual ao remoto, 
 ## Pendências (a verificar, sem urgência)
 - 403 direto do `twitch-proxy` com conta fora da allowlist: precisa de uma segunda conta Google e das chaves de produção; o login já barra essas contas.
 - Ganho percebido do autocompletar de categoria: depende da impressão de uso.
+- Visual a conferir no navegador: alinhamento das duas tabelas da Prospecção (PR #75); modal de detalhes da campanha (olho) no computador e em tela pequena.
+- Ambiente local: `.env` com as 3 variáveis públicas e CLI da Vercel logada nesta máquina; servidor de teste (`npm run dev`, porta 8000) pode ser desligado quando não for usado.
 - Opcionais nunca pedidos: túnel do Sentry pelo próprio domínio; remover a coluna `campaign_streamers.email` (exige autorização explícita de SQL em produção).
 
 ## Próximo passo sugerido
