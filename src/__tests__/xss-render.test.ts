@@ -16,7 +16,7 @@ beforeEach(() => {
     <div><div class="overflow-x-auto"><table><tbody id="table-body"></tbody></table></div></div>
     <select id="month-filter"></select><select id="year-filter"></select>
     <table><tbody id="campaigns-body"></tbody></table>
-    <div id="generatePdfBtn"></div><div id="exportCsvBtn"></div><div id="removeSelectedBtn"></div><span id="selectedCount"></span><span id="selectedCountCsv"></span><span id="selectedCountRemove"></span><div id="monthly-total"></div><div id="monthly-total-label"></div>`
+    <div id="generatePdfBtn"></div><div id="removeSelectedBtn"></div><span id="selectedCount"></span><span id="selectedCountRemove"></span><div id="monthly-total"></div><div id="monthly-total-label"></div>`
 })
 
 const injected = (root: string) => document.querySelectorAll(`${root} img[src="x"], ${root} script, ${root} svg, ${root} [onerror], ${root} [onload]`).length

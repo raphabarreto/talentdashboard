@@ -1,10 +1,9 @@
 import { deleteStreamer, deleteStreamers } from '../lib/data'
 import { prepareStreamerData, buildStreamerRow, registerStreamersBatch } from '../lib/registration'
 import { fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
-import { exportStreamersToCSV } from '../lib/export'
 import { streamers, selectedStreamers, setStreamers } from '../state'
 import { showToast, confirmAction, fmt } from '../utils'
-import { getFilteredStreamers } from '../ui/filters'
+import { getTablePageStreamers } from '../ui/table'
 import { setupLookupModal } from './streamers/lookup'
 import { MAX_STREAMERS_BATCH, TWITCH_API_BATCH_SIZE } from '../constants'
 
@@ -39,9 +38,9 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     }
   })
   document.getElementById('selectAll')?.addEventListener('change', (e) => {
+    // Só a página atual: marca/desmarca os streamers visíveis, sem mexer na seleção das outras páginas.
     const checked = (e.target as HTMLInputElement).checked
-    if (checked) { getFilteredStreamers('table').forEach(s => selectedStreamers.add(s.id)) }
-    else { selectedStreamers.clear() }
+    getTablePageStreamers().forEach(s => checked ? selectedStreamers.add(s.id) : selectedStreamers.delete(s.id))
     renderTable()
   })
 
@@ -166,12 +165,4 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     })
     doc.save('streamers.pdf')
   })
-
-  // Export CSV
-  document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
-    const selected = streamers.filter(s => selectedStreamers.has(s.id))
-    exportStreamersToCSV(selected)
-    showToast(`${selected.length} streamers exportados!`)
-  })
-
 }
