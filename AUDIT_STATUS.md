@@ -110,16 +110,18 @@ Nenhuma em andamento (sessão encerrada em 03/11; main limpa e igual ao remoto, 
 - Opcionais nunca pedidos: túnel do Sentry pelo próprio domínio; remover a coluna `campaign_streamers.email` (exige autorização explícita de SQL em produção).
 
 ## Próximo passo sugerido
-Sem item obrigatório. Aguardar novas features ou correções visuais do usuário. Revisão periódica: `npm audit` (restam 4 avisos só de dev, exigem `--force`). Considerar `supabase logout` ao encerrar.
+Sem item obrigatório. Aguardar novas features ou correções visuais do usuário. Revisão periódica: `npm audit`. Considerar `supabase logout` ao encerrar.
 
-## Testes (main @ cba9c2f)
+## Feito em 07/11
+- Ferramentas de teste (só dev): `vitest`/`@vitest/ui` 4.1.9→4.1.12 e `happy-dom` 20→21.0.4. `npm audit`: 0 vulnerabilidades (antes 4). Sem versão maior do vitest. [ok] testes 101/101, `tsc`, build. Reversão: revert do PR.
+- Branches já mescladas apagadas (local e GitHub); fica só a `main`.
+
+## Testes (07/11)
 - [ok] `vitest run`: 21 arquivos, 101 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
 
 ## Branches
-- PRs #1 a #28 mesclados (exceto #14, #15 e #19, fechados e substituídos). Branches mescladas podem ser apagadas no GitHub (limpeza opcional).
-- Branches já mescladas e ainda existentes (local e remoto): `maintenance/2026-review`,
-  `chore/claude-instructions`, `fix/update-last-live-authz`.
+- PRs #1 a #67 mesclados (exceto #14, #15 e #19, fechados e substituídos). Branches mescladas apagadas em 07/11.
 
 ## Deploys
 - [ok] Manual, 02/11: `collect-snapshots` e `consolidate-daily`.
