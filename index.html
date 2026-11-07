@@ -154,8 +154,8 @@
 
         <!-- Botões de ação de streamers: movidos via JS para dentro da view ativa (Overview/Tabela) -->
         <div id="streamerActionsTemplate" class="hidden flex flex-wrap gap-2 items-center">
-            <button id="openLookup" class="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white border border-slate-600 hover:border-slate-500 hover:bg-slate-800 py-2.5 px-4 rounded-lg transition-colors" title="Consultar um streamer qualquer direto na Twitch"><i class="fas fa-search"></i><span>Consultar na Twitch</span></button>
-            <button id="addMultipleBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Streamer</button>
+            <button id="openLookup" class="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white border border-slate-600 hover:border-slate-500 hover:bg-slate-800 h-10 px-4 rounded-lg transition-colors" title="Consultar um streamer qualquer direto na Twitch"><i class="fas fa-search"></i><span>Consultar na Twitch</span></button>
+            <button id="addMultipleBtn" class="flex items-center h-10 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 rounded-lg transition-colors">+ Adicionar Streamer</button>
         </div>
 
         <!-- Navigation -->
@@ -170,9 +170,9 @@
         <section id="view-overview" class="view">
             <div class="flex flex-wrap gap-3 mb-6 items-center justify-between">
                 <div class="flex flex-wrap gap-3">
-                    <input id="search-overview" type="text" placeholder="Nome do streamer..." class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
-                    <select id="country-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os Países</option></select>
-                    <select id="status-filter-overview" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
+                    <input id="search-overview" type="text" placeholder="Nome do streamer..." class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
+                    <select id="country-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os Países</option></select>
+                    <select id="status-filter-overview" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
                         <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
                     </select>
                 </div>
@@ -186,9 +186,9 @@
         <section id="view-table" class="view hidden">
             <div class="flex flex-wrap gap-3 mb-6 items-center justify-between">
                 <div class="flex flex-wrap gap-3">
-                    <input id="search-table" type="text" placeholder="Nome do streamer..." class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
-                    <select id="country-filter-table" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os Países</option></select>
-                    <select id="status-filter-table" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
+                    <input id="search-table" type="text" placeholder="Nome do streamer..." class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[220px]">
+                    <select id="country-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">Todos os Países</option></select>
+                    <select id="status-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
                         <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
                     </select>
                 </div>
@@ -220,8 +220,8 @@
         <section id="view-campaigns" class="view hidden">
             <div class="flex flex-wrap gap-4 mb-6 items-center justify-between">
                 <div class="flex flex-wrap gap-4">
-                    <select id="month-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-auto"><option value="all">Todos os Meses</option></select>
-                    <select id="year-filter" class="px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-auto"><option value="all">Todos os Anos</option></select>
+                    <select id="month-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-auto"><option value="all">Todos os Meses</option></select>
+                    <select id="year-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm w-auto"><option value="all">Todos os Anos</option></select>
                 </div>
                 <button id="openAddCampaignInline" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors">+ Adicionar Campanha</button>
             </div>
