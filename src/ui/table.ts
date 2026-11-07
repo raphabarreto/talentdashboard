@@ -1,14 +1,29 @@
 import { escapeHtml as esc } from '../lib/escape'
-import { tablePage, setTablePage, selectedStreamers, PAGE_SIZE, currentSort } from '../state'
+import { tablePage, setTablePage, selectedStreamers, currentSort } from '../state'
+import { TABLE_PAGE_SIZE } from '../constants'
 import { fmt } from '../utils'
 import { getFilteredStreamers } from './filters'
+
+// Streamers da página atual da tabela (respeitando busca, filtro e ordenação).
+export function getTablePageStreamers(data = getFilteredStreamers('table')) {
+  return data.slice((tablePage - 1) * TABLE_PAGE_SIZE, tablePage * TABLE_PAGE_SIZE)
+}
+
+// Caixa do título reflete só a página: marcada (todos), "meio marcada" (alguns) ou vazia.
+function updateSelectAllState(paged: { id: string }[]) {
+  const selectAll = document.getElementById('selectAll') as HTMLInputElement | null
+  if (!selectAll) return
+  const marked = paged.filter(s => selectedStreamers.has(s.id)).length
+  selectAll.checked = paged.length > 0 && marked === paged.length
+  selectAll.indeterminate = marked > 0 && marked < paged.length
+}
 
 export function renderTable() {
   const tbody = document.getElementById('table-body')!
   const data = getFilteredStreamers('table')
-  const totalPages = Math.ceil(data.length / PAGE_SIZE)
+  const totalPages = Math.ceil(data.length / TABLE_PAGE_SIZE)
   if (tablePage > totalPages) setTablePage(Math.max(1, totalPages))
-  const paged = data.slice((tablePage - 1) * PAGE_SIZE, tablePage * PAGE_SIZE)
+  const paged = getTablePageStreamers(data)
   
   // Usar DocumentFragment para evitar múltiplos reflows
   const fragment = document.createDocumentFragment()
@@ -56,16 +71,15 @@ export function renderTable() {
   }
 
   updateSelectionButtons()
+  updateSelectAllState(paged)
   updateSortIndicators()
 }
 
 export function updateSelectionButtons() {
   const count = selectedStreamers.size
   document.getElementById('generatePdfBtn')!.classList.toggle('hidden', count === 0)
-  document.getElementById('exportCsvBtn')!.classList.toggle('hidden', count === 0)
   document.getElementById('removeSelectedBtn')!.classList.toggle('hidden', count === 0)
   document.getElementById('selectedCount')!.textContent = String(count)
-  document.getElementById('selectedCountCsv')!.textContent = String(count)
   document.getElementById('selectedCountRemove')!.textContent = String(count)
 }
 

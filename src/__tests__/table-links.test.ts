@@ -8,8 +8,8 @@ const streamer = (id: string, name: string, avg: number) => ({ id, name, country
 beforeEach(() => {
   document.body.innerHTML = `
     <div><div class="overflow-x-auto"><table><tbody id="table-body"></tbody></table></div></div>
-    <div id="generatePdfBtn"></div><div id="exportCsvBtn"></div><div id="removeSelectedBtn"></div>
-    <span id="selectedCount"></span><span id="selectedCountCsv"></span><span id="selectedCountRemove"></span>`
+    <div id="generatePdfBtn"></div><div id="removeSelectedBtn"></div>
+    <span id="selectedCount"></span><span id="selectedCountRemove"></span>`
   setStreamers([streamer('1', 'Toniki', 2387), streamer('2', 'XAROLA_', 2340)])
   renderTable()
 })
@@ -72,5 +72,40 @@ describe('Tabela de Dados: indicador ao vivo', () => {
         expect(a.className).toMatch(/-my-1\b/)
       })
     })
+  })
+})
+
+describe('Tabela de Dados: página e seleção', () => {
+  const many = Array.from({ length: 20 }, (_, i) => streamer(String(i + 1), `s${String(i + 1).padStart(2, '0')}`, 1000 - i))
+
+  beforeEach(async () => {
+    const { selectedStreamers, setTablePage } = await import('../state')
+    selectedStreamers.clear()
+    setTablePage(1)
+    document.body.insertAdjacentHTML('afterbegin', '<input type="checkbox" id="selectAll">')
+    setStreamers(many)
+    renderTable()
+  })
+
+  it('mostra 8 streamers por página', () => {
+    expect(rows()).toHaveLength(8)
+  })
+
+  it('selecionar todos marca só a página atual, e desmarcar não mexe nas outras páginas', async () => {
+    const { selectedStreamers, setTablePage } = await import('../state')
+    const { getTablePageStreamers } = await import('../ui/table')
+    getTablePageStreamers().forEach(s => selectedStreamers.add(s.id)) // o que o "selecionar todos" faz
+    expect(selectedStreamers.size).toBe(8)
+    setTablePage(2); renderTable()
+    expect((document.getElementById('selectAll') as HTMLInputElement).checked).toBe(false)
+    selectedStreamers.add(getTablePageStreamers()[0].id); renderTable()
+    expect((document.getElementById('selectAll') as HTMLInputElement).indeterminate).toBe(true)
+    setTablePage(1); renderTable()
+    expect((document.getElementById('selectAll') as HTMLInputElement).checked).toBe(true)
+    expect(selectedStreamers.size).toBe(9)
+  })
+
+  it('não existe mais o botão de exportar CSV', () => {
+    expect(document.getElementById('exportCsvBtn')).toBeNull()
   })
 })
