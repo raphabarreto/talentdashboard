@@ -34,18 +34,20 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("authorization")
     if (!authHeader) return new Response("Unauthorized", { status: 401, headers: corsHeaders })
 
+    // Valida o token e a allowlist ao mesmo tempo (duas viagens ao Supabase em paralelo, não em fila).
+    // Qualquer conta Google autenticada tem JWT valido, entao is_allowed_user() roda com o JWT do proprio
+    // usuario antes de gastar cota da Twitch. Token invalido continua dando 401; fora da lista, 403.
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!)
-    const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""))
-    if (!user) return new Response("Unauthorized", { status: 401, headers: corsHeaders })
-
-    // Allowlist: qualquer conta Google autenticada tem JWT valido, entao checa
-    // is_allowed_user() com o JWT do proprio usuario antes de gastar cota da Twitch.
     const userClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     )
-    const { data: allowed, error: allowError } = await userClient.rpc("is_allowed_user")
+    const [{ data: { user } }, { data: allowed, error: allowError }] = await Promise.all([
+      supabase.auth.getUser(authHeader.replace("Bearer ", "")),
+      userClient.rpc("is_allowed_user")
+    ])
+    if (!user) return new Response("Unauthorized", { status: 401, headers: corsHeaders })
     if (allowError) throw allowError
     if (allowed !== true) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {

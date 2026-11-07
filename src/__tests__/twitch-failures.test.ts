@@ -108,4 +108,24 @@ describe('twitch-proxy', () => {
     const res = await handler(proxyReq())
     expect(res.status).toBe(502)
   })
+
+  it('retorna 401 (sem gastar a Twitch) quando o token nao e valido', async () => {
+    createClientMock.mockImplementation(() => ({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
+      rpc: vi.fn().mockResolvedValue({ data: null, error: { message: 'JWT invalid' } }),
+    }))
+    const res = await handler(proxyReq())
+    expect(res.status).toBe(401)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('retorna 403 (sem gastar a Twitch) quando a conta nao esta na allowlist', async () => {
+    createClientMock.mockImplementation(() => ({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u' } } }) },
+      rpc: vi.fn().mockResolvedValue({ data: false, error: null }),
+    }))
+    const res = await handler(proxyReq())
+    expect(res.status).toBe(403)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
 })
