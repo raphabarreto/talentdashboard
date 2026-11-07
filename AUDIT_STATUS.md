@@ -97,7 +97,7 @@ Baixa
 3. Migrations: `migration_*.sql` da raiz movidos para `docs/migrations-aplicadas/` (histórico; fora de `supabase/migrations/` de propósito, para a CLI não reaplicar). Itens 1 e 2 feitos.
 
 ## Tarefa atual
-Nenhuma em andamento (07/11: main @ b790c60 limpa e igual ao remoto, último deploy de produção com sucesso; `npm audit` 0 vulnerabilidades).
+Nenhuma em andamento. Sessão encerrada em 07/11: main @ bb1e721 igual ao remoto; último deploy de produção (PR #87) com sucesso; `npm audit` 0 vulnerabilidades; testes 135/135. Único PR aberto: o deste fechamento (só docs, sem merge, aguardando autorização).
 
 ## Feito em 03/11
 - Teste de XSS automatizado (`src/__tests__/xss-render.test.ts`): nomes maliciosos em cards, tabela e campanhas não viram código. Corrigida a inicial do nome no card da Visão Geral, que não era escapada (PR #64).
@@ -107,12 +107,16 @@ Nenhuma em andamento (07/11: main @ b790c60 limpa e igual ao remoto, último dep
 ## Pendências (a verificar, sem urgência)
 - 403 direto do `twitch-proxy` com conta fora da allowlist: precisa de uma segunda conta Google e das chaves de produção; o login já barra essas contas.
 - Ganho percebido do autocompletar de categoria: depende da impressão de uso.
-- Visual a conferir no navegador: alinhamento das duas tabelas da Prospecção (PR #75); Tabela de Dados (coluna Links, setas de ordenação) e um clique no ícone do SullyGnome (o site bloqueia verificação automática); modal de detalhes da campanha (olho) no computador e em tela pequena.
+- Visual a conferir no navegador: Tabela de Dados com 8 por página e "selecionar todos" só da página (PR #87); alinhamento das duas tabelas da Prospecção (PR #75); Tabela de Dados (coluna Links, setas de ordenação) e um clique no ícone do SullyGnome (o site bloqueia verificação automática); modal de detalhes da campanha (olho) no computador e em tela pequena.
 - Ambiente local limpo (07/11): servidor de teste desligado, `.env` e `.vercel/` removidos, CLI da Vercel deslogada (continua instalada). Para testar de novo: recriar `.env` com as 3 variáveis `VITE_*` públicas (as da Vercel são "sensíveis" e não vêm no `vercel env pull`).
 - Túnel do Sentry: ver "Feito em 07/11" (conferir com bloqueador de anúncios ligado).
+- Sessões logadas nesta máquina: Supabase CLI (`npx supabase`, conta do usuário) e `gh`. Deslogar o Supabase quando não for usar (`npx supabase logout`); novo login precisa ser feito pelo usuário num PowerShell separado.
 
 ## Próximo passo sugerido
-Sem item obrigatório. Aguardar novas features ou correções visuais do usuário. Revisão periódica: `npm audit`. Considerar `supabase logout` ao encerrar.
+1. Mesclar o PR de fechamento da sessão (só `AUDIT_STATUS.md`) quando o usuário autorizar.
+2. Conferências visuais pendentes (ver Pendências) e confirmar um erro real chegando ao Sentry com bloqueador ligado.
+3. Depois de confirmado o túnel: opcionalmente remover `https://*.ingest.sentry.io https://*.sentry.io` do `connect-src` da CSP (PR próprio).
+4. Sem item obrigatório além disso: aguardar novas features/ajustes do usuário; revisão periódica com `npm audit`; deslogar o Supabase CLI se não for usar.
 
 ## Feito em 07/11
 - Ferramentas de teste (só dev): `vitest`/`@vitest/ui` 4.1.9→4.1.12 e `happy-dom` 20→21.0.4. `npm audit`: 0 vulnerabilidades (antes 4). Sem versão maior do vitest. [ok] testes 101/101, `tsc`, build. Reversão: revert do PR.
@@ -125,7 +129,7 @@ Sem item obrigatório. Aguardar novas features ou correções visuais do usuári
 - Tabela de Dados: colunas "Twitch" e "SullyGnome" unificadas em "Links" (ícone da Twitch e de gráfico, mesmas URLs e `target=_blank`, tooltips "Abrir Twitch"/"Abrir SullyGnome", `aria-label` com o nome do streamer, foco visível no teclado); estrutura Seleção | Nome | Média | Links | Ações com larguras fixas. Busca, filtros, paginação, seleção, PDF/CSV e remoção inalterados. [ok] testes 121/121 (5 novos), `tsc`, build. [a verificar] visual no navegador. Ordenar por "Nome do Streamer" não funcionava (`filters.ts` subtraía textos): corrigido depois (A→Z no 1º clique, sem diferenciar maiúsculas/acentos; `compareStreamers` + teste). Reversão: revert do PR.
 - Tabela de Dados, ícones de Links: área clicável 36 px (`w-9 h-9 -my-1`, sem aumentar a linha) e espaço `gap-2`. Indicador ao vivo conferido: código igual ao anterior (vem de `is_live` do banco, atualizado pela coleta a cada 15 min; diferença entre abas é de momento de carregamento) + teste. Links: Twitch conferido via `curl` (título "Toniki - Twitch"); SullyGnome bloqueia acesso automatizado (403/Cloudflare), URL igual à anterior e coberta por teste. [ok] testes 123/123, `tsc`, build.
 - Tabela de Dados: seta ▲/▼ no título da coluna ordenada ("Nome do Streamer" ou "Média de Viewers") e `aria-sort` para leitores de tela. [ok] testes 127/127, `tsc`, build. Reversão: revert do PR.
-- Teste local: `.env` (ignorado pelo Git) com as 3 variáveis públicas `VITE_*`; as da Vercel são "sensíveis" e o `vercel env pull` não entrega o valor. CLI da Vercel instalada e logada (07/11). Preview da Vercel fica preso no carregamento (variáveis só em produção).
+- Teste local: `.env` (ignorado pelo Git) com as 3 variáveis públicas `VITE_*`; as da Vercel são "sensíveis" e o `vercel env pull` não entrega o valor. CLI da Vercel instalada (logada durante a sessão; deslogada no fim, ver Pendências). Preview da Vercel fica preso no carregamento (variáveis só em produção).
 - Banco (Dash Lugs), 07/11, com autorização: removida a coluna sem uso `campaign_streamers.email` (`alter table ... drop column email`). Antes: 194 linhas, todas vazias; sem views/funções/policies dependentes; front e Edge Functions não usavam. Validado: coluna ausente, 194 linhas, RLS ativa, 1 policy; consulta `campaigns?select=*,campaign_streamers(*)` responde 200. `schema.sql`, `DATABASE.md` e tipo `CampaignStreamer` atualizados; SQL e rollback em `docs/migrations-aplicadas/migration_drop_campaign_streamers_email.sql`. [usuário] campanhas funcionando em produção após a remoção (07/11).
 - Sentry pelo próprio domínio: função `api/sentry-tunnel.ts` (Vercel) recebe os envelopes do navegador e repassa só para o projeto do DSN configurado no servidor (`SENTRY_DSN` ou `VITE_SENTRY_DSN`); destino montado a partir desse DSN; recusa outros (403), corpo > 1 MB (413), sem DSN (503). `Sentry.init({ tunnel })` em `main.ts`. CSP inalterada (`connect-src` já tem `self`; liberação de `*.sentry.io` mantida por enquanto). [ok] testes 135/135 (8 novos), `tsc` (src e api), build. [ok] produção (07/11): GET 405, envelope de outro destino 403, evento de teste do nosso projeto 200 ("Teste do túnel do Sentry (pode ignorar)"); site publicado usa o túnel. [a verificar] evento real com bloqueador de anúncios ligado. Reversão: revert do PR.
 - Tabela de Dados: "selecionar todos" marca/desmarca só a página atual (antes marcava todos os filtrados, ex.: "Remover (160)"); caixa do título reflete a página (marcada/"meio marcada"); 8 por página na Tabela (`TABLE_PAGE_SIZE`; Visão Geral segue com 12); exportação CSV removida (botão, `src/lib/export.ts` e teste), a pedido do usuário. PDF e Remover inalterados. [ok] testes 135/135, `tsc`, build. Reversão: revert do PR.
