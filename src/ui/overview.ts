@@ -23,7 +23,7 @@ export function renderOverview() {
   paged.forEach(s => {
     const flagHtml = s.country ? `<span class="fi fi-${esc(s.country)} w-3.5 h-3.5 rounded-full shadow-md"></span> ${esc(countryNames[s.country] || s.country)}` : '-'
     const card = document.createElement('div')
-    card.className = `bg-slate-800 p-6 rounded-xl shadow-lg border ${s.is_live ? 'border-red-500/60 hover:border-red-400' : 'border-slate-700 hover:border-slate-600'} transition-colors relative`
+    card.className = 'bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700 hover:border-slate-600 transition-colors relative'
     card.innerHTML = `
       <div class="absolute top-4 right-4">
         <button class="card-menu-btn text-slate-500 hover:text-slate-300 transition-colors p-2 hover:bg-slate-700/50 rounded">
@@ -40,9 +40,11 @@ export function renderOverview() {
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
             <a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors truncate">${esc(s.name)}</a>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 flex items-center gap-1">${flagHtml}</span>
             ${s.is_live ? '<span class="live-badge flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold tracking-wide flex-shrink-0"><span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>AO VIVO</span>' : ''}
           </div>
-          <span class="text-xs text-slate-400 flex items-center gap-1">${flagHtml}</span>
         </div>
       </div>
       <div class="bg-slate-900/60 rounded-lg px-4 py-3 mb-3 flex items-center justify-between">
@@ -52,7 +54,7 @@ export function renderOverview() {
       <div class="grid grid-cols-3 gap-2 text-center">
         <div class="flex flex-col justify-end"><p class="text-xs leading-tight text-slate-400">Pico</p><p class="text-sm font-semibold text-white">${fmt(s.peak_viewers)}</p></div>
         <div class="flex flex-col justify-end"><p class="text-xs leading-tight text-slate-400">Horas assistidas</p><p class="text-sm font-semibold text-white">${fmt(s.hours_watched)}</p></div>
-        <div class="flex flex-col justify-end"><p class="text-xs leading-tight text-slate-400">Horas transmitidas</p><p class="text-sm font-semibold text-white">${fmt(s.hours_streamed)}</p></div>
+        <div class="flex flex-col justify-end"><p class="text-xs leading-tight text-slate-400">Horas em live</p><p class="text-sm font-semibold text-white">${fmt(s.hours_streamed)}</p></div>
       </div>
     `
     // Sem onclick inline (bloqueado por CSP sem 'unsafe-inline').

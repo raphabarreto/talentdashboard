@@ -25,6 +25,6 @@ describe('Visão Geral: selo AO VIVO e legendas', () => {
     renderOverview()
     const text = document.getElementById('overview-grid')!.textContent!
     expect(text).toContain('Horas assistidas')
-    expect(text).toContain('Horas transmitidas')
+    expect(text).toContain('Horas em live')
   })
 })
