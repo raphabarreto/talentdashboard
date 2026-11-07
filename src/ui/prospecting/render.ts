@@ -5,8 +5,14 @@ import { ps } from './state'
 import type { ProspectStream } from './types'
 
 export function getVisibleResults(): ProspectStream[] {
-  const onlyEmail = (document.getElementById('prospectOnlyEmail') as HTMLInputElement)?.checked
-  return onlyEmail ? ps.results.filter(r => r.email) : ps.results
+  return ps.results
+}
+
+// Bandeira pelo idioma (ícone do flag-icons; emoji de bandeira vira "BR"/"ES" no Windows).
+export function langFlag(language: string): string {
+  if (language === 'pt') return '<span class="fi fi-br rounded-sm" title="Português"></span>'
+  if (language === 'es') return '<span class="fi fi-es rounded-sm" title="Espanhol"></span>'
+  return '<i class="fas fa-globe text-slate-500" title="Outro idioma"></i>'
 }
 
 export function renderResults() {
@@ -78,7 +84,7 @@ export function renderShortlist() {
       <td class="p-3">
         <a href="https://www.twitch.tv/${esc(r.user_login)}/about" target="_blank" rel="noopener" class="text-white hover:text-indigo-400 font-semibold" title="Abrir a página Sobre do canal">${esc(r.user_name)}</a>
       </td>
-      <td class="p-3 text-sm text-slate-400">${r.language === 'pt' ? '🇧🇷' : r.language === 'es' ? '🇪🇸' : '🌐'} ${esc(r.game_name)}</td>
+      <td class="p-3 text-sm text-slate-400"><span class="inline-flex items-center gap-2">${langFlag(r.language)}${esc(r.game_name) || '-'}</span></td>
       <td class="p-3 text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${esc(r.email) || '-'}</td>
       <td class="p-3">
         <button class="shortlist-remove text-slate-400 hover:text-red-400 transition-colors cursor-pointer" data-login="${esc(r.user_login)}" title="Remover"><i class="fas fa-trash"></i></button>
