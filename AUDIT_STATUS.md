@@ -97,7 +97,7 @@ Baixa
 3. Migrations: `migration_*.sql` da raiz movidos para `docs/migrations-aplicadas/` (histórico; fora de `supabase/migrations/` de propósito, para a CLI não reaplicar). Itens 1 e 2 feitos.
 
 ## Tarefa atual
-Nenhuma em andamento (07/11: main @ c65ac76 limpa e igual ao remoto, último deploy de produção com sucesso; `npm audit` 0 vulnerabilidades).
+Nenhuma em andamento (07/11: main @ b790c60 limpa e igual ao remoto, último deploy de produção com sucesso; `npm audit` 0 vulnerabilidades).
 
 ## Feito em 03/11
 - Teste de XSS automatizado (`src/__tests__/xss-render.test.ts`): nomes maliciosos em cards, tabela e campanhas não viram código. Corrigida a inicial do nome no card da Visão Geral, que não era escapada (PR #64).
@@ -107,7 +107,7 @@ Nenhuma em andamento (07/11: main @ c65ac76 limpa e igual ao remoto, último dep
 ## Pendências (a verificar, sem urgência)
 - 403 direto do `twitch-proxy` com conta fora da allowlist: precisa de uma segunda conta Google e das chaves de produção; o login já barra essas contas.
 - Ganho percebido do autocompletar de categoria: depende da impressão de uso.
-- Visual a conferir no navegador: alinhamento das duas tabelas da Prospecção (PR #75); modal de detalhes da campanha (olho) no computador e em tela pequena.
+- Visual a conferir no navegador: alinhamento das duas tabelas da Prospecção (PR #75); Tabela de Dados (coluna Links, setas de ordenação) e um clique no ícone do SullyGnome (o site bloqueia verificação automática); modal de detalhes da campanha (olho) no computador e em tela pequena.
 - Ambiente local: `.env` com as 3 variáveis públicas e CLI da Vercel logada nesta máquina; servidor de teste (`npm run dev`, porta 8000) pode ser desligado quando não for usado.
 - Opcionais nunca pedidos: túnel do Sentry pelo próprio domínio; remover a coluna `campaign_streamers.email` (exige autorização explícita de SQL em produção).
 
