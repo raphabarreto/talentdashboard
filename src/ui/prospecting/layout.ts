@@ -32,14 +32,14 @@ export function prospectingHtml(): string {
           </div>
         </div>
         <div class="overflow-x-auto rounded-lg border border-slate-700 bg-slate-800">
-          <table class="w-full text-left">
+          <table class="w-full min-w-[640px] table-fixed text-left">
             <thead class="border-b border-slate-700 text-sm text-slate-400">
               <tr>
-                <th class="p-4 w-10"><input type="checkbox" id="prospectSelectAll" class="w-4 h-4 rounded"></th>
-                <th class="p-4 w-[25%]">Streamer</th>
-                <th class="p-4 w-[20%]">Categoria</th>
-                <th class="p-4 w-[80px] text-center">Viewers</th>
-                <th class="p-4 w-[25%]">Email</th>
+                <th class="p-3 w-12"><input type="checkbox" id="prospectSelectAll" class="w-4 h-4 rounded"></th>
+                <th class="p-3 w-[calc(26%-3rem)]">Streamer</th>
+                <th class="p-3 w-[32%]">Categoria</th>
+                <th class="p-3 w-24 text-center">Viewers</th>
+                <th class="p-3">Email</th>
               </tr>
             </thead>
             <tbody id="prospectBody" class="divide-y divide-slate-700"></tbody>

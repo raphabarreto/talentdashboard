@@ -9,7 +9,7 @@ export function resultsCounterText(found: number, withEmail: number, loaded: num
   const plural = found === 1 ? '' : 's'
   let text = `${found} streamer${plural} encontrado${plural}`
   if (withEmail) text += ` • ${withEmail} com email`
-  if (loaded >= PROSPECT_FETCH_LIMIT) text += ` (entre as ${loaded} lives com mais viewers; pode haver mais)`
+  if (loaded >= PROSPECT_FETCH_LIMIT) text += ` · de ${loaded} lives carregadas`
   return text
 }
 
@@ -48,15 +48,15 @@ export function renderResults() {
     const inList = shortlist.some(s => s.user_login === r.user_login)
     return `
     <tr class="hover:bg-slate-700/30 transition-colors ${inList ? 'opacity-50' : ''}">
-      <td class="p-4"><input type="checkbox" class="prospect-check w-4 h-4 rounded" data-login="${esc(r.user_login)}" ${ps.selected.has(r.user_login) ? 'checked' : ''} ${inList ? 'disabled' : ''}></td>
-      <td class="p-4">
+      <td class="p-3"><input type="checkbox" class="prospect-check w-4 h-4 rounded" data-login="${esc(r.user_login)}" ${ps.selected.has(r.user_login) ? 'checked' : ''} ${inList ? 'disabled' : ''}></td>
+      <td class="p-3 truncate">
         <a href="https://twitch.tv/${esc(r.user_login)}" target="_blank" class="text-white hover:text-indigo-400 font-semibold text-base">${esc(r.user_name)}</a>${inList ? ' <span class="text-xs text-slate-500">✓ na lista</span>' : ''}
       </td>
-      <td class="p-4 text-sm text-slate-400">${esc(r.game_name) || '-'}</td>
-      <td class="p-4 text-center">
+      <td class="p-3 text-sm text-slate-400 truncate" title="${esc(r.game_name)}">${esc(r.game_name) || '-'}</td>
+      <td class="p-3 text-center">
         <span class="text-sm font-medium text-slate-300">${r.viewer_count.toLocaleString()}</span>
       </td>
-      <td class="p-4">
+      <td class="p-3 truncate" title="${esc(r.email)}">
         <span class="text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${esc(r.email) || '-'}</span>
       </td>
     </tr>
