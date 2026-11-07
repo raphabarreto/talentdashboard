@@ -74,3 +74,22 @@ describe('Prospecção: "Adicionar à Minha Lista"', () => {
     ps.selected.clear()
   })
 })
+
+describe('Prospecção: contador da busca e Minha Lista', () => {
+  it('contador mostra só o que foi carregado e avisa quando pode haver mais', async () => {
+    const { resultsCounterText } = await import('../ui/prospecting/render')
+    expect(resultsCounterText(24, 5, 60)).toBe('24 streamers encontrados • 5 com email')
+    expect(resultsCounterText(1, 0, 10)).toBe('1 streamer encontrado')
+    expect(resultsCounterText(0, 0, 0)).toBe('0 streamers encontrados')
+    expect(resultsCounterText(80, 3, 100)).toBe('80 streamers encontrados • 3 com email (entre as 100 lives com mais viewers; pode haver mais)')
+  })
+
+  it('controles da Minha Lista na ordem pedida, Limpar junto (sem empurrar para a direita)', () => {
+    const ids = ['shortlistCount', 'manualAddInput', 'manualAddBtn', 'copyListBtn', 'clearListBtn']
+    const els = ids.map(id => document.getElementById(id)!)
+    for (let i = 1; i < els.length; i++) {
+      expect(els[i - 1].compareDocumentPosition(els[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    }
+    expect(document.getElementById('clearListBtn')!.className).not.toMatch(/ml-auto/)
+  })
+})

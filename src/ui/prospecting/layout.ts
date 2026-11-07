@@ -56,17 +56,17 @@ export function prospectingHtml(): string {
             <button id="manualAddBtn" class="h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 rounded-r-lg text-sm transition-colors cursor-pointer" title="Adicionar à Minha Lista"><i class="fas fa-plus"></i></button>
           </div>
           <button id="copyListBtn" class="h-10 flex items-center gap-2 border border-slate-600 text-slate-200 hover:bg-slate-700 font-semibold px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-copy text-xs"></i>Copiar Lista</button>
-          <button id="clearListBtn" class="h-10 sm:ml-auto flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 rounded-lg text-sm transition-colors cursor-pointer" title="Apaga todos os streamers da Minha Lista"><i class="fas fa-trash text-xs"></i>Limpar lista</button>
+          <button id="clearListBtn" class="h-10 flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 rounded-lg text-sm transition-colors cursor-pointer" title="Apaga todos os streamers da Minha Lista"><i class="fas fa-trash text-xs"></i>Limpar lista</button>
         </div>
         <div class="rounded-lg border border-slate-700 bg-slate-800">
           <div class="overflow-x-auto">
-            <table class="w-full text-left">
+            <table class="w-full min-w-[640px] table-fixed text-left">
               <thead class="border-b border-slate-700 text-sm text-slate-400 sticky top-0 bg-slate-800">
                 <tr>
-                  <th class="p-3">Streamer</th>
-                  <th class="p-3">Categoria</th>
+                  <th class="p-3 w-[26%]">Streamer</th>
+                  <th class="p-3 w-[32%]">Categoria</th>
                   <th class="p-3">Email</th>
-                  <th class="p-3 w-[120px]">Ações</th>
+                  <th class="p-3 w-20 text-center">Ações</th>
                 </tr>
               </thead>
               <tbody id="shortlistBody" class="divide-y divide-slate-700"></tbody>

@@ -1,8 +1,17 @@
 import { escapeHtml as esc } from '../../lib/escape'
-import { PROSPECT_PAGE_SIZE } from '../../constants'
+import { PROSPECT_PAGE_SIZE, PROSPECT_FETCH_LIMIT } from '../../constants'
 import { shortlist } from './shortlist'
 import { ps } from './state'
 import type { ProspectStream } from './types'
+
+// Contador da busca: só o que foi carregado. A Twitch não informa o total; se veio o máximo pedido, avisa que pode haver mais.
+export function resultsCounterText(found: number, withEmail: number, loaded: number): string {
+  const plural = found === 1 ? '' : 's'
+  let text = `${found} streamer${plural} encontrado${plural}`
+  if (withEmail) text += ` • ${withEmail} com email`
+  if (loaded >= PROSPECT_FETCH_LIMIT) text += ` (entre as ${loaded} lives com mais viewers; pode haver mais)`
+  return text
+}
 
 export function getVisibleResults(): ProspectStream[] {
   return ps.results
@@ -24,7 +33,7 @@ export function renderResults() {
   wrapper.classList.remove('hidden')
   const visible = getVisibleResults()
   const withEmail = ps.results.filter(r => r.email).length
-  document.getElementById('prospectCounter')!.textContent = `${ps.results.length} encontrados • ${withEmail} com email`
+  document.getElementById('prospectCounter')!.textContent = resultsCounterText(ps.results.length, withEmail, ps.loaded)
   const totalPages = Math.ceil(visible.length / PROSPECT_PAGE_SIZE)
   if (ps.page > totalPages) ps.page = Math.max(1, totalPages)
   const paged = visible.slice((ps.page - 1) * PROSPECT_PAGE_SIZE, ps.page * PROSPECT_PAGE_SIZE)
@@ -86,12 +95,12 @@ export function renderShortlist() {
 
   body.innerHTML = shortlist.map(r => `
     <tr class="hover:bg-slate-700/30 transition-colors">
-      <td class="p-3">
+      <td class="p-3 truncate">
         <a href="https://www.twitch.tv/${esc(r.user_login)}/about" target="_blank" rel="noopener" class="text-white hover:text-indigo-400 font-semibold" title="Abrir a página Sobre do canal">${esc(r.user_name)}</a>
       </td>
-      <td class="p-3 text-sm text-slate-400"><span class="inline-flex items-center gap-2">${langFlag(r.language)}${esc(r.game_name) || '-'}</span></td>
-      <td class="p-3 text-sm ${r.email ? 'text-emerald-400' : 'text-slate-500'}">${esc(r.email) || '-'}</td>
-      <td class="p-3">
+      <td class="p-3 text-sm text-slate-400 truncate" title="${esc(r.game_name)}"><span class="inline-flex items-center gap-2">${langFlag(r.language)}${esc(r.game_name) || '-'}</span></td>
+      <td class="p-3 text-sm truncate ${r.email ? 'text-emerald-400' : 'text-slate-500'}" title="${esc(r.email)}">${esc(r.email) || '-'}</td>
+      <td class="p-3 text-center">
         <button class="shortlist-remove text-slate-400 hover:text-red-400 transition-colors cursor-pointer" data-login="${esc(r.user_login)}" title="Remover"><i class="fas fa-trash"></i></button>
       </td>
     </tr>
