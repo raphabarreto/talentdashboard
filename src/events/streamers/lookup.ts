@@ -14,11 +14,20 @@ export function setupLookupModal(
   let lookupData: Awaited<ReturnType<PrepareStreamerData>> | null = null
 
   const shortlistBtn = () => document.getElementById('lookupShortlistBtn') as HTMLButtonElement
+  // Fora da lista: botão "+ Minha Lista". Na lista: faixa verde de confirmação com atalho "Ver lista".
   function setShortlistBtn(inList: boolean) {
     const b = shortlistBtn()
-    b.disabled = inList
-    b.textContent = inList ? '✓ Já está na Minha Lista' : '+ Minha Lista (Prospecção)'
+    b.disabled = false
+    b.textContent = '+ Minha Lista (Prospecção)'
+    b.classList.toggle('hidden', inList)
+    document.getElementById('lookupShortlistStatus')!.classList.toggle('hidden', !inList)
   }
+
+  document.getElementById('lookupGoShortlist')?.addEventListener('click', () => {
+    document.getElementById('lookupModal')!.classList.add('hidden')
+    document.querySelector('.nav-link[data-view="prospecting"]')?.dispatchEvent(new Event('click'))
+    document.getElementById('shortlistSection')?.scrollIntoView({ behavior: 'smooth' })
+  })
 
   document.getElementById('openLookup')?.addEventListener('click', () => {
     document.getElementById('lookupResult')!.classList.add('hidden')
