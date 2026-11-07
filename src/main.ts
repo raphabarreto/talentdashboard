@@ -4,7 +4,7 @@ import { setStreamers, setCampaigns } from './state'
 import { renderOverview } from './ui/overview'
 import { renderTable } from './ui/table'
 import { renderCampaigns } from './ui/campaigns'
-import { populateFilters, setupAutocomplete, getExistingCompanies } from './ui/filters'
+import { setupAutocomplete, getExistingCompanies } from './ui/filters'
 import { setupProspecting } from './ui/prospecting'
 import { setupNav, setupFiltersAndSort, setupGlobalEvents, placeLookupBar } from './events/navigation'
 import { setupStreamersEvents } from './events/streamers'
@@ -28,7 +28,6 @@ async function loadData() {
 }
 
 function renderAll() {
-  populateFilters()
   renderOverview()
   renderTable()
   renderCampaigns()

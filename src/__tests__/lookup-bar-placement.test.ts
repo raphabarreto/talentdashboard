@@ -16,7 +16,7 @@ beforeEach(() => {
 
 const parentOfBar = () => document.getElementById('lookupBar')!.parentElement!.id
 
-describe('campo "Consultar Twitch" acompanha a aba', () => {
+describe('campo "Consultar Streamer" acompanha a aba', () => {
   it('vai para o espaço da aba indicada', () => {
     placeLookupBar('campaigns')
     expect(parentOfBar()).toBe('lookupSlot-campaigns')

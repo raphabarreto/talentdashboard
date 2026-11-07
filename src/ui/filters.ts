@@ -1,16 +1,14 @@
 import { escapeHtml as esc } from '../lib/escape'
-import { streamers, campaigns, currentSort, getCachedCountries } from '../state'
-import { isActive, countryNames } from '../utils'
+import { streamers, campaigns, currentSort } from '../state'
+import { isActive } from '../utils'
 import type { Streamer } from '../types/index'
 
 export function getFilteredStreamers(prefix: string): Streamer[] {
   const search = (document.getElementById(`search-${prefix}`) as HTMLInputElement)?.value.toLowerCase() || ''
-  const country = (document.getElementById(prefix === 'overview' ? 'country-filter' : 'country-filter-table') as HTMLSelectElement)?.value || 'all'
   const status = (document.getElementById(`status-filter-${prefix}`) as HTMLSelectElement)?.value || 'all'
 
   return streamers
     .filter(s => !search || s.name.toLowerCase().includes(search))
-    .filter(s => country === 'all' || s.country === country)
     .filter(s => {
       if (status === 'all') return true
       if (status === 'live') return s.is_live
@@ -27,17 +25,6 @@ export function getExistingCompanies(): string[] {
   return [...new Set(campaigns.map(c => c.company).filter(Boolean))].sort()
 }
 
-export function populateFilters() {
-  const countries = getCachedCountries()
-
-  ;['country-filter', 'country-filter-table'].forEach(id => {
-    const el = document.getElementById(id) as HTMLSelectElement
-    const val = el.value
-    el.innerHTML = '<option value="all">País</option>'
-    countries.forEach(c => { el.innerHTML += `<option value="${esc(c)}">${esc(countryNames[c] || c.toUpperCase())}</option>` })
-    el.value = val || 'all'
-  })
-}
 
 export function setupAutocomplete(inputId: string, suggestionsId: string, dataFn: () => string[]) {
   const input = document.getElementById(inputId) as HTMLInputElement

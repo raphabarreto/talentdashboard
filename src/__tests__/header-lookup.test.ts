@@ -25,7 +25,7 @@ beforeEach(() => {
 const key = (el: EventTarget, k: string) => el.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }))
 const modalOpen = () => !document.getElementById('lookupModal')!.classList.contains('hidden')
 
-describe('botão "Consultar Twitch"', () => {
+describe('botão "Consultar Streamer"', () => {
   it('abre a janela vazia com o cursor no campo de nome, sem buscar nada', () => {
     ;(document.getElementById('lookupInput') as HTMLInputElement).value = 'antigo'
     document.getElementById('lookupBar')!.click()

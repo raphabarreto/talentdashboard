@@ -40,7 +40,7 @@ export function setupLookupModal(
     if (name) doLookup()
   }
 
-  // Botão "Consultar Twitch": abre a janela com o cursor já no campo de nome.
+  // Botão "Consultar Streamer": abre a janela com o cursor já no campo de nome.
   function openEmpty() {
     openLookup()
     ;(document.getElementById('lookupInput') as HTMLInputElement).focus()

@@ -168,21 +168,18 @@
         <!-- View: Overview -->
         <section id="view-overview" class="view">
             <div class="flex flex-wrap gap-3 mb-6 items-center">
-                <div class="contents">
-                    <div class="relative flex-1 min-w-[240px]">
-                        <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
-                        <input id="search-overview" type="text" placeholder="Buscar na lista..." class="h-10 w-full pl-10 pr-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <select id="country-filter" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">País</option></select>
-                    <select id="status-filter-overview" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
-                        <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
-                    </select>
+                <div class="relative w-full sm:w-72">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+                    <input id="search-overview" type="text" placeholder="Buscar na lista..." class="h-10 w-full pl-10 pr-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-                <div id="streamerActionsSlot-overview" class="flex flex-wrap gap-2"></div>
-                <!-- Botão "Consultar Twitch": movido via JS para a aba ativa (lookupSlot-<aba>) -->
+                <!-- Botão "Consultar Streamer": movido via JS para a aba ativa (lookupSlot-<aba>) -->
                 <div id="lookupSlot-overview">
-                    <button id="lookupBar" class="h-10 px-4 flex items-center gap-2 rounded-lg border border-indigo-500/70 text-indigo-200 hover:text-white hover:bg-indigo-500/15 text-sm font-semibold transition-colors" title="Consultar um streamer na Twitch (atalho: /)"><i class="fas fa-search text-xs"></i>Consultar Twitch</button>
+                    <button id="lookupBar" class="h-10 px-4 flex items-center gap-2 rounded-lg border border-indigo-500/70 text-indigo-200 hover:text-white hover:bg-indigo-500/15 text-sm font-semibold transition-colors" title="Consultar um streamer na Twitch (atalho: /)"><i class="fas fa-search text-xs"></i>Consultar Streamer</button>
                 </div>
+                <select id="status-filter-overview" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
+                    <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
+                </select>
+                <div id="streamerActionsSlot-overview" class="flex flex-wrap gap-2"></div>
             </div>
             <p class="text-xs text-slate-400 -mt-3 mb-4"><i class="far fa-calendar mr-1"></i>Médias, pico e horas referentes aos últimos 30 dias</p>
             <div id="overview-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 content-start"></div>
@@ -191,18 +188,15 @@
         <!-- View: Table -->
         <section id="view-table" class="view hidden">
             <div class="flex flex-wrap gap-3 mb-6 items-center">
-                <div class="contents">
-                    <div class="relative flex-1 min-w-[240px]">
-                        <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
-                        <input id="search-table" type="text" placeholder="Buscar na lista..." class="h-10 w-full pl-10 pr-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <select id="country-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"><option value="all">País</option></select>
-                    <select id="status-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
-                        <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
-                    </select>
+                <div class="relative w-full sm:w-72">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+                    <input id="search-table" type="text" placeholder="Buscar na lista..." class="h-10 w-full pl-10 pr-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
-                <div id="streamerActionsSlot-table" class="flex flex-wrap gap-2"></div>
                 <div id="lookupSlot-table"></div>
+                <select id="status-filter-table" class="filter-select h-10 pl-4 cursor-pointer rounded-lg bg-slate-800 border border-slate-700 text-white text-sm">
+                    <option value="all">Todos</option><option value="active" selected>Ativos</option><option value="inactive">Inativos</option><option value="live">Ao Vivo 🔴</option>
+                </select>
+                <div id="streamerActionsSlot-table" class="flex flex-wrap gap-2"></div>
             </div>
             <div class="flex gap-3 mb-4">
                 <button id="generatePdfBtn" class="hidden bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md text-sm transition-colors"><i class="fas fa-file-pdf"></i> Gerar PDF (<span id="selectedCount">0</span>)</button>
