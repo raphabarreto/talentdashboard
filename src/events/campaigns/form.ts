@@ -1,6 +1,7 @@
 import { addCampaign, updateCampaign } from '../../lib/data'
 import { campaigns, streamers, editingCampaignId, setEditingCampaignId } from '../../state'
-import { showToast, sanitizeCurrencyInput } from '../../utils'
+import { showToast, sanitizeCurrencyInput, confirmAction } from '../../utils'
+import { diffCampaignStreamers } from '../../lib/campaignSync'
 import { campaignSchema } from '../../lib/validators'
 import { logError, setButtonLoading } from '../../lib/logger'
 import { escapeHtml as esc } from '../../lib/escape'
@@ -156,6 +157,17 @@ export function setupCampaignForm({ loadData, renderAll }: Callbacks) {
       }
     }
     const streamerRows = toStreamerRows(names, alreadyConfirmed)
+
+    // Editar nunca remove participantes em silêncio: quem sair da lista precisa ser confirmado.
+    if (editingCampaignId) {
+      const current = campaigns.find(c => c.id === editingCampaignId)?.campaign_streamers ?? []
+      const { removedNames } = diffCampaignStreamers(current, streamerRows)
+      if (removedNames.length) {
+        const shown = removedNames.length <= 5 ? `: ${removedNames.join(', ')}` : ''
+        const ok = await confirmAction(`Esta edição vai remover ${removedNames.length === 1 ? '1 participante' : `${removedNames.length} participantes`} da campanha${shown}. O status de contato deles será perdido.`, 'Remover e salvar', { title: 'Remover participantes?' })
+        if (!ok) return
+      }
+    }
 
     const saveBtn = document.getElementById('saveCampaignBtn') as HTMLButtonElement
     const addAnotherBtn = document.getElementById('saveAndAddAnotherBtn') as HTMLButtonElement
