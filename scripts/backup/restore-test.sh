@@ -52,9 +52,9 @@ SQL
 }
 OK="$(as_user "$ALLOWED")"
 NO="$(as_user "intruso@example.invalid")"
-echo "usuario da lista: $(echo "$OK" | sed 's/^t/permitido/;s/^f/negado/') | estranho: $(echo "$NO" | sed 's/^t/permitido/;s/^f/negado/')"
-[ "$OK" = "t|$EXPECTED|$EXPECTED" ] || { echo "::error::usuario permitido nao enxerga todos os streamers"; exit 1; }
-[ "$NO" = "f|0|0" ] || { echo "::error::usuario fora da lista enxerga dados (RLS falhou)"; exit 1; }
+echo "usuario da lista: $(echo "$OK" | sed 's/^true/permitido/;s/^false/negado/') | estranho: $(echo "$NO" | sed 's/^true/permitido/;s/^false/negado/')"
+[ "$OK" = "true|$EXPECTED|$EXPECTED" ] || { echo "::error::usuario permitido nao enxerga todos os streamers"; exit 1; }
+[ "$NO" = "false|0|0" ] || { echo "::error::usuario fora da lista enxerga dados (RLS falhou)"; exit 1; }
 
 echo "5/5 função de métricas"
 psqlq -Atc "select count(*) >= 0 from public.calculate_streamer_metrics(now() - interval '30 days')" >/dev/null
