@@ -1,11 +1,10 @@
--- PROPOSTA — NÃO EXECUTADA. Exige autorização explícita antes de rodar em produção (CLAUDE.md: SQL em produção).
+-- APLICADA em produção (Dash Lugs) em 07/11/2026, com autorização do usuário. Registro histórico.
 --
 -- Objetivo: impedir, no próprio banco, o mesmo streamer duas vezes na MESMA campanha
 -- (ex.: duas abas salvando ao mesmo tempo). Campanhas diferentes continuam podendo ter o mesmo streamer.
 -- O front já evita duplicatas e trata erro de gravação; este índice é só a rede de segurança final.
 --
--- VERIFICADO (consulta somente leitura, produção): 0 duplicatas em 193 linhas; nenhuma linha sem campanha ou com nome vazio.
--- Antes de aplicar, repita o PASSO 1 (podem surgir duplicatas entre a verificação e a aplicação).
+-- RESULTADO: antes, 193 linhas e 0 duplicatas; depois, índice válido e ativo, 0 duplicatas e dados idênticos (mesmo hash).
 --
 -- PASSO 1 — conferir se já existem duplicatas (somente leitura). Se retornar linhas, corrigir antes do passo 2,
 -- senão a criação do índice falha (sem danificar nada):

@@ -92,6 +92,7 @@ create table campaigns (
 );
 
 -- Streamers associados a campanhas
+-- (indice unico campaign_streamers_campaign_name_unique abaixo: mesmo streamer so uma vez por campanha)
 create table campaign_streamers (
   id uuid primary key default gen_random_uuid(),
   campaign_id uuid references campaigns(id) on delete cascade,
@@ -100,6 +101,8 @@ create table campaign_streamers (
   payment_date date,
   contact_status text default 'pendente' check (contact_status in ('pendente', 'contatado', 'nao_respondeu', 'confirmado', 'recusado'))
 );
+
+create unique index campaign_streamers_campaign_name_unique on campaign_streamers (campaign_id, lower(trim(streamer_name)));
 
 -- Lista salva da aba Prospecção
 create table prospect_shortlist (
