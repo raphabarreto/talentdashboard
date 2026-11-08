@@ -156,7 +156,10 @@ Branch `fix/auditoria-integridade-estabilidade` (3 commits locais, sem push/PR).
 - [ok em testes] Funções: 500 genérico em twitch-proxy/update-last-live; limite de 100 nomes. [a verificar] só vale em produção após merge + deploy das funções.
 - [ok] CI: tipos no `test.yml`, job de audit (não bloqueante), deploy das funções só após testes+tipos (workflows não executados remotamente).
 - Proposta NÃO executada: `docs/migrations-propostas/campaign_streamers_unique_name.sql` (índice único por campanha+nome). Exige autorização.
-- Validação: 239 testes, `tsc` 0 erros, build ok, `npm audit` 0. [a verificar] teste manual no navegador (editar campanha, remover, falha de rede).
+- Remoção de streamers: aviso "Removendo..." + bloqueio de clique duplo (aprovado pelo usuário após teste manual).
+- Verificação somente leitura em produção: 0 duplicatas em `campaign_streamers` (193 linhas); índice único segue como proposta, não aplicado.
+- Workflows: `permissions: contents: read` e fila única no deploy das funções. [a verificar] `main` sem proteção de branch (checks não bloqueiam o merge).
+- Validação: 242 testes, `tsc` 0 erros, build ok, `npm audit` 0. [a verificar] teste manual no navegador (editar campanha, remover, falha de rede).
 
 ## Testes (07/11)
 - [ok] `vitest run`: 28 arquivos, 135 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.

@@ -7,6 +7,15 @@ on:
     paths:
       - 'supabase/functions/**'
 
+# Token do GitHub só de leitura: os acessos de escrita ao Supabase usam os secrets, não este token.
+permissions:
+  contents: read
+
+# Nunca duas publicações ao mesmo tempo (a segunda espera a primeira terminar).
+concurrency:
+  group: deploy-edge-functions
+  cancel-in-progress: false
+
 jobs:
   # A publicação só acontece se testes e tipos passarem no mesmo commit.
   verify:
