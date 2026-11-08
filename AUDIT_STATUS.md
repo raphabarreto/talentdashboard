@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-08. Base: main @ 2aa101a. Sem segredos neste arquivo.
+Atualizado em 2026-11-07. Base: main @ 0b59147 (PR #103). Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -97,7 +97,7 @@ Baixa
 3. Migrations: `migration_*.sql` da raiz movidos para `docs/migrations-aplicadas/` (histórico; fora de `supabase/migrations/` de propósito, para a CLI não reaplicar). Itens 1 e 2 feitos.
 
 ## Tarefa atual
-Nenhuma em andamento. Sessão encerrada em 08/11: main @ 2aa101a igual ao remoto; último deploy de produção (PR #100, deps de rotina) com sucesso; `npm audit` 0 vulnerabilidades; testes 181/181, `tsc` e build ok. Sem PRs abertos (o deste fechamento foi mesclado).
+Auditoria técnica CONCLUÍDA em 07/11/2026 e **em operação** (ver seção abaixo). Nenhuma correção em andamento. Último deploy de produção: PR #103 (merge `0b59147`).
 
 ## Feito em 03/11
 - Teste de XSS automatizado (`src/__tests__/xss-render.test.ts`): nomes maliciosos em cards, tabela e campanhas não viram código. Corrigida a inicial do nome no card da Visão Geral, que não era escapada (PR #64).
@@ -111,8 +111,8 @@ Nenhuma em andamento. Sessão encerrada em 08/11: main @ 2aa101a igual ao remoto
 - Usuário usa só PC: não listar conferências de celular.
 
 ## Próximo passo sugerido
-1. (feito em 08/11) PR de rotina com as atualizações pequenas.
-2. Aguardar novos ajustes do usuário; revisão periódica com `npm audit`.
+1. Aguardar novos ajustes do usuário; revisão periódica com `npm audit`.
+2. Itens opcionais da auditoria (P3-06, P3-08, P3-09 e outros listados em "Riscos residuais") só se o usuário pedir.
 
 ## Feito em 07/11
 - Ferramentas de teste (só dev): `vitest`/`@vitest/ui` 4.1.9→4.1.12 e `happy-dom` 20→21.0.4. `npm audit`: 0 vulnerabilidades (antes 4). Sem versão maior do vitest. [ok] testes 101/101, `tsc`, build. Reversão: revert do PR.
@@ -147,19 +147,28 @@ Nenhuma em andamento. Sessão encerrada em 08/11: main @ 2aa101a igual ao remoto
 
 - [usuário] Teste de 403 (conta fora da allowlist) funcionando em produção (08/11); fecha o item [a verificar] do `twitch-proxy`. Usuário informou "tudo certo" nas conferências restantes.
 
-## Auditoria técnica 08/11 — correções em branch (NÃO publicadas)
-Branch `fix/auditoria-integridade-estabilidade` (3 commits locais, sem push/PR). Aguarda aprovação do usuário.
-- [ok em testes] P1-01/P2-01: campanha salva por diferença (`lib/campaignSync.ts` + `data.ts`); nunca apaga/recria quem fica; erro explícito; criação desfaz a campanha se os streamers falharem. Remover participantes pede confirmação.
-- [ok em testes] P2-02: remoção de streamer/campanha só aparece depois do banco confirmar. Troca de status volta ao valor real se falhar. Cadastro automático ao confirmar atualiza as outras abas.
-- [ok em testes] P2-03: falha no carregamento inicial mostra aviso com "Tentar novamente".
-- [ok em testes] Minha Lista (Prospecção): gravação por item (antes regravava a lista inteira e podia apagar itens de outro dispositivo); app não quebra com armazenamento do navegador bloqueado.
-- [ok em testes] Funções: 500 genérico em twitch-proxy/update-last-live; limite de 100 nomes. [a verificar] só vale em produção após merge + deploy das funções.
-- [ok] CI: tipos no `test.yml`, job de audit (não bloqueante), deploy das funções só após testes+tipos (workflows não executados remotamente).
-- Proposta NÃO executada: `docs/migrations-propostas/campaign_streamers_unique_name.sql` (índice único por campanha+nome). Exige autorização.
-- Remoção de streamers: aviso "Removendo..." + bloqueio de clique duplo (aprovado pelo usuário após teste manual).
-- Verificação somente leitura em produção: 0 duplicatas em `campaign_streamers` (193 linhas); índice único segue como proposta, não aplicado.
-- Workflows: `permissions: contents: read` e fila única no deploy das funções. [a verificar] `main` sem proteção de branch (checks não bloqueiam o merge).
-- Validação: 242 testes, `tsc` 0 erros, build ok, `npm audit` 0. [a verificar] teste manual no navegador (editar campanha, remover, falha de rede).
+## Auditoria técnica — CONCLUÍDA em 07/11/2026 (em operação)
+Resultado: 0 problemas P0; 1 P1, 5 P2 e 9 P3 identificados; os confirmados foram corrigidos e publicados. PR #103 mesclado (merge commit `0b59147`, merge commit, não squash).
+- [ok] P1-01/P2-01: campanha salva por diferença (`lib/campaignSync.ts` + `data.ts`); quem continua na lista nunca é apagado e recriado; todo erro interrompe e é mostrado; repetir o salvamento não duplica; criação desfaz a campanha se os streamers falharem. Remover participantes pede confirmação.
+- [ok] P2-02: remoção de streamer/campanha só aparece depois do banco confirmar ("Removendo..." + bloqueio de clique duplo). Troca de status volta ao valor real se falhar. Cadastro automático ao confirmar atualiza as outras abas.
+- [ok] P2-03: falha no carregamento inicial mostra aviso com "Tentar novamente".
+- [ok] Minha Lista (Prospecção): gravação por item (antes regravava a lista inteira); app não quebra com armazenamento do navegador bloqueado.
+- [ok] Edge Functions: 500 genérico em `twitch-proxy`/`update-last-live`; limite de 100 nomes por consulta.
+- [ok] CI: tipos no `test.yml`, job `audit` (não bloqueante), deploy das funções só após tipos+testes, permissões mínimas e fila única.
+- [ok] Validação final: 242 testes (eram 181), `tsc` 0 erros, build ok, `npm audit` 0.
+- [ok] Publicação: Vercel concluído; GitHub Actions "Deploy Edge Functions" (verify + deploy) com sucesso, 4 funções republicadas; as 4 respondem 401 sem credenciais; cabeçalhos de segurança presentes.
+- [usuário] Testes manuais em produção aprovados (campanhas, streamers, remoção, Prospecção).
+- [ok] Proteção da `main` ativada: PR obrigatório, check `test` obrigatório, branch atualizada, sem push direto/force-push, sem exigir revisor; vale também para o administrador.
+- [ok] Índice único aplicado em produção (Dash Lugs, com autorização, 07/11): `campaign_streamers_campaign_name_unique` em `(campaign_id, lower(trim(streamer_name)))`. Antes: 193 linhas, 0 duplicatas, 0 nomes vazios/sem campanha, índice inexistente. Depois: índice válido e ativo, 0 duplicatas, 193 linhas com hash idêntico ao de antes (dados intactos); 31 nomes continuam em mais de uma campanha (mesmo streamer em campanhas diferentes segue permitido). Arquivo movido para `docs/migrations-aplicadas/`. Rollback: `drop index if exists campaign_streamers_campaign_name_unique;`.
+
+### Riscos residuais conhecidos (sem ocultar)
+- Salvar campanha NÃO é uma transação única: se a lista de participantes falhar na edição, os dados da campanha podem já ter sido gravados (a janela fica aberta com erro; repetir é seguro). A atomicidade estrita exigiria uma função no banco (RPC), não implementada por não haver perda silenciosa.
+- Duas abas editando a mesma campanha: o índice único impede nome duplicado (a segunda gravação recebe erro genérico "Erro ao salvar campanha"; repetir resolve). Cada gravação é "último a gravar vence" por item.
+- O índice usa `trim()` do Postgres (só espaços); o app usa o `trim()` do JavaScript (também tabs/espaços especiais). Nomes que diferem só por tab/espaço especial não são bloqueados pelo banco; efeito prático desprezível.
+- Supabase sem backup automático (sem PITR; lista de backups vazia): não há recuperação de dados pelo painel. Foi feita cópia local (somente leitura) da tabela antes do índice; considerar rotina de exportação ou plano com backup. [a verificar]
+- Edge Functions de cron (`collect-snapshots`, `consolidate-daily`) ainda devolvem o texto do erro (exigem o segredo; decisão consciente, útil para diagnóstico).
+- Não feitos de propósito: P3-06 (Esc fecha formulário preenchido), P3-08 (lotes de 10 no `collect-snapshots`, sem lentidão medida), P3-09 (nome do pacote), lint (exigiria dependência nova). Latência da remoção em cascata no servidor não medida.
+- Actions pinadas por tag (`@v4`), não por hash; avisos de descontinuação do Node 20 nas Actions (sem impacto hoje).
 
 ## Testes (07/11)
 - [ok] `vitest run`: 28 arquivos, 135 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.

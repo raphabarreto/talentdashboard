@@ -106,6 +106,8 @@ Streamers associados a cada campanha.
 | `payment_date` | date | Data do pagamento ao streamer |
 | `contact_status` | text | Status: `pendente`, `contatado`, `nao_respondeu`, `confirmado`, `recusado` |
 
+**Unicidade:** índice único `campaign_streamers_campaign_name_unique` em `(campaign_id, lower(trim(streamer_name)))` — o mesmo streamer não repete na mesma campanha (sem diferenciar maiúsculas/espaços); campanhas diferentes podem ter o mesmo streamer.
+
 **Auto-registro:** Quando um streamer é marcado como `confirmado`, ele é automaticamente adicionado à tabela `streamers` (se ainda não existir).
 
 ---
