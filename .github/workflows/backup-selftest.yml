@@ -20,16 +20,6 @@ jobs:
   selftest:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    services:
-      postgres:
-        image: supabase/postgres:17.6.1.178
-        env:
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -h localhost"
-          --health-interval 5s --health-timeout 5s --health-retries 30
     env:
       PGHOST: localhost
       PGPORT: '5432'
@@ -41,6 +31,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Iniciar Postgres descartável do Supabase
+        run: bash scripts/backup/start-postgres.sh
 
       - name: Chave GPG descartável (só existe neste teste)
         run: |

@@ -49,16 +49,6 @@ jobs:
     if: needs.check.outputs.exists != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    services:
-      postgres:
-        image: supabase/postgres:17.6.1.178
-        env:
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -h localhost"
-          --health-interval 5s --health-timeout 5s --health-retries 30
     env:
       BACKUP_GPG_PUBLIC_KEY: ${{ vars.BACKUP_GPG_PUBLIC_KEY }}
       SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
@@ -71,6 +61,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Iniciar Postgres descartável do Supabase
+        run: bash scripts/backup/start-postgres.sh
 
       - name: 0. Definir a data do backup (fuso de Brasília)
         id: date

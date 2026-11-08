@@ -13,7 +13,7 @@ export BACKUP_JSON="$JSON" PGDATABASE="${PGDATABASE:-postgres}" PGTZ=UTC
 
 psqlq() { # $@: argumentos do psql; falha mostrando apenas códigos de erro
   if ! psql -X -q -v ON_ERROR_STOP=1 -v VERBOSITY=sqlstate "$@" 2>"$WORK/err"; then
-    echo "::error::psql falhou (SQLSTATE: $(grep -oE 'ERROR: +[0-9A-Z]{5}' "$WORK/err" | tr -s ' ' | head -3 | tr '\n' ';'))"
+    echo "::error::psql falhou (SQLSTATE: $(grep -oE 'ERROR: +[0-9A-Z]{5}' "$WORK/err" | tr -s ' ' | head -3 | tr '\n' ';'))" >&2
     return 1
   fi
 }
