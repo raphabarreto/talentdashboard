@@ -1,0 +1,125 @@
+name: Backup auto-teste
+
+# Exercita TODO o fluxo do backup com dados 100% FICTÍCIOS e uma chave GPG descartável:
+# validação, restauração em Postgres do Supabase (RLS/auth reais), criptografia, upload, verificação do upload,
+# checagem "já existe backup do dia" e recuperação com a chave privada. Não usa secrets nem toca em produção.
+on:
+  pull_request:
+    paths:
+      - 'scripts/backup/**'
+      - '.github/workflows/backup*.yml'
+      - 'schema.sql'
+      - 'supabase/migrations/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '54329'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      BACKUP_DATE: selftest-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Iniciar Postgres descartável do Supabase
+        run: bash scripts/backup/start-postgres.sh
+
+      - name: Chave GPG descartável (só existe neste teste)
+        run: |
+          export GNUPGHOME="$RUNNER_TEMP/gnupg-test"; mkdir -m 700 "$GNUPGHOME"
+          gpg --batch --passphrase '' --quick-generate-key "selftest <selftest@example.test>" ed25519 cert 1d
+          FPR="$(gpg --list-keys --with-colons | awk -F: '/^fpr/{print $10; exit}')"
+          gpg --batch --passphrase '' --quick-add-key "$FPR" cv25519 encr 1d
+          { echo 'BACKUP_GPG_PUBLIC_KEY<<EOF_KEY'; gpg --export --armor "$FPR"; echo 'EOF_KEY'; } >> "$GITHUB_ENV"
+
+      - name: Dados fictícios
+        run: node scripts/backup/fixture.mjs "$RUNNER_TEMP/backup.json"
+
+      - name: Validar
+        run: node scripts/backup/validate.mjs "$RUNNER_TEMP/backup.json"
+
+      - name: Comparação exata - detecta diferença no último dígito e horários sutis, aceita o mesmo valor/instante
+        run: |
+          B="$RUNNER_TEMP/backup.json"; V="$RUNNER_TEMP/var.json"
+          P='123456789012345.123456789012'; T0='2026-03-01T00:00:00.123456+00:00'
+          grep -q "$P" "$B" && grep -q "$T0" "$B" || { echo "::error::fixture sem os valores de teste"; exit 1; }
+          node scripts/backup/compare.mjs "$B" "$B" >/dev/null || { echo "::error::arquivo diferente de si mesmo"; exit 1; }
+          same() { sed "s/$1/$2/g" "$B" > "$V"; node scripts/backup/compare.mjs "$B" "$V" >/dev/null 2>&1; }
+          # devem PASSAR (mesmo valor/instante, outra representação)
+          same "$P" "${P}000"                              || { echo "::error::zeros à direita viraram diferença"; exit 1; }
+          same "$T0" '2026-02-28T21:00:00.123456-03:00'     || { echo "::error::mesmo instante em outro fuso virou diferença"; exit 1; }
+          same "$T0" '2026-03-01T05:30:00.123456+05:30'     || { echo "::error::offset com minutos não normalizou"; exit 1; }
+          # devem FALHAR (alteração real)
+          if same "$P" '123456789012345.123456789013'; then echo "::error::último dígito de numeric NÃO foi detectado"; exit 1; fi
+          if same "$T0" '2026-03-01T00:00:00.123457+00:00'; then echo "::error::1 microssegundo NÃO foi detectado"; exit 1; fi
+          if same "$T0" '2026-03-01T00:00:00.123456+00:01'; then echo "::error::1 minuto de fuso NÃO foi detectado"; exit 1; fi
+          rm -f "$V"
+          echo "comparação exata validada (6 cenários)"
+
+      - name: Restaurar em Postgres do Supabase e conferir (RLS incluída)
+        run: bash scripts/backup/restore-test.sh "$RUNNER_TEMP/backup.json"
+
+      - name: Criptografar
+        run: node scripts/backup/seal.mjs "$RUNNER_TEMP/backup.json" "$RUNNER_TEMP/out"
+
+      - name: Enviar artifact (1 dia)
+        id: upload
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: backup-${{ env.BACKUP_DATE }}
+          path: ${{ runner.temp }}/out/
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: true
+          compression-level: 0
+
+      - name: Confirmar o upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+          EXPECTED_NAME: backup-${{ env.BACKUP_DATE }}
+        run: node scripts/backup/verify-upload.mjs
+
+      - name: Checagem "já existe backup do dia" encontra o artifact íntegro
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_NAME: backup-${{ env.BACKUP_DATE }}
+          ACCEPT_RUN_ID: ${{ github.run_id }}
+          CHECK_OUTPUT: ${{ runner.temp }}/check.out
+        run: |
+          : > "$CHECK_OUTPUT"
+          node scripts/backup/check-existing.mjs
+          grep -qx 'exists=true' "$CHECK_OUTPUT"
+
+      - name: Checagem rejeita execução ainda não concluída com sucesso
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_NAME: backup-${{ env.BACKUP_DATE }}
+          CHECK_OUTPUT: ${{ runner.temp }}/check2.out
+        run: |
+          : > "$CHECK_OUTPUT"
+          # sem ACCEPT_RUN_ID a execução em andamento não conta como concluída com sucesso => deve dizer "não existe"
+          node scripts/backup/check-existing.mjs
+          grep -qx 'exists=false' "$CHECK_OUTPUT"
+
+      - name: Recuperar com a chave privada e comparar com o original
+        run: |
+          export GNUPGHOME="$RUNNER_TEMP/gnupg-test"
+          gpg --batch --pinentry-mode loopback --passphrase '' -d "$RUNNER_TEMP/out/backup-$BACKUP_DATE.json.gpg" > "$RUNNER_TEMP/recovered.json"
+          cmp "$RUNNER_TEMP/backup.json" "$RUNNER_TEMP/recovered.json" && echo "recuperação idêntica ao original"
+
+      - name: Remover o contêiner de teste
+        if: always()
+        run: bash scripts/backup/stop-postgres.sh

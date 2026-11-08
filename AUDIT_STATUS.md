@@ -171,6 +171,11 @@ Resultado: 0 problemas P0; 1 P1, 5 P2 e 9 P3 identificados; os confirmados foram
 - Não feitos de propósito: P3-06 (Esc fecha formulário preenchido), P3-08 (lotes de 10 no `collect-snapshots`, sem lentidão medida), P3-09 (nome do pacote), lint (exigiria dependência nova). Latência da remoção em cascata no servidor não medida.
 - Actions pinadas por tag (`@v4`), não por hash; avisos de descontinuação do Node 20 nas Actions (sem impacto hoje).
 
+## Backup automático (PR aberto, desligado)
+- Implementado em `scripts/backup/` + workflows `backup.yml` (só manual; sem agendamento, chave, token ou secret) e `backup-selftest.yml` (dados fictícios no CI). Documentação: `docs/BACKUP.md`.
+- Pendente de autorização do dono: gerar chaves GPG, token Supabase `database_read`, cadastrar secret/variáveis, 1ª execução real, ativar agendamento (06h e 18h Brasília). Até lá a funcionalidade é **a verificar** (não validada em produção).
+- Limitações registradas: agendamento desativa após 60 dias sem atividade (sem commits artificiais, por decisão); artifacts ficam no GitHub (ponto único de falha); chave privada é insubstituível.
+
 ## Testes (07/11)
 - [ok] `vitest run`: 28 arquivos, 135 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
