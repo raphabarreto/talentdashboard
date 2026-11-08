@@ -18,11 +18,12 @@ async function removeSelected(renderAll: () => void) {
   const detail = names.length <= 3 ? `: ${names.join(', ')}` : ''
   if (!await confirmAction(`Tem certeza de que deseja remover ${n === 1 ? '1 streamer selecionado' : `os ${n} streamers selecionados`} da sua lista${detail}?`, 'Remover', { title: n === 1 ? 'Remover streamer?' : `Remover ${n} streamers?` })) return
   const ids = [...selectedStreamers]
+  // Só mostra como removido depois que o banco confirmou; se falhar, a lista e a seleção continuam como estavam.
+  try { await deleteStreamers(ids) } catch { showToast('Não foi possível remover. Nada foi alterado.', 'error'); return }
   selectedStreamers.clear()
   setStreamers(streamers.filter(s => !ids.includes(s.id)))
   renderAll()
   showToast('Streamers removidos!')
-  deleteStreamers(ids).catch(() => showToast('Erro ao remover do banco', 'error'))
 }
 
 export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callbacks) {
@@ -37,11 +38,11 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       const name = streamers.find(s => s.id === id)?.name
       const message = name ? `Tem certeza de que deseja remover ${name} da sua lista?` : 'Tem certeza de que deseja remover este streamer da sua lista?'
       if (!await confirmAction(message, 'Remover', { title: 'Remover streamer?' })) return
+      try { await deleteStreamer(id) } catch { showToast('Não foi possível remover. Nada foi alterado.', 'error'); return }
       selectedStreamers.delete(id)
       setStreamers(streamers.filter(s => s.id !== id))
       renderAll()
       showToast('Streamer removido!')
-      deleteStreamer(id).catch(() => showToast('Erro ao remover do banco', 'error'))
     }
   })
 
@@ -172,6 +173,7 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     const selected = streamers.filter(s => selectedStreamers.has(s.id))
     const { jsPDF } = await import('jspdf')
     const { default: autoTable } = await import('jspdf-autotable')
+    type CellHookData = Parameters<NonNullable<NonNullable<Parameters<typeof autoTable>[1]>['didDrawCell']>>[0]
     const doc = new jsPDF()
     doc.setFontSize(16)
     doc.text('Lista de Streamers', 14, 20)
@@ -181,13 +183,13 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       body: selected.map(s => [s.name, `twitch.tv/${s.name.toLowerCase()}`, fmt(s.avg_viewers)]),
       styles: { fontSize: 10 },
       headStyles: { fillColor: [79, 70, 229] },
-      didDrawCell: (data: any) => {
+      didDrawCell: (data: CellHookData) => {
         if (data.section === 'body' && data.column.index === 1) {
           const name = selected[data.row.index]?.name?.toLowerCase()
           if (name) doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: `https://twitch.tv/${name}` })
         }
       },
-      didParseCell: (data: any) => {
+      didParseCell: (data: CellHookData) => {
         if (data.section === 'body' && data.column.index === 1) {
           data.cell.styles.textColor = [79, 70, 229]
           data.cell.styles.fontStyle = 'bold'

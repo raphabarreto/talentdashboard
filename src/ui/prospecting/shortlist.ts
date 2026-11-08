@@ -1,5 +1,5 @@
 import { showToast } from '../../utils'
-import { getProspectShortlist, replaceProspectShortlist, addProspectRow } from '../../lib/data'
+import { getProspectShortlist, addProspectRow, addProspectRows, deleteProspectRow, clearProspectShortlist } from '../../lib/data'
 import type { ProspectStream } from './types'
 
 // Monta um item da Minha Lista a partir do resultado do "Consultar na Twitch" (o canal pode estar offline).
@@ -26,37 +26,71 @@ export async function addToShortlist(item: ProspectStream): Promise<'added' | 'e
   const entry = { ...item, added_at: new Date().toISOString() }
   await addProspectRow({ user_login: entry.user_login, data: { ...entry } })
   shortlist.push(entry)
-  localStorage.setItem('prospectShortlist', JSON.stringify(shortlist))
+  writeLocal()
   return 'added'
 }
 
+// O navegador pode bloquear o armazenamento local (janela privada, dados do site bloqueados): nunca derruba o app.
+const LOCAL_KEY = 'prospectShortlist'
+function readLocal(): ProspectStream[] {
+  try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]') } catch { return [] }
+}
+function writeLocal() {
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(shortlist)) } catch { /* sem armazenamento local: segue só com o banco */ }
+}
+
 // Lista salva da Prospecção. Importadores leem `shortlist` (binding vivo) e alteram via setShortlist/push.
-export let shortlist: ProspectStream[] = JSON.parse(localStorage.getItem('prospectShortlist') || '[]')
+export let shortlist: ProspectStream[] = readLocal()
 
 export function setShortlist(list: ProspectStream[]) { shortlist = list }
 
-// Salva no banco (fonte principal) e no navegador (reserva se o banco falhar).
-export function saveShortlist() {
+// Mudanças feitas enquanto a lista ainda está sendo carregada do banco (para não serem perdidas ao chegar).
+let loading = false
+const addedWhileLoading = new Map<string, ProspectStream>()
+const removedWhileLoading = new Set<string>()
+
+function warnServerFailure() { showToast('Não foi possível salvar a lista no servidor (salva só neste navegador)', 'error') }
+
+// Itens acrescentados à lista (já estão em `shortlist`): grava só eles no banco, sem tocar nos demais.
+export function persistAdded(items: ProspectStream[]) {
   const base = Date.now()
-  shortlist.forEach((s, i) => { if (!s.added_at) s.added_at = new Date(base + i).toISOString() })
-  localStorage.setItem('prospectShortlist', JSON.stringify(shortlist))
-  replaceProspectShortlist(shortlist.map(s => ({ user_login: s.user_login, data: { ...s } })))
-    .catch(() => showToast('Não foi possível salvar a lista no servidor (salva só neste navegador)'))
+  items.forEach((s, i) => { if (!s.added_at) s.added_at = new Date(base + i).toISOString() })
+  if (loading) items.forEach(s => { addedWhileLoading.set(s.user_login, s); removedWhileLoading.delete(s.user_login) })
+  writeLocal()
+  addProspectRows(items.map(s => ({ user_login: s.user_login, data: { ...s } }))).catch(warnServerFailure)
 }
 
-// Carrega a lista do banco. Se o banco estiver vazio, envia a lista que já existia no navegador.
+// Um item removido da lista: apaga só ele do banco.
+export function persistRemoved(login: string) {
+  if (loading) { removedWhileLoading.add(login); addedWhileLoading.delete(login) }
+  writeLocal()
+  deleteProspectRow(login).catch(warnServerFailure)
+}
+
+// Lista esvaziada pelo usuário (depois da confirmação).
+export function persistCleared() {
+  if (loading) addedWhileLoading.clear()
+  writeLocal()
+  clearProspectShortlist().catch(warnServerFailure)
+}
+
+// Carrega a lista do banco (fonte principal). Se o banco estiver vazio, envia a lista que já existia no navegador.
 export async function loadShortlistFromDb(onLoaded: () => void) {
+  loading = true
   try {
     const rows = await getProspectShortlist()
     if (rows.length) {
-      shortlist = rows.map(r => r.data as unknown as ProspectStream)
-        .sort((a, b) => (a.added_at || '').localeCompare(b.added_at || ''))
-      localStorage.setItem('prospectShortlist', JSON.stringify(shortlist))
+      const fromDb = rows.map(r => r.data as unknown as ProspectStream).filter(s => !removedWhileLoading.has(s.user_login))
+      const known = new Set(fromDb.map(s => s.user_login))
+      const extra = [...addedWhileLoading.values()].filter(s => !known.has(s.user_login))
+      shortlist = [...fromDb, ...extra].sort((a, b) => (a.added_at || '').localeCompare(b.added_at || ''))
+      writeLocal()
     } else if (shortlist.length) {
-      saveShortlist()
+      persistAdded(shortlist) // primeira vez com banco vazio: só acrescenta, nunca apaga
     }
     onLoaded()
   } catch { /* sem banco: segue com a lista do navegador */ }
+  finally { loading = false; addedWhileLoading.clear(); removedWhileLoading.clear() }
 }
 
 // Texto agrupado por país para copiar e colar.

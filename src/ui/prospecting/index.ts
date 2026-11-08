@@ -5,9 +5,10 @@ import { showToast, confirmAction } from '../../utils'
 import { streamers } from '../../state'
 import { prospectingHtml, getElements, type Els } from './layout'
 import { searchCategoriesCached, isCategoryCached, findCachedCategories } from './categories'
-import { shortlist, setShortlist, saveShortlist, loadShortlistFromDb, formatShortlistForCopy } from './shortlist'
+import { shortlist, setShortlist, persistAdded, persistRemoved, persistCleared, loadShortlistFromDb, formatShortlistForCopy } from './shortlist'
 import { extractEmail } from './email'
 import { ps } from './state'
+import type { ProspectStream } from './types'
 import { getVisibleResults, renderResults, renderShortlist, updateActions } from './render'
 
 export { searchCategoriesCached } from './categories'
@@ -62,7 +63,8 @@ function setupSearch(els: Els) {
 
     // Se digitou algo, busca a categoria
     if (q && !ps.gameId) {
-      const cats = await searchCategoriesCached(q)
+      let cats: Awaited<ReturnType<typeof searchCategoriesCached>>
+      try { cats = await searchCategoriesCached(q) } catch { showToast('Erro ao buscar a categoria', 'error'); return }
       if (!cats.length) { showToast('Categoria não encontrada', 'error'); return }
       const exact = cats.find(c => c.name.toLowerCase() === q.toLowerCase()) || cats[0]
       ps.gameId = exact.id
@@ -110,7 +112,7 @@ function setupResultsTable(els: Els) {
   els.addToListBtn.addEventListener('click', () => {
     const toAdd = ps.results.filter(r => ps.selected.has(r.user_login) && !shortlist.some(s => s.user_login === r.user_login))
     shortlist.push(...toAdd)
-    saveShortlist()
+    persistAdded(toAdd)
     ps.selected.clear()
     renderResults()
     renderShortlist()
@@ -129,16 +131,18 @@ function setupResultsTable(els: Els) {
 
 // Minha Lista: copiar, limpar, adicionar manualmente e remover.
 function setupShortlistActions(els: Els) {
-  els.copyListBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(formatShortlistForCopy(shortlist))
-    showToast(`Lista copiada! (${shortlist.length} streamers)`)
+  els.copyListBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(formatShortlistForCopy(shortlist))
+      showToast(`Lista copiada! (${shortlist.length} streamers)`)
+    } catch { showToast('Não foi possível copiar. Verifique a permissão do navegador.', 'error') }
   })
 
   els.clearListBtn.addEventListener('click', async () => {
     if (!shortlist.length) return
     if (!await confirmAction(`Tem certeza de que deseja apagar os ${shortlist.length} streamers da Minha Lista? Isso não pode ser desfeito.`, 'Apagar lista', { title: 'Limpar Minha Lista?' })) return
     setShortlist([])
-    saveShortlist()
+    persistCleared()
     renderShortlist()
     showToast('Lista limpa!')
   })
@@ -151,8 +155,9 @@ function setupShortlistActions(els: Els) {
     try {
       const u = await fetchTwitchUser(login)
       if (!u) { showToast('Streamer não encontrado'); return }
-      shortlist.push({ user_login: u.login, user_name: u.display_name, viewer_count: 0, game_name: u.game_name || '', email: extractEmail(u.description || ''), description: u.description || '', language: (u.broadcaster_language || '').toLowerCase().split('-')[0] })
-      saveShortlist()
+      const added: ProspectStream = { user_login: u.login, user_name: u.display_name, viewer_count: 0, game_name: u.game_name || '', email: extractEmail(u.description || ''), description: u.description || '', language: (u.broadcaster_language || '').toLowerCase().split('-')[0] }
+      shortlist.push(added)
+      persistAdded([added])
       renderShortlist()
       if (ps.results.length) renderResults()
       showToast(`${u.display_name} adicionado!`)
@@ -165,8 +170,9 @@ function setupShortlistActions(els: Els) {
   els.shortlistBody.addEventListener('click', (e) => {
     const removeBtn = (e.target as HTMLElement).closest('.shortlist-remove') as HTMLElement
     if (removeBtn) {
-      setShortlist(shortlist.filter(s => s.user_login !== removeBtn.dataset.login))
-      saveShortlist()
+      const login = removeBtn.dataset.login!
+      setShortlist(shortlist.filter(s => s.user_login !== login))
+      persistRemoved(login)
       renderShortlist()
       if (ps.results.length) renderResults()
     }

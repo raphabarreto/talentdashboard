@@ -1,18 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { replaceProspectShortlist, confirmAction } = vi.hoisted(() => {
+const { clearProspectShortlist, deleteProspectRow, confirmAction } = vi.hoisted(() => {
   const m = new Map<string, string>()
   Object.defineProperty(globalThis, 'localStorage', { value: { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => { m.set(k, v) } }, configurable: true })
-  return { replaceProspectShortlist: vi.fn().mockResolvedValue(undefined), confirmAction: vi.fn() }
+  return { clearProspectShortlist: vi.fn().mockResolvedValue(undefined), deleteProspectRow: vi.fn().mockResolvedValue(undefined), confirmAction: vi.fn() }
 })
 
-vi.mock('../lib/data', () => ({ getProspectShortlist: vi.fn().mockResolvedValue([]), replaceProspectShortlist, addProspectRow: vi.fn() }))
+vi.mock('../lib/data', () => ({ getProspectShortlist: vi.fn().mockResolvedValue([]), addProspectRows: vi.fn().mockResolvedValue(undefined), clearProspectShortlist, deleteProspectRow, addProspectRow: vi.fn() }))
 vi.mock('../lib/twitch', () => ({ fetchStreamsByGame: vi.fn(), fetchTwitchUser: vi.fn(), searchCategories: vi.fn() }))
 vi.mock('../utils', () => ({ showToast: vi.fn(), confirmAction }))
 
 import { setupProspecting } from '../ui/prospecting'
 import { setShortlist, shortlist } from '../ui/prospecting/shortlist'
-import { langFlag } from '../ui/prospecting/render'
+import { langFlag, renderShortlist } from '../ui/prospecting/render'
 
 const item = (login: string) => ({ user_login: login, user_name: login, viewer_count: 0, game_name: 'VALORANT', email: null, description: '', language: 'pt', added_at: '2026-01-01' })
 
@@ -24,7 +24,7 @@ beforeEach(async () => {
   setupProspecting()
   await flush() // carga inicial da lista (pode gravar a lista do navegador no banco)
   setShortlist([item('a'), item('b')])
-  replaceProspectShortlist.mockClear()
+  clearProspectShortlist.mockClear(); deleteProspectRow.mockClear()
 })
 
 describe('Prospecção', () => {
@@ -38,7 +38,7 @@ describe('Prospecção', () => {
     await flush()
     expect(confirmAction).toHaveBeenCalledOnce()
     expect(shortlist).toHaveLength(2)
-    expect(replaceProspectShortlist).not.toHaveBeenCalled()
+    expect(clearProspectShortlist).not.toHaveBeenCalled()
   })
 
   it('"Limpar lista" confirmado apaga a lista', async () => {
@@ -46,7 +46,16 @@ describe('Prospecção', () => {
     document.getElementById('clearListBtn')!.click()
     await flush()
     expect(shortlist).toHaveLength(0)
-    expect(replaceProspectShortlist).toHaveBeenCalledWith([])
+    expect(clearProspectShortlist).toHaveBeenCalledTimes(1)
+  })
+
+  it('remover um item apaga só aquele item no banco', async () => {
+    renderShortlist()
+    document.querySelector<HTMLElement>('.shortlist-remove[data-login="a"]')!.click()
+    await flush()
+    expect(shortlist.map(s => s.user_login)).toEqual(['b'])
+    expect(deleteProspectRow).toHaveBeenCalledWith('a')
+    expect(clearProspectShortlist).not.toHaveBeenCalled()
   })
 
   it('bandeiras usam ícone (não emoji, que vira "BR" no Windows)', () => {

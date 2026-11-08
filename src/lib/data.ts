@@ -129,16 +129,22 @@ export async function addProspectRow(row: ProspectRow) {
   if (error) throw error
 }
 
-// Grava a lista inteira: upsert dos itens atuais e remove os que saíram.
-export async function replaceProspectShortlist(rows: ProspectRow[]) {
-  if (rows.length) {
-    const { error } = await supabase.from('prospect_shortlist').upsert(rows, { onConflict: 'user_login' })
-    if (error) throw error
-  }
-  const logins = rows.map(r => r.user_login)
-  const del = supabase.from('prospect_shortlist').delete()
-  const { error: delErr } = logins.length
-    ? await del.not('user_login', 'in', `(${logins.map(l => `"${l.replace(/"/g, '')}"`).join(',')})`)
-    : await del.neq('user_login', '')
-  if (delErr) throw delErr
+// Grava vários itens de uma vez (upsert). Nunca apaga nada.
+export async function addProspectRows(rows: ProspectRow[]) {
+  if (!rows.length) return
+  const { error } = await supabase.from('prospect_shortlist').upsert(rows, { onConflict: 'user_login' })
+  if (error) throw error
+}
+
+// Remove só o item pedido. (A lista nunca é "regravada por inteiro": uma cópia desatualizada no navegador
+// não pode apagar do banco itens que ela desconhece.)
+export async function deleteProspectRow(userLogin: string) {
+  const { error } = await supabase.from('prospect_shortlist').delete().eq('user_login', userLogin)
+  if (error) throw error
+}
+
+// Limpar a Minha Lista (ação explícita, já confirmada pelo usuário).
+export async function clearProspectShortlist() {
+  const { error } = await supabase.from('prospect_shortlist').delete().neq('user_login', '')
+  if (error) throw error
 }

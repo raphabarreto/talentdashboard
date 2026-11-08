@@ -8,6 +8,10 @@ describe('isEmailAllowed', () => {
   const list = ['a@x.com', 'b@x.com']
   it('aceita e-mail da lista', () => expect(isEmailAllowed('a@x.com', list)).toBe(true))
   it('rejeita e-mail fora da lista', () => expect(isEmailAllowed('z@x.com', list)).toBe(false))
+  it('ignora maiúsculas e espaços na lista e no e-mail', () => {
+    expect(isEmailAllowed('A@X.com', [' a@x.com '])).toBe(true)
+    expect(isEmailAllowed(' b@x.com', list)).toBe(true)
+  })
   it('rejeita vazio/indefinido', () => {
     expect(isEmailAllowed('', [''])).toBe(false)
     expect(isEmailAllowed(undefined, list)).toBe(false)

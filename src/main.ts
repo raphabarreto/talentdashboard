@@ -10,6 +10,8 @@ import { setupNav, setupFiltersAndSort, setupGlobalEvents, placeLookupBar } from
 import { setupStreamersEvents } from './events/streamers'
 import { setupCampaignsEvents } from './events/campaigns'
 import * as Sentry from '@sentry/browser'
+import { showLoadError } from './ui/loadError'
+import { logError } from './lib/logger'
 import './style.css'
 
 // Inicializar Sentry em produção
@@ -35,9 +37,16 @@ function renderAll() {
 }
 
 async function init() {
-  const session = await getSession()
-  if (!session) { window.location.href = '/login.html'; return }
-  await loadData()
+  // Só esta parte depende da rede: se falhar, mostra o aviso com "Tentar novamente" (nada de tela eterna).
+  try {
+    const session = await getSession()
+    if (!session) { window.location.href = '/login.html'; return }
+    await loadData()
+  } catch (err) {
+    logError(err, 'Falha no carregamento inicial')
+    showLoadError(init)
+    return
+  }
   setupNav()
   setupFiltersAndSort()
   setupGlobalEvents()

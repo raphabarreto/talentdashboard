@@ -132,7 +132,7 @@ export function openDetailsModal(c: typeof campaigns[number]) {
 }
 
 // Eventos do modal de detalhes (filtros, busca e troca de status).
-export function setupDetailsModal() {
+export function setupDetailsModal(callbacks: { renderAll?: () => void } = {}) {
   const closeDetails = () => document.getElementById('campaignDetailsModal')!.classList.add('hidden')
   document.getElementById('closeDetailsModal')?.addEventListener('click', closeDetails)
   document.getElementById('closeDetailsX')?.addEventListener('click', closeDetails)
@@ -169,6 +169,7 @@ export function setupDetailsModal() {
     const idx = campaigns.findIndex(c => c.campaign_streamers?.some(s => s.id === id))
     if (idx < 0) return
     const s = campaigns[idx].campaign_streamers!.find(s => s.id === id)!
+    const previousStatus = s.contact_status
     s.contact_status = newStatus
 
     const c = campaigns[idx]
@@ -176,7 +177,14 @@ export function setupDetailsModal() {
     renderCampaigns()
 
     try { await updateContactStatus(id, newStatus) }
-    catch { showToast('Erro ao salvar status', 'error'); return }
+    catch {
+      // Não gravou: a tela volta ao status que realmente está no banco.
+      s.contact_status = previousStatus
+      renderDetailsList(c)
+      renderCampaigns()
+      showToast('Erro ao salvar status', 'error')
+      return
+    }
 
     // Auto-register streamer when confirmed
     let autoRegisterWarning = false
@@ -185,6 +193,7 @@ export function setupDetailsModal() {
         try {
           const { lastLiveSaved } = await registerStreamer(await prepareStreamerData(s.streamer_name))
           setStreamers(await getStreamers())
+          callbacks.renderAll?.() // mostra o streamer recém-cadastrado na Visão Geral e na Tabela de Dados
           if (!lastLiveSaved) { autoRegisterWarning = true; showToast('Streamer cadastrado, mas sem data de última live', 'error') }
         } catch (err) {
           logError(err, 'Cadastro automático ao confirmar falhou')

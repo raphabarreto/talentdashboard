@@ -28,12 +28,12 @@ export function sanitizeCurrencyInput(value: string): string {
   return sanitized
 }
 
-export function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
-  let timeout: number
-  return ((...args: any[]) => {
+export function debounce<A extends unknown[]>(fn: (...args: A) => void, delay: number): (...args: A) => void {
+  let timeout: ReturnType<typeof setTimeout>
+  return (...args: A) => {
     clearTimeout(timeout)
     timeout = setTimeout(() => fn(...args), delay)
-  }) as T
+  }
 }
 
 export function isActive(s: Streamer): boolean {
@@ -41,6 +41,7 @@ export function isActive(s: Streamer): boolean {
   return Date.now() - new Date(s.last_live_at).getTime() < ACTIVE_STREAMER_DAYS * 24 * 60 * 60 * 1000
 }
 
+let toastTimer: ReturnType<typeof setTimeout> | undefined
 export function showToast(msg: string, type: 'success' | 'error' = 'success') {
   const toast = document.getElementById('toast')!
   const toastMsg = document.getElementById('toast-message')!
@@ -48,7 +49,8 @@ export function showToast(msg: string, type: 'success' | 'error' = 'success') {
   toastMsg.textContent = msg
   toast.classList.remove('translate-y-[200%]')
   toast.classList.add('translate-y-0')
-  setTimeout(() => { toast.classList.remove('translate-y-0'); toast.classList.add('translate-y-[200%]') }, 3000)
+  clearTimeout(toastTimer) // um aviso novo reinicia a contagem (o anterior não o esconde antes da hora)
+  toastTimer = setTimeout(() => { toast.classList.remove('translate-y-0'); toast.classList.add('translate-y-[200%]') }, 3000)
 }
 
 export interface ConfirmOptions {
