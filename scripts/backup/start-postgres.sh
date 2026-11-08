@@ -30,6 +30,9 @@ if [ "$READY" != 1 ]; then echo "::error::Postgres do Supabase nao aceitou conex
 
 # auth.jwt()/auth.uid()/auth.role() sao criadas pelo servico de autenticacao, nao pela imagem do Postgres.
 # Aplicamos as migrations dele (o servico em si nao fica rodando).
+# Banco descartável: garante a senha do papel que o serviço de autenticação usa.
+psql -X -h localhost -U supabase_admin -Atqc "alter role supabase_auth_admin with password 'postgres'" >/dev/null 2>&1 \
+  || psql -X -h localhost -U postgres -Atqc "alter role supabase_auth_admin with password 'postgres'" >/dev/null
 LOG="$(mktemp)"
 if ! docker run --rm --network host \
   -e GOTRUE_DB_DRIVER=postgres -e GOTRUE_DB_NAMESPACE=auth \
