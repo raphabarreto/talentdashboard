@@ -112,7 +112,8 @@ Auditoria técnica CONCLUÍDA em 07/11/2026 e **em operação** (ver seção aba
 
 ## Próximo passo sugerido
 1. Aguardar novos ajustes do usuário; revisão periódica com `npm audit`.
-2. Itens opcionais da auditoria (P3-06, P3-08, P3-09 e outros listados em "Riscos residuais") só se o usuário pedir.
+2. **Recomendação futura (não executada): estratégia de backup do Supabase.** O projeto Dash Lugs não tem backup automático (sem PITR; lista de backups vazia em 07/11/2026). Opções a avaliar: plano com backups diários/PITR, ou rotina de exportação periódica (leitura) das tabelas `campaigns`, `campaign_streamers`, `streamers`, `prospect_shortlist` guardada fora do banco. Decidir com o usuário; exige conta/custo ou novo workflow.
+3. Itens opcionais da auditoria (P3-06, P3-08, P3-09 e outros listados em "Riscos residuais") só se o usuário pedir.
 
 ## Feito em 07/11
 - Ferramentas de teste (só dev): `vitest`/`@vitest/ui` 4.1.9→4.1.12 e `happy-dom` 20→21.0.4. `npm audit`: 0 vulnerabilidades (antes 4). Sem versão maior do vitest. [ok] testes 101/101, `tsc`, build. Reversão: revert do PR.
