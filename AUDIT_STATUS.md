@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-02. Base: main @ 06d2b85. Sem segredos neste arquivo.
+Atualizado em 2026-11-08. Base: main @ 517412f. Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -97,7 +97,7 @@ Baixa
 3. Migrations: `migration_*.sql` da raiz movidos para `docs/migrations-aplicadas/` (histórico; fora de `supabase/migrations/` de propósito, para a CLI não reaplicar). Itens 1 e 2 feitos.
 
 ## Tarefa atual
-Nenhuma em andamento. Sessão encerrada em 07/11: main @ bb1e721 igual ao remoto; último deploy de produção (PR #87) com sucesso; `npm audit` 0 vulnerabilidades; testes 135/135. Único PR aberto: o deste fechamento (só docs, sem merge, aguardando autorização).
+Nenhuma em andamento. Sessão encerrada em 08/11: main @ 517412f igual ao remoto; último deploy de produção (PR #98) com sucesso; `npm audit` 0 vulnerabilidades; testes 181/181, `tsc` e build ok. Único PR aberto: o deste fechamento (só docs, sem merge, aguardando autorização do usuário).
 
 ## Feito em 03/11
 - Teste de XSS automatizado (`src/__tests__/xss-render.test.ts`): nomes maliciosos em cards, tabela e campanhas não viram código. Corrigida a inicial do nome no card da Visão Geral, que não era escapada (PR #64).
@@ -105,16 +105,18 @@ Nenhuma em andamento. Sessão encerrada em 07/11: main @ bb1e721 igual ao remoto
 - Opcionais da auditoria encerrados (PR #65).
 
 ## Pendências (a verificar, sem urgência)
-- 403 direto do `twitch-proxy` com conta fora da allowlist: precisa de uma segunda conta Google e das chaves de produção; o login já barra essas contas.
-- Visual a conferir no navegador (só desktop, o usuário não usa celular): detalhes da campanha (ícone do olho) em janela estreita é opcional.
-- Ambiente local limpo (07/11): servidor de teste desligado, `.env` e `.vercel/` removidos, CLI da Vercel deslogada (continua instalada). Para testar de novo: recriar `.env` com as 3 variáveis `VITE_*` públicas (as da Vercel são "sensíveis" e não vêm no `vercel env pull`).
-- Túnel do Sentry: [usuário] confirmado em produção (08/11): com bloqueador de anúncios ligado, um erro disparado no console do navegador ("teste sentry tunel real") chegou ao Sentry em ~20 s (TALENTDASHBOARD-4). Os itens de teste podem ser resolvidos/ignorados no Sentry.
+- [usuário] Usar o modal Gerenciar Campanha na OperaGX (45 streamers) em produção e avisar se algo ficar apertado/estranho (08/11: grupos por status, cartões compactos, "Marcar contato").
+- [usuário] Marcar como resolvidos no Sentry os itens de teste ("teste sentry 2", "Teste do túnel…", "teste sentry tunel real").
+- 403 direto do `twitch-proxy` com conta fora da allowlist: precisa de uma segunda conta Google; o login já barra essas contas. Baixo risco.
+- Atualizações pequenas de rotina (opcional, PR próprio): `@supabase/supabase-js` 2.118→2.119 (também fixado nas Edge Functions, tratar à parte), `tailwindcss`/`@tailwindcss/postcss` 4.3.4→4.3.5. Versões grandes (vite 8, typescript 7, vitest 5, sentry 11): não mexer agora.
+- Ambiente local limpo (08/11): servidor de teste desligado e `.env` removido. Para testar de novo: recriar `.env` com as 3 variáveis `VITE_*` públicas (extraídas do bundle de produção; as da Vercel são "sensíveis") e `npm run dev`.
 - Sessões logadas nesta máquina: Supabase CLI (`npx supabase`, conta do usuário) e `gh`. Deslogar o Supabase quando não for usar (`npx supabase logout`); novo login precisa ser feito pelo usuário num PowerShell separado.
+- Usuário usa só PC: não listar conferências de celular.
 
 ## Próximo passo sugerido
 1. Mesclar o PR de fechamento da sessão (só `AUDIT_STATUS.md`) quando o usuário autorizar.
-2. Sem conferências obrigatórias pendentes.
-4. Sem item obrigatório além disso: aguardar novas features/ajustes do usuário; revisão periódica com `npm audit`; deslogar o Supabase CLI se não for usar.
+2. Opcional: PR de rotina com as atualizações pequenas (supabase-js, tailwind), com testes/tsc/build e reversão descrita.
+3. Aguardar novos ajustes do usuário; revisão periódica com `npm audit`; deslogar o Supabase CLI se não for usar.
 
 ## Feito em 07/11
 - Ferramentas de teste (só dev): `vitest`/`@vitest/ui` 4.1.9→4.1.12 e `happy-dom` 20→21.0.4. `npm audit`: 0 vulnerabilidades (antes 4). Sem versão maior do vitest. [ok] testes 101/101, `tsc`, build. Reversão: revert do PR.
