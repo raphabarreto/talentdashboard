@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  TABLES, buildBackupQuery, extractBackup, extractBackupText, validateBackup, diffTables, diffOk, canonical,
+  TABLES, buildBackupQuery, extractBackup, extractBackupText, validateBackup, diffTables, diffOk, normalizeDecimal, normalizeTimestamp, parseLossless,
   brasiliaDate, artifactNameFor, sha256, buildManifest, evaluateCandidate, parsePacketKeyIds, parseEncryptionKeyIds,
 } from '../../scripts/backup/lib.mjs'
 import { createFixture } from '../../scripts/backup/fixture.mjs'
@@ -72,7 +72,13 @@ describe('backup: validação', () => {
   })
 })
 
-describe('backup: comparação com o banco restaurado', () => {
+describe('backup: comparação exata com o banco restaurado', () => {
+  const PRECISO = '123456789012345.123456789012'
+  // documento como o fluxo real o lê: texto -> parseLossless (nenhum número passa por double)
+  const docText = (mut: (t: string) => string = (t) => t) => mut(JSON.stringify(createFixture()).replace('"campaign_value":2001,', `"campaign_value":${PRECISO},`))
+  const diff = (a: string, b: string) => diffTables(parseLossless(a), parseLossless(b))
+  const changed = (d: ReturnType<typeof diff>) => !diffOk(d)
+
   it('idêntico mesmo com fuso, escala de número e ordem de chaves diferentes', () => {
     const a = createFixture()
     const b = clone(a)
@@ -91,11 +97,79 @@ describe('backup: comparação com o banco restaurado', () => {
     expect(diffTables(a, d).campaigns.different).toBe(1)
     expect(JSON.stringify(diffTables(a, b))).not.toContain('streamer_ficticio')
   })
-  it('canonical normaliza timestamps com fuso', () => {
-    expect(canonical('2026-01-05T09:00:00-03:00')).toBe('2026-01-05T12:00:00.000000Z')
-    expect(canonical('2026-01-05T12:00:00.123456+00:00')).toBe('2026-01-05T12:00:00.123456Z')
-    expect(canonical('2026-01-05T12:00:00.123456+00:00')).not.toBe(canonical('2026-01-05T12:00:00.123457+00:00'))
-    expect(canonical('texto')).toBe('texto')
+
+  describe('valores financeiros (numeric) sem perda de precisão', () => {
+    it('Number do JavaScript NÃO distingue estes valores; a comparação exata distingue', () => {
+      const x = '123456789012345.123456789012', y = '123456789012345.123456789013'
+      expect(Number(x)).toBe(Number(y)) // prova de que a estratégia antiga mascararia a diferença
+      expect(changed(diff(docText(), docText((t) => t.replace(x, y))))).toBe(true)
+    })
+    it('diferença só no último dígito de valores monetários é detectada', () => {
+      expect(changed(diff(docText(), docText((t) => t.replace('"payment":150.5,', '"payment":150.51,'))))).toBe(true)
+      expect(changed(diff(docText(), docText((t) => t.replace('"total_received":1000.5', '"total_received":1000.49'))))).toBe(true)
+      expect(changed(diff(docText(), docText((t) => t.replace('"payment":99999999.99', '"payment":99999999.98'))))).toBe(true)
+      expect(changed(diff(docText(), docText((t) => t.replace('"payment":0.01', '"payment":0.02'))))).toBe(true)
+    })
+    it('mesma quantia em outra representação NÃO é diferença (zeros à direita, expoente)', () => {
+      expect(changed(diff(docText(), docText((t) => t.replace(PRECISO, `${PRECISO}000`))))).toBe(false)
+      expect(changed(diff(docText(), docText((t) => t.replace('"payment":150.5,', '"payment":150.50,'))))).toBe(false)
+      expect(changed(diff(docText(), docText((t) => t.replace('"payment":300,', '"payment":3e2,'))))).toBe(false)
+      expect(changed(diff(docText(), docText((t) => t.replace('"payment":300,', '"payment":300.00,'))))).toBe(false)
+    })
+    it('normalizeDecimal: casos extremos', () => {
+      expect(normalizeDecimal('150.50')).toBe(normalizeDecimal('1.505e2'))
+      expect(normalizeDecimal('0.10')).toBe(normalizeDecimal('0.1'))
+      expect(normalizeDecimal('-0')).toBe('0')
+      expect(normalizeDecimal('000')).toBe('0')
+      expect(normalizeDecimal('-12.30')).not.toBe(normalizeDecimal('12.30'))
+      expect(normalizeDecimal('0.01')).not.toBe(normalizeDecimal('0.1'))
+      expect(normalizeDecimal('abc')).toBeNull()
+    })
+    it('parseLossless guarda o texto exato de cada número', () => {
+      const d = parseLossless('{"a":123456789012345.123456789012,"b":[1.50,2e3]}')
+      expect(d.a).toEqual({ $num: normalizeDecimal('123456789012345.123456789012') })
+      expect(d.b[0]).toEqual(d.b[0]) // marcador estável
+    })
+  })
+
+  describe('timestamps (timestamptz) por instante, com microssegundos e qualquer fuso', () => {
+    const ts = (v: string) => normalizeTimestamp(v)
+    it('mesmo instante em formatos diferentes normaliza igual', () => {
+      const base = '2026-01-05T12:00:00.123456Z'
+      for (const v of [
+        '2026-01-05T12:00:00.123456+00:00', '2026-01-05 12:00:00.123456+00', '2026-01-05T09:00:00.123456-03:00',
+        '2026-01-05T17:30:00.123456+05:30', '2026-01-05T17:30:00.123456+0530', '2026-01-05T08:30:00.123456-03:30',
+        '2026-01-05T08:30:00.123456-0330', '2026-01-05T12:00:00.123456000Z', '2026-01-05T12:53:28.123456+00:53:28',
+      ]) expect(ts(v)).toBe(base)
+    })
+    it('cruzando a virada do dia/ano', () => {
+      expect(ts('2026-01-01T02:00:00+05:30')).toBe('2025-12-31T20:30:00.000000Z')
+      expect(ts('2025-12-31T23:59:59.999999-03:00')).toBe('2026-01-01T02:59:59.999999Z')
+    })
+    it('diferença sutil (1 microssegundo, 1 segundo, 1 minuto de fuso) é detectada', () => {
+      expect(ts('2026-01-05T12:00:00.123456Z')).not.toBe(ts('2026-01-05T12:00:00.123457Z'))
+      expect(ts('2026-01-05T12:00:00.000000Z')).not.toBe(ts('2026-01-05T12:00:01.000000Z'))
+      expect(ts('2026-01-05T12:00:00+05:30')).not.toBe(ts('2026-01-05T12:00:00+05:29'))
+      expect(ts('2026-01-05T12:00:00+05:30')).not.toBe(ts('2026-01-05T12:00:00+05:00'))
+    })
+    it('não reconhece o que não é horário', () => {
+      expect(ts('2026-01-05')).toBeNull()
+      expect(ts('texto qualquer')).toBeNull()
+      expect(ts(123 as unknown as string)).toBeNull()
+    })
+    it('diffTables: mesmo instante passa; qualquer alteração real falha', () => {
+      const t0 = '2026-03-01T00:00:00.123456+00:00'
+      expect(changed(diff(docText(), docText((t) => t.split(t0).join('2026-02-28T21:00:00.123456-03:00'))))).toBe(false)
+      expect(changed(diff(docText(), docText((t) => t.split(t0).join('2026-03-01T05:30:00.123456+05:30'))))).toBe(false)
+      expect(changed(diff(docText(), docText((t) => t.split(t0).join('2026-03-01T00:00:00.123457+00:00'))))).toBe(true)
+      expect(changed(diff(docText(), docText((t) => t.split(t0).join('2026-03-01T00:00:00.123456+00:01'))))).toBe(true)
+      expect(changed(diff(docText(), docText((t) => t.split(t0).join('2026-03-01T00:00:01.123456+00:00'))))).toBe(true)
+    })
+    it('texto parecido com horário fora de colunas timestamptz é comparado literalmente', () => {
+      const a = docText((t) => t.replace('"tags":["x","y"]', '"tags":["x","y"],"quando":"2026-01-05T12:00:00+00:00"'))
+      const b = docText((t) => t.replace('"tags":["x","y"]', '"tags":["x","y"],"quando":"2026-01-05T09:00:00-03:00"'))
+      expect(changed(diff(a, b))).toBe(true)
+    })
   })
 })
 

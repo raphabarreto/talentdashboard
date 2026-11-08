@@ -98,30 +98,80 @@ export function validateBackup(doc) {
   return { ok: errors.length === 0, errors, warnings, counts }
 }
 
-// ---- comparação backup original x banco restaurado (independe do fuso e da formatação de números) ----
-const ISO_TS = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}(:?\d{2})?)$/
-export function canonical(v) {
-  if (Array.isArray(v)) return v.map(canonical)
-  if (isObj(v)) return Object.fromEntries(Object.keys(v).sort().map((k) => [k, canonical(v[k])]))
-  if (typeof v === 'string' && ISO_TS.test(v)) {
-    // normaliza para UTC preservando os microssegundos (Date só guarda milissegundos)
-    const m = v.replace(' ', 'T').replace(/([+-]\d{2})$/, '$1:00').match(/^(.*?T\d{2}:\d{2}:\d{2})(?:\.(\d+))?(.*)$/)
-    const d = new Date(`${m[1]}${m[3]}`)
-    return Number.isNaN(d.getTime()) ? v : `${d.toISOString().slice(0, 19)}.${(m[2] ?? '').padEnd(6, '0').slice(0, 6)}Z`
-  }
-  return v
+// ---- comparação backup original x banco restaurado ----
+// Exata: números comparados por valor decimal (todos os dígitos), horários por instante (com microssegundos).
+// Só as colunas timestamptz conhecidas são normalizadas; qualquer outro texto (inclusive dentro de jsonb) é comparado literalmente.
+export const TIMESTAMPTZ_COLUMNS = {
+  streamers: ['created_at', 'last_live_at'],
+  campaigns: ['created_at'],
+  prospect_shortlist: ['created_at'],
+  streamer_history: ['created_at'],
 }
 
-// Devolve só números (nunca valores) para poder ir ao log público.
+// Forma canônica de um número decimal: mesma quantidade => mesma string ("150.50" = "150.5" = "1.505e2").
+export function normalizeDecimal(src) {
+  const m = /^(-?)(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/.exec(String(src))
+  if (!m) return null
+  let digits = (m[2] + (m[3] ?? '')).replace(/^0+/, '')
+  let exp = Number(m[4] ?? 0) - (m[3]?.length ?? 0)
+  if (digits === '') return '0'
+  const zeros = /0*$/.exec(digits)[0].length
+  if (zeros) { digits = digits.slice(0, -zeros); exp += zeros }
+  return `${m[1]}${digits}e${exp}`
+}
+
+// JSON.parse que NÃO passa os números por double: usa o texto original de cada número (reviver com context.source, Node >= 22).
+export function parseLossless(text) {
+  if (JSON.parse('1', (_k, v, c) => c?.source ?? v) !== '1') throw new Error('Node sem suporte a context.source em JSON.parse; use Node >= 22')
+  return JSON.parse(text, (_k, v, ctx) => (typeof v === 'number' ? { $num: normalizeDecimal(ctx.source) ?? ctx.source } : v))
+}
+
+// Horário -> instante em UTC com microssegundos ("YYYY-MM-DDTHH:MM:SS.ffffffZ"). Aceita 'Z', +HH, +HH:MM, +HHMM e +HH:MM:SS.
+const TS_RE = /^(\d{4,})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}(?::?\d{2}(?::?\d{2})?)?)$/
+export function normalizeTimestamp(v) {
+  const m = typeof v === 'string' ? TS_RE.exec(v) : null
+  if (!m) return null
+  const [, y, mo, d, h, mi, s, frac = '', off] = m
+  let offSeconds = 0
+  if (off !== 'Z') {
+    const digits = off.slice(1).replace(/:/g, '')
+    offSeconds = (off[0] === '-' ? -1 : 1) * (Number(digits.slice(0, 2)) * 3600 + Number(digits.slice(2, 4) || 0) * 60 + Number(digits.slice(4, 6) || 0))
+  }
+  const dt = new Date(0)
+  dt.setUTCFullYear(Number(y), Number(mo) - 1, Number(d))
+  dt.setUTCHours(Number(h), Number(mi), Number(s), 0)
+  const ms = dt.getTime() - offSeconds * 1000
+  if (Number.isNaN(ms)) return null
+  let f = frac.padEnd(6, '0')
+  while (f.length > 6 && f.endsWith('0')) f = f.slice(0, -1)
+  return `${new Date(ms).toISOString().slice(0, 19)}.${f}Z`
+}
+
+export function canonicalValue(v) {
+  if (Array.isArray(v)) return v.map(canonicalValue)
+  if (typeof v === 'number') return { $num: normalizeDecimal(String(v)) ?? String(v) }
+  if (isObj(v)) return Object.fromEntries(Object.keys(v).sort().map((k) => [k, canonicalValue(v[k])]))
+  return v
+}
+export function canonicalRow(table, row) {
+  const r = { ...row }
+  for (const col of TIMESTAMPTZ_COLUMNS[table] ?? []) {
+    const n = normalizeTimestamp(r[col])
+    if (n) r[col] = n
+  }
+  return canonicalValue(r)
+}
+
+// Devolve só números (nunca valores) para poder ir ao log público. Os documentos devem vir de parseLossless (ou ser JS comum em testes).
 export function diffTables(original, restored) {
   const result = {}
   for (const t of TABLES) {
     const a = original?.tables?.[t] ?? []
     const b = restored?.tables?.[t] ?? []
     const pk = pkOf(t)
-    const byKey = new Map(b.map((r) => [r[pk], JSON.stringify(canonical(r))]))
+    const byKey = new Map(b.map((r) => [r[pk], JSON.stringify(canonicalRow(t, r))]))
     let different = 0
-    for (const r of a) if (byKey.get(r[pk]) !== JSON.stringify(canonical(r))) different++
+    for (const r of a) if (byKey.get(r[pk]) !== JSON.stringify(canonicalRow(t, r))) different++
     result[t] = { original: a.length, restored: b.length, different }
   }
   return result

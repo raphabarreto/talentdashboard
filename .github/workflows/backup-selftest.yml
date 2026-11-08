@@ -49,6 +49,24 @@ jobs:
       - name: Validar
         run: node scripts/backup/validate.mjs "$RUNNER_TEMP/backup.json"
 
+      - name: Comparação exata - detecta diferença no último dígito e horários sutis, aceita o mesmo valor/instante
+        run: |
+          B="$RUNNER_TEMP/backup.json"; V="$RUNNER_TEMP/var.json"
+          P='123456789012345.123456789012'; T0='2026-03-01T00:00:00.123456+00:00'
+          grep -q "$P" "$B" && grep -q "$T0" "$B" || { echo "::error::fixture sem os valores de teste"; exit 1; }
+          node scripts/backup/compare.mjs "$B" "$B" >/dev/null || { echo "::error::arquivo diferente de si mesmo"; exit 1; }
+          same() { sed "s/$1/$2/g" "$B" > "$V"; node scripts/backup/compare.mjs "$B" "$V" >/dev/null 2>&1; }
+          # devem PASSAR (mesmo valor/instante, outra representação)
+          same "$P" "${P}000"                              || { echo "::error::zeros à direita viraram diferença"; exit 1; }
+          same "$T0" '2026-02-28T21:00:00.123456-03:00'     || { echo "::error::mesmo instante em outro fuso virou diferença"; exit 1; }
+          same "$T0" '2026-03-01T05:30:00.123456+05:30'     || { echo "::error::offset com minutos não normalizou"; exit 1; }
+          # devem FALHAR (alteração real)
+          if same "$P" '123456789012345.123456789013'; then echo "::error::último dígito de numeric NÃO foi detectado"; exit 1; fi
+          if same "$T0" '2026-03-01T00:00:00.123457+00:00'; then echo "::error::1 microssegundo NÃO foi detectado"; exit 1; fi
+          if same "$T0" '2026-03-01T00:00:00.123456+00:01'; then echo "::error::1 minuto de fuso NÃO foi detectado"; exit 1; fi
+          rm -f "$V"
+          echo "comparação exata validada (6 cenários)"
+
       - name: Restaurar em Postgres do Supabase e conferir (RLS incluída)
         run: bash scripts/backup/restore-test.sh "$RUNNER_TEMP/backup.json"
 
