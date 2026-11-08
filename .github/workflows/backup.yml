@@ -1,0 +1,117 @@
+name: Backup Supabase
+
+# ETAPA 1: SOMENTE EXECUÇÃO MANUAL. Nenhum agendamento está ativo.
+# Quando o dono autorizar, descomente o bloco "schedule" (06h e 18h de Brasília = 09:00 e 21:00 UTC).
+# Ver docs/BACKUP.md (limitações, recuperação, o que fica fora do backup).
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Ignorar a checagem "já existe backup de hoje" e criar outro'
+        type: boolean
+        default: false
+  # schedule:
+  #   - cron: '0 9 * * *'   # 06h Brasília
+  #   - cron: '0 21 * * *'  # 18h Brasília
+
+# Mínimo necessário: ler o código e listar/ler artifacts. Sem permissão de escrita no repositório.
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: backup-supabase
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Já existe um backup válido de hoje?
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BACKUP_GPG_PUBLIC_KEY: ${{ vars.BACKUP_GPG_PUBLIC_KEY }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          if [ "$FORCE" = "true" ]; then echo "exists=false" >> "$GITHUB_OUTPUT"; echo "forçado: ignorando a checagem"; exit 0; fi
+          node scripts/backup/check-existing.mjs
+
+  backup:
+    needs: check
+    if: needs.check.outputs.exists != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: supabase/postgres:17.6.1.178
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -h localhost"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+    env:
+      BACKUP_GPG_PUBLIC_KEY: ${{ vars.BACKUP_GPG_PUBLIC_KEY }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 0. Definir a data do backup (fuso de Brasília)
+        id: date
+        run: |
+          D="$(node -e 'import("./scripts/backup/lib.mjs").then(m=>console.log(m.brasiliaDate()))')"
+          echo "d=$D" >> "$GITHUB_OUTPUT"
+          echo "BACKUP_DATE=$D" >> "$GITHUB_ENV"
+
+      - name: 1. Ler as 6 tabelas (consulta única, somente leitura)
+        env:
+          SUPABASE_BACKUP_TOKEN: ${{ secrets.SUPABASE_BACKUP_TOKEN }}
+        run: node scripts/backup/fetch.mjs "$RUNNER_TEMP/backup.json"
+
+      - name: 2. Validar estrutura, contagens e relacionamentos
+        run: node scripts/backup/validate.mjs "$RUNNER_TEMP/backup.json"
+
+      - name: 3. Teste de restauração (Postgres descartável com as dependências reais do Supabase)
+        run: scripts/backup/restore-test.sh "$RUNNER_TEMP/backup.json"
+
+      - name: 4. Criptografar com a chave pública e gerar manifesto
+        run: node scripts/backup/seal.mjs "$RUNNER_TEMP/backup.json" "$RUNNER_TEMP/out"
+
+      - name: 5. Publicar artifact (30 dias)
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ steps.date.outputs.d }}
+          path: ${{ runner.temp }}/out/
+          retention-days: 30
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: 6. Confirmar que o GitHub guardou o artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+        run: |
+          NAME="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).name)' "$RUNNER_TEMP/out/manifest.json")"
+          EXPECTED_NAME="$NAME" node scripts/backup/verify-upload.mjs
+
+      - name: Apagar o JSON em texto puro do disco do runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/backup.json"
