@@ -57,7 +57,7 @@ jobs:
         run: node scripts/backup/validate.mjs "$RUNNER_TEMP/backup.json"
 
       - name: Restaurar em Postgres do Supabase e conferir (RLS incluída)
-        run: scripts/backup/restore-test.sh "$RUNNER_TEMP/backup.json"
+        run: bash scripts/backup/restore-test.sh "$RUNNER_TEMP/backup.json"
 
       - name: Criptografar
         run: node scripts/backup/seal.mjs "$RUNNER_TEMP/backup.json" "$RUNNER_TEMP/out"
