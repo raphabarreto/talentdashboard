@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Streamer, Campaign, CampaignStreamer, ContactStatus } from '../types/index'
+import { diffCampaignStreamers, type ExistingRow } from './campaignSync'
 
 // --- STREAMERS ---
 export async function getStreamers() {
@@ -65,22 +66,41 @@ export async function addCampaign(campaign: Omit<Campaign, 'id' | 'created_at' |
   if (streamers.length > 0) {
     const rows = streamers.map(s => ({ ...s, campaign_id: data.id }))
     const { error: sErr } = await supabase.from('campaign_streamers').insert(rows)
-    if (sErr) throw sErr
+    if (sErr) {
+      // A campanha acabou de nascer e não tem mais nada ligado a ela: desfaz a criação para que
+      // tentar de novo não gere uma campanha duplicada e vazia.
+      const { error: undoErr } = await supabase.from('campaigns').delete().eq('id', data.id)
+      if (undoErr) throw new Error('A campanha foi criada, mas os streamers não puderam ser salvos. Abra a campanha e adicione-os novamente.')
+      throw sErr
+    }
   }
   return data as Campaign
 }
 
+// Atualiza os dados da campanha e, se vierem streamers, sincroniza a lista por diferença.
+// Ordem pensada para nunca perder dados: o que é novo entra antes; o que saiu só é removido por último.
+// Qualquer erro interrompe e é lançado (a tela nunca anuncia sucesso de algo que não foi gravado);
+// repetir o salvamento é seguro, porque a diferença é recalculada a cada tentativa.
 export async function updateCampaign(id: string, campaign: Partial<Campaign>, streamers?: Omit<CampaignStreamer, 'id' | 'campaign_id'>[]) {
   const { error } = await supabase.from('campaigns').update(campaign).eq('id', id)
   if (error) throw error
-  if (streamers) {
-    const { data: existing } = await supabase.from('campaign_streamers').select('streamer_name, contact_status').eq('campaign_id', id)
-    const statusMap = new Map((existing || []).map(e => [e.streamer_name.toLowerCase(), e.contact_status]))
-    await supabase.from('campaign_streamers').delete().eq('campaign_id', id)
-    if (streamers.length > 0) {
-      const rows = streamers.map(s => ({ ...s, campaign_id: id, contact_status: s.contact_status || statusMap.get(s.streamer_name.toLowerCase()) || 'pendente' }))
-      await supabase.from('campaign_streamers').insert(rows)
-    }
+  if (!streamers) return
+
+  const { data: existing, error: readErr } = await supabase.from('campaign_streamers').select('id, streamer_name, contact_status').eq('campaign_id', id)
+  if (readErr) throw readErr
+  const diff = diffCampaignStreamers((existing || []) as ExistingRow[], streamers)
+
+  if (diff.toInsert.length) {
+    const { error: insErr } = await supabase.from('campaign_streamers').insert(diff.toInsert.map(s => ({ ...s, campaign_id: id })))
+    if (insErr) throw insErr
+  }
+  for (const u of diff.toUpdate) {
+    const { error: upErr } = await supabase.from('campaign_streamers').update(u.patch).eq('id', u.id)
+    if (upErr) throw upErr
+  }
+  if (diff.toDeleteIds.length) {
+    const { error: delErr } = await supabase.from('campaign_streamers').delete().in('id', diff.toDeleteIds)
+    if (delErr) throw delErr
   }
 }
 
@@ -109,16 +129,22 @@ export async function addProspectRow(row: ProspectRow) {
   if (error) throw error
 }
 
-// Grava a lista inteira: upsert dos itens atuais e remove os que saíram.
-export async function replaceProspectShortlist(rows: ProspectRow[]) {
-  if (rows.length) {
-    const { error } = await supabase.from('prospect_shortlist').upsert(rows, { onConflict: 'user_login' })
-    if (error) throw error
-  }
-  const logins = rows.map(r => r.user_login)
-  const del = supabase.from('prospect_shortlist').delete()
-  const { error: delErr } = logins.length
-    ? await del.not('user_login', 'in', `(${logins.map(l => `"${l.replace(/"/g, '')}"`).join(',')})`)
-    : await del.neq('user_login', '')
-  if (delErr) throw delErr
+// Grava vários itens de uma vez (upsert). Nunca apaga nada.
+export async function addProspectRows(rows: ProspectRow[]) {
+  if (!rows.length) return
+  const { error } = await supabase.from('prospect_shortlist').upsert(rows, { onConflict: 'user_login' })
+  if (error) throw error
+}
+
+// Remove só o item pedido. (A lista nunca é "regravada por inteiro": uma cópia desatualizada no navegador
+// não pode apagar do banco itens que ela desconhece.)
+export async function deleteProspectRow(userLogin: string) {
+  const { error } = await supabase.from('prospect_shortlist').delete().eq('user_login', userLogin)
+  if (error) throw error
+}
+
+// Limpar a Minha Lista (ação explícita, já confirmada pelo usuário).
+export async function clearProspectShortlist() {
+  const { error } = await supabase.from('prospect_shortlist').delete().neq('user_login', '')
+  if (error) throw error
 }

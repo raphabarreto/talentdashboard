@@ -192,4 +192,5 @@ create policy "Allow all for allowed users" on prospect_shortlist for all using 
 --   '0 3 1 * *',
 --   $$delete from stream_snapshots where captured_at < now() - interval '6 months'$$
 -- );
--- (A Edge Function consolidate-daily tambem apaga snapshots com mais de 30 dias.)
+-- Obs.: na pratica a Edge Function consolidate-daily ja apaga snapshots com mais de 30 dias a cada rodada,
+-- entao esta limpeza mensal e redundante (so serviria como rede de seguranca).

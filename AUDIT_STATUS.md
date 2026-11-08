@@ -147,6 +147,20 @@ Nenhuma em andamento. Sessão encerrada em 08/11: main @ 2aa101a igual ao remoto
 
 - [usuário] Teste de 403 (conta fora da allowlist) funcionando em produção (08/11); fecha o item [a verificar] do `twitch-proxy`. Usuário informou "tudo certo" nas conferências restantes.
 
+## Auditoria técnica 08/11 — correções em branch (NÃO publicadas)
+Branch `fix/auditoria-integridade-estabilidade` (3 commits locais, sem push/PR). Aguarda aprovação do usuário.
+- [ok em testes] P1-01/P2-01: campanha salva por diferença (`lib/campaignSync.ts` + `data.ts`); nunca apaga/recria quem fica; erro explícito; criação desfaz a campanha se os streamers falharem. Remover participantes pede confirmação.
+- [ok em testes] P2-02: remoção de streamer/campanha só aparece depois do banco confirmar. Troca de status volta ao valor real se falhar. Cadastro automático ao confirmar atualiza as outras abas.
+- [ok em testes] P2-03: falha no carregamento inicial mostra aviso com "Tentar novamente".
+- [ok em testes] Minha Lista (Prospecção): gravação por item (antes regravava a lista inteira e podia apagar itens de outro dispositivo); app não quebra com armazenamento do navegador bloqueado.
+- [ok em testes] Funções: 500 genérico em twitch-proxy/update-last-live; limite de 100 nomes. [a verificar] só vale em produção após merge + deploy das funções.
+- [ok] CI: tipos no `test.yml`, job de audit (não bloqueante), deploy das funções só após testes+tipos (workflows não executados remotamente).
+- Proposta NÃO executada: `docs/migrations-propostas/campaign_streamers_unique_name.sql` (índice único por campanha+nome). Exige autorização.
+- Remoção de streamers: aviso "Removendo..." + bloqueio de clique duplo (aprovado pelo usuário após teste manual).
+- Verificação somente leitura em produção: 0 duplicatas em `campaign_streamers` (193 linhas); índice único segue como proposta, não aplicado.
+- Workflows: `permissions: contents: read` e fila única no deploy das funções. [a verificar] `main` sem proteção de branch (checks não bloqueiam o merge).
+- Validação: 242 testes, `tsc` 0 erros, build ok, `npm audit` 0. [a verificar] teste manual no navegador (editar campanha, remover, falha de rede).
+
 ## Testes (07/11)
 - [ok] `vitest run`: 28 arquivos, 135 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.

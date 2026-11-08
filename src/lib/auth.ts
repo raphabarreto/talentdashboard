@@ -1,9 +1,11 @@
 import { supabase } from './supabase'
 
-const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || '').split(',')
+// Lista de e-mails permitidos: ignora espaços e maiúsculas (o banco continua sendo a barreira real).
+const normalizeEmail = (e: string) => e.trim().toLowerCase()
+const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || '').split(',').map(normalizeEmail).filter(Boolean)
 
 export function isEmailAllowed(email: string | undefined | null, allowed: string[] = ALLOWED_EMAILS) {
-  return !!email && allowed.includes(email)
+  return !!email && allowed.map(normalizeEmail).includes(normalizeEmail(email))
 }
 
 // Só devolve sessão de e-mail permitido. Quem não está na lista é deslogado,

@@ -55,7 +55,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { 
+    console.error("update-last-live:", err)
+    return new Response(JSON.stringify({ error: "Erro interno" }), { 
       status: 500, 
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     })

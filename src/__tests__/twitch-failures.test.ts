@@ -129,3 +129,39 @@ describe('twitch-proxy', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })
+
+describe('twitch-proxy: entrada e erros', () => {
+  const authOk = () => createClientMock.mockImplementation(() => ({
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u' } } }) },
+    rpc: vi.fn().mockResolvedValue({ data: true, error: null }),
+  }))
+  const req = (query: string) => new Request(`https://x/functions/v1/twitch-proxy?${query}`, { headers: { authorization: 'Bearer jwt' } })
+
+  beforeEach(async () => { authOk(); await load('twitch-proxy') })
+
+  it('mais de 100 nomes por consulta: 400 e a Twitch nem é chamada', async () => {
+    fetchMock.mockResolvedValueOnce(json({ access_token: 't', expires_in: 3600 }))
+    const logins = Array.from({ length: 101 }, (_, i) => `s${i}`).join(',')
+    const res = await handler(req(`action=users&logins=${logins}`))
+    expect(res.status).toBe(400)
+    expect(fetchMock).toHaveBeenCalledTimes(1) // só o token; nenhuma consulta de usuários
+  })
+
+  it('100 nomes ainda é aceito', async () => {
+    fetchMock.mockResolvedValueOnce(json({ access_token: 't', expires_in: 3600 })).mockResolvedValueOnce(json({ data: [] }))
+    const logins = Array.from({ length: 100 }, (_, i) => `s${i}`).join(',')
+    const res = await handler(req(`action=users&logins=${logins}`))
+    expect(res.status).toBe(200)
+  })
+
+  it('erro inesperado: resposta genérica, sem expor o detalhe interno', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    createClientMock.mockImplementation(() => { throw new Error('segredo-interno-123') })
+    const res = await handler(req('action=streams&usernames=ana'))
+    const body = await res.text()
+    expect(res.status).toBe(500)
+    expect(body).not.toContain('segredo-interno-123')
+    expect(spy).toHaveBeenCalled()
+    spy.mockRestore()
+  })
+})

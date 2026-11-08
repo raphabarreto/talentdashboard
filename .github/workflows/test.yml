@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -23,8 +26,24 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
+    - name: Type check
+      run: npm run typecheck
+
     - name: Run tests
       run: npm run test:run
       
     - name: Build
       run: npm run build
+
+  # Aviso de dependências com vulnerabilidade alta/crítica. Não bloqueia o PR (um aviso novo de terceiros
+  # não deve travar uma correção sem relação), mas fica visível no resultado do GitHub Actions.
+  audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+    - run: npm audit --audit-level=high

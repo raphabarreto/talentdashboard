@@ -36,10 +36,10 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
       const name = campaigns.find(c => c.id === id)?.company
       const message = name ? `Tem certeza de que deseja excluir a campanha ${name}?` : 'Tem certeza de que deseja excluir esta campanha?'
       if (!await confirmAction(message, 'Excluir', { title: 'Excluir campanha?' })) return
+      try { await deleteCampaign(id) } catch { showToast('Não foi possível excluir a campanha. Nada foi alterado.', 'error'); return }
       setCampaigns(campaigns.filter(c => c.id !== id))
       renderAll()
       showToast('Campanha removida!')
-      deleteCampaign(id).catch(() => showToast('Erro ao remover do banco', 'error'))
     }
   })
 
@@ -49,5 +49,5 @@ export function setupCampaignsEvents({ loadData, renderAll }: Callbacks) {
   document.addEventListener('scroll', () => closeCampaignMenus(), true)
 
   setupCampaignForm({ loadData, renderAll })
-  setupDetailsModal()
+  setupDetailsModal({ renderAll })
 }
