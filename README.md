@@ -39,14 +39,14 @@ src/
     supabase.ts       # Client Supabase
     auth.ts           # Autenticação (Google OAuth) e allowlist de e-mails
     data.ts           # Acesso ao banco (streamers, campanhas, lista da Prospecção)
+    campaignSync.ts   # Diferença entre participantes salvos e novos (editar campanha sem apagar ninguém)
     registration.ts   # Regra única de cadastro de streamer (busca, lote, campanha)
     twitch.ts         # Twitch API (via Edge Function) e twitchtracker
     validators.ts     # Validação com Zod
     escape.ts         # escapeHtml (proteção contra XSS em innerHTML)
     logger.ts         # Logger centralizado
-    export.ts         # Exportação CSV
   events/
-    campaigns.ts      # Eventos de campanhas
+    campaigns/        # Eventos de campanhas (formulário, detalhes/status, interpretação do texto colado)
     streamers.ts      # Eventos de streamers (lote, remoção, PDF)
     streamers/
       lookup.ts       # Modal de busca/cadastro individual
@@ -55,7 +55,8 @@ src/
     overview.ts       # Visão Geral (cards)
     table.ts          # Tabela de streamers
     campaigns.ts      # Renderização de campanhas
-    prospecting.ts    # Prospecção (busca por categoria, lista salva no banco)
+    prospecting/      # Prospecção (busca por categoria, Minha Lista salva no banco)
+    loadError.ts      # Aviso com "Tentar novamente" quando o carregamento inicial falha
     filters.ts        # Filtros com cache
   types/              # Interfaces TypeScript
   state.ts            # Estado global em memória
@@ -97,19 +98,21 @@ npm run preview      # Preview do build
 npm run test         # Roda testes (modo watch)
 npm run test:ui      # Interface visual dos testes
 npm run test:run     # Roda testes uma vez
+npm run typecheck    # Confere os tipos (tsc --noEmit)
 ```
 
 ## Testes
 
 O projeto possui testes automatizados (`npm run test:run`) que cobrem:
 - ✅ Validação de dados (Zod schemas)
-- ✅ Cálculos de comissão
-- ✅ Debounce e cache de filtros
-- ✅ Exportação CSV
+- ✅ Comissão informada manualmente (nunca calculada)
+- ✅ Salvar/editar campanhas sem perda de participantes (inclui falhas simuladas do banco)
+- ✅ Remoções e troca de status só aparecem como feitas quando o banco confirma
+- ✅ Busca, ordenação e filtros
 - ✅ Regras de negócio críticas (cadastro de streamer, lista da Prospecção, falhas da Twitch)
 - ✅ Segurança (escape de HTML, allowlist de login, CSP)
 
-Os testes rodam automaticamente via GitHub Actions em todo push/PR.
+Os testes e a checagem de tipos rodam automaticamente via GitHub Actions em todo push/PR. A publicação das Edge Functions só acontece depois que testes e tipos passam.
 
 ## Variáveis de ambiente
 

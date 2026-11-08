@@ -203,6 +203,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       })
     }
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } })
+    // Detalhe técnico fica só no log do servidor; o navegador recebe uma mensagem genérica.
+    console.error("twitch-proxy:", err)
+    return new Response(JSON.stringify({ error: "Erro interno" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } })
   }
 })

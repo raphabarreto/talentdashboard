@@ -10,6 +10,7 @@ export const updateLastLiveSchema = z.object({
   }),
 })
 
+const MAX_LOGINS = 100
 const twitchLoginSchema = z.string().trim().min(1).max(25)
 
 export const twitchProxyActionSchema = z.enum([
@@ -40,6 +41,11 @@ export const twitchProxyParamsSchema = z.object({
     search_categories: ["query"],
     last_video: ["user_id"],
     lookup: ["username"],
+  }
+  // A Twitch aceita no máximo 100 logins por consulta: acima disso a chamada falharia com erro genérico.
+  for (const field of ["logins", "usernames"] as const) {
+    const count = data[field]?.split(",").filter(Boolean).length ?? 0
+    if (count > MAX_LOGINS) ctx.addIssue({ code: "custom", message: `Máximo de ${MAX_LOGINS} nomes por consulta`, path: [field] })
   }
   const required = requiredByAction[data.action]
   if (required) {
