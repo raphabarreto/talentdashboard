@@ -1,3 +1,4 @@
+import './safe.mjs'
 // Criptografa o backup com a chave PÚBLICA e gera o manifesto (só contagens e hash; nada de dados).
 // Uso: node scripts/backup/seal.mjs <backup.json> <pasta-saida>
 // Env: BACKUP_GPG_PUBLIC_KEY (chave pública ASCII), BACKUP_DATE (opcional, AAAA-MM-DD; padrão: hoje em Brasília)

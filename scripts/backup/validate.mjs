@@ -1,3 +1,4 @@
+import './safe.mjs'
 // Valida o JSON do backup (estrutura, contagens, relacionamentos). Imprime só nomes de tabelas e números.
 // Uso: node scripts/backup/validate.mjs <backup.json>
 import { readFileSync } from 'node:fs'

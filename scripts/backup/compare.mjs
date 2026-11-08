@@ -1,3 +1,4 @@
+import './safe.mjs'
 // Compara o backup original com o banco restaurado. Imprime só contagens (nunca valores).
 // Uso: node scripts/backup/compare.mjs <original.json> <restaurado.json>
 import { readFileSync } from 'node:fs'

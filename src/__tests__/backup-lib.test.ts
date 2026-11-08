@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
-  TABLES, buildBackupQuery, extractBackup, validateBackup, diffTables, diffOk, canonical,
+  TABLES, buildBackupQuery, extractBackup, extractBackupText, validateBackup, diffTables, diffOk, canonical,
   brasiliaDate, artifactNameFor, sha256, buildManifest, evaluateCandidate, parsePacketKeyIds, parseEncryptionKeyIds,
 } from '../../scripts/backup/lib.mjs'
 import { createFixture } from '../../scripts/backup/fixture.mjs'
+import { runWithBadInput } from '../../scripts/backup/test-helpers.mjs'
 
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v))
 
@@ -32,7 +33,7 @@ describe('backup: validação', () => {
   it('fixture fictícia é válida', () => {
     const r = validateBackup(createFixture())
     expect(r.ok).toBe(true)
-    expect(r.counts.campaign_streamers).toBe(4)
+    expect(r.counts.campaign_streamers).toBe(6)
   })
   it('alteração legítima durante a execução não gera falso alarme (contagens vêm do mesmo retrato)', () => {
     const d = createFixture()
@@ -91,7 +92,9 @@ describe('backup: comparação com o banco restaurado', () => {
     expect(JSON.stringify(diffTables(a, b))).not.toContain('streamer_ficticio')
   })
   it('canonical normaliza timestamps com fuso', () => {
-    expect(canonical('2026-01-05T09:00:00-03:00')).toBe('2026-01-05T12:00:00.000Z')
+    expect(canonical('2026-01-05T09:00:00-03:00')).toBe('2026-01-05T12:00:00.000000Z')
+    expect(canonical('2026-01-05T12:00:00.123456+00:00')).toBe('2026-01-05T12:00:00.123456Z')
+    expect(canonical('2026-01-05T12:00:00.123456+00:00')).not.toBe(canonical('2026-01-05T12:00:00.123457+00:00'))
     expect(canonical('texto')).toBe('texto')
   })
 })
@@ -108,7 +111,8 @@ describe('backup: datas e artifact do dia', () => {
   const bytes = new TextEncoder().encode('conteudo-criptografado-ficticio'.repeat(10))
   const manifest = buildManifest({ date: '2026-11-08', generatedAt: 'x', fileName: `${name}.json.gpg`, fileBytes: bytes, recipients: ['AAAA1111'], counts: { allowed_users: 1, streamers: 3 } })
   const base = () => ({
-    name, artifact: { expired: false, size_in_bytes: 500 }, run: { id: 1, conclusion: 'success', head_branch: 'main' },
+    name, artifact: { expired: false, size_in_bytes: 500 }, repo: 'dono/repo',
+    run: { id: 1, conclusion: 'success', head_branch: 'main', event: 'workflow_dispatch', path: '.github/workflows/backup.yml@refs/heads/main', head_repository: { full_name: 'dono/repo' }, repository: { full_name: 'dono/repo' } } as Record<string, unknown>,
     manifest: clone(manifest), fileSha256: sha256(bytes), fileSize: bytes.length, expectedKeyIds: ['AAAA1111', 'BBBB2222'],
   })
   it('aceita artifact íntegro', () => expect(evaluateCandidate(base())).toBeNull())
@@ -117,6 +121,11 @@ describe('backup: datas e artifact do dia', () => {
     expect(t((b) => { b.artifact.expired = true })).toBe('expirado')
     expect(t((b) => { b.artifact.size_in_bytes = 0 })).toBe('artifact-vazio')
     expect(t((b) => { b.run.conclusion = 'failure' })).toBe('execucao-nao-concluida-com-sucesso')
+    // falso positivo: a chave pública é pública; um terceiro consegue gerar um .gpg "válido" para ela
+    expect(t((b) => { b.run.event = 'pull_request' })).toBe('evento-nao-confiavel')
+    expect(t((b) => { b.run.path = '.github/workflows/outro.yml@refs/heads/main' })).toBe('workflow-diferente')
+    expect(t((b) => { b.run.head_repository = { full_name: 'fork/repo' } })).toBe('origem-fora-do-repositorio')
+    expect(t((b) => { b.repo = '' })).toBe('origem-fora-do-repositorio')
     expect(t((b) => { b.run.head_branch = 'outro' })).toBe('ramo-diferente-de-main')
     expect(t((b) => { b.fileSha256 = 'ff' })).toBe('hash-diverge')
     expect(t((b) => { b.fileSize += 1 })).toBe('tamanho-diverge')
@@ -126,7 +135,7 @@ describe('backup: datas e artifact do dia', () => {
     expect(t((b) => { b.manifest.counts.streamers = 0 })).toBe('contagens-invalidas')
   })
   it('execução em andamento só conta no auto-teste (ACCEPT_RUN_ID)', () => {
-    const b = base(); b.run = { id: 7, conclusion: null as unknown as string, head_branch: 'main' }
+    const b = base(); b.run = { ...b.run, id: 7, conclusion: null, event: 'pull_request', head_branch: 'feat/x' }
     expect(evaluateCandidate(b)).toBe('execucao-nao-concluida-com-sucesso')
     expect(evaluateCandidate({ ...b, acceptRunId: '7' })).toBeNull()
   })
@@ -140,5 +149,30 @@ describe('backup: leitura de saída do gpg', () => {
     expect(parsePacketKeyIds(':pubkey enc packet: version 3, algo 18, keyid 1a2b3c4d5e6f7788\n\tdata: ...')).toEqual(['1A2B3C4D5E6F7788'])
     const colons = ['pub:u:255:22:AAAAAAAAAAAAAAAA:1:::u:::scESC:::::ed25519:::0:', 'sub:u:255:18:BBBBBBBBBBBBBBBB:1::::::e:::::cv25519::', 'sub:r:255:18:CCCCCCCCCCCCCCCC:1::::::e:::::cv25519::'].join('\n')
     expect(parseEncryptionKeyIds(colons)).toEqual(['AAAAAAAAAAAAAAAA', 'BBBBBBBBBBBBBBBB'])
+  })
+})
+
+describe('backup: precisão e vazamento em logs', () => {
+  it('o texto devolvido pela API é gravado como veio (numeric sem arredondar)', () => {
+    const exato = '{"counts":{},"tables":{"campaigns":[{"campaign_value":123456789012345.123456789012}]}}'
+    expect(extractBackupText([{ backup: exato }])).toBe(exato)
+    expect(JSON.stringify(JSON.parse(exato))).not.toBe(exato) // reserializar perderia casas decimais
+    expect(buildBackupQuery().endsWith(')::text as backup')).toBe(true)
+  })
+  it('resposta sem texto do backup é rejeitada', () => {
+    expect(() => extractBackupText([{ backup: { a: 1 } }])).toThrow()
+    expect(() => extractBackupText([])).toThrow()
+  })
+  it('erro inesperado de JSON em script não imprime trecho do conteúdo (logs públicos)', () => {
+    const r = runWithBadInput('scripts/backup/compare.mjs', 'bad pessoa@segredo.test comissao 12345 json')
+    expect(r.status).toBe(1)
+    expect(r.output).toContain('detalhes omitidos')
+    for (const s of ['segredo.test', 'comissao', '12345']) expect(r.output).not.toContain(s)
+  })
+  it('fixture com casos de borda é válida e idêntica após ida e volta por JSON', () => {
+    const d = createFixture()
+    expect(validateBackup(d).ok).toBe(true)
+    expect(diffOk(diffTables(d, JSON.parse(JSON.stringify(d))))).toBe(true)
+    expect(JSON.stringify(d)).toContain('🎮')
   })
 })

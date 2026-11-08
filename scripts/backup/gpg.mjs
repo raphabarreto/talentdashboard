@@ -20,6 +20,7 @@ export function withPublicKeyring(armoredKey, fn) {
   try {
     gpg(['--import'], home, armoredKey)
     const colons = gpg(['--list-keys', '--with-colons'], home).toString()
+    if (colons.split('\n').filter((l) => l.startsWith('pub:')).length !== 1) throw new Error('a variavel deve conter exatamente UMA chave publica')
     const fingerprint = colons.split('\n').find((l) => l.startsWith('fpr:'))?.split(':')[9]
     const keyIds = parseEncryptionKeyIds(colons)
     if (!fingerprint || keyIds.length === 0) throw new Error('a chave publica nao tem capacidade de criptografar')

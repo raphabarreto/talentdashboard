@@ -1,3 +1,4 @@
+import './safe.mjs'
 // Confirma, depois do upload, que o GitHub guardou o artifact: existe, não expirou, tem tamanho e o hash (digest) bate
 // com o informado pela ação de upload. Env: GH_TOKEN, GITHUB_REPOSITORY, ARTIFACT_ID, ARTIFACT_DIGEST, EXPECTED_NAME.
 const { GH_TOKEN, GITHUB_REPOSITORY, ARTIFACT_ID, ARTIFACT_DIGEST, EXPECTED_NAME } = process.env

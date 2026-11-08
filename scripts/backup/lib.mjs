@@ -25,7 +25,16 @@ export const REQUIRED_COLUMNS = {
 export function buildBackupQuery() {
   const rows = TABLES.map((t) => `'${t}', (select coalesce(jsonb_agg(to_jsonb(x) order by x.${pkOf(t)}), '[]'::jsonb) from public.${t} x)`).join(',\n    ')
   const counts = TABLES.map((t) => `'${t}', (select count(*) from public.${t})`).join(', ')
-  return `select jsonb_build_object(\n  'format', ${FORMAT},\n  'generated_at', now(),\n  'tables', jsonb_build_object(\n    ${rows}\n  ),\n  'counts', jsonb_build_object(${counts})\n) as backup`
+  // ::text => a API devolve o texto exato do jsonb (números sem passar por double do JavaScript)
+  return `select (jsonb_build_object(\n  'format', ${FORMAT},\n  'generated_at', now(),\n  'tables', jsonb_build_object(\n    ${rows}\n  ),\n  'counts', jsonb_build_object(${counts})\n))::text as backup`
+}
+
+// Texto exato do backup, sem reserializar (preserva a precisão de numeric).
+export function extractBackupText(response) {
+  const row = Array.isArray(response) ? response[0] : response
+  const b = row && typeof row === 'object' && 'backup' in row ? row.backup : undefined
+  if (typeof b !== 'string' || b.length < 2) throw new Error('resposta da API sem o campo backup em texto')
+  return b
 }
 
 export function extractBackup(response) {
@@ -95,8 +104,10 @@ export function canonical(v) {
   if (Array.isArray(v)) return v.map(canonical)
   if (isObj(v)) return Object.fromEntries(Object.keys(v).sort().map((k) => [k, canonical(v[k])]))
   if (typeof v === 'string' && ISO_TS.test(v)) {
-    const d = new Date(v.replace(' ', 'T').replace(/([+-]\d{2})$/, '$1:00'))
-    return Number.isNaN(d.getTime()) ? v : d.toISOString()
+    // normaliza para UTC preservando os microssegundos (Date só guarda milissegundos)
+    const m = v.replace(' ', 'T').replace(/([+-]\d{2})$/, '$1:00').match(/^(.*?T\d{2}:\d{2}:\d{2})(?:\.(\d+))?(.*)$/)
+    const d = new Date(`${m[1]}${m[3]}`)
+    return Number.isNaN(d.getTime()) ? v : `${d.toISOString().slice(0, 19)}.${(m[2] ?? '').padEnd(6, '0').slice(0, 6)}Z`
   }
   return v
 }
@@ -152,13 +163,21 @@ export function buildManifest({ date, generatedAt, fileName, fileBytes, recipien
 
 // Decide se um artifact encontrado conta como "backup válido do dia". Não confia no nome:
 // confere conclusão do workflow, ramo, integridade do arquivo e para quem foi criptografado.
-export function evaluateCandidate({ name, artifact, run, manifest, fileSha256, fileSize, expectedKeyIds, acceptRunId }) {
+// Procedência: a chave pública é pública, então qualquer pessoa consegue criar um arquivo "criptografado para ela".
+// Por isso só vale artifact vindo do NOSSO workflow, neste repositório (não de fork), disparado manualmente/agendado, na main.
+export const BACKUP_WORKFLOW_PATH = '.github/workflows/backup.yml'
+export function evaluateCandidate({ name, artifact, run, manifest, fileSha256, fileSize, expectedKeyIds, acceptRunId, repo }) {
   if (!artifact || artifact.expired) return 'expirado'
   if (!(artifact.size_in_bytes > 0)) return 'artifact-vazio'
-  const runOk = run && (run.conclusion === 'success' || (acceptRunId && String(run.id) === String(acceptRunId)))
+  const isSelfTestRun = Boolean(acceptRunId) && run && String(run.id) === String(acceptRunId) // auto-teste: execução atual, no ramo do PR
+  const runOk = run && (run.conclusion === 'success' || isSelfTestRun)
   if (!runOk) return 'execucao-nao-concluida-com-sucesso'
-  const isSelfTestRun = acceptRunId && String(run.id) === String(acceptRunId) // auto-teste roda no ramo do PR
-  if (run.head_branch !== 'main' && !isSelfTestRun) return 'ramo-diferente-de-main'
+  if (!isSelfTestRun) {
+    if (run.head_branch !== 'main') return 'ramo-diferente-de-main'
+    if (run.event !== 'workflow_dispatch' && run.event !== 'schedule') return 'evento-nao-confiavel'
+    if (!String(run.path ?? '').startsWith(`${BACKUP_WORKFLOW_PATH}@`) && run.path !== BACKUP_WORKFLOW_PATH) return 'workflow-diferente'
+    if (!repo || run.head_repository?.full_name !== repo || run.repository?.full_name !== repo) return 'origem-fora-do-repositorio'
+  }
   if (!isObj(manifest) || manifest.format !== FORMAT) return 'manifesto-invalido'
   if (manifest.name !== name) return 'manifesto-nome-diverge'
   if (manifest.file !== `${name}.json.gpg`) return 'manifesto-arquivo-diverge'

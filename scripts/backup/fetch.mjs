@@ -1,9 +1,11 @@
+import './safe.mjs'
 // Lê as seis tabelas essenciais com UMA consulta somente leitura (API de gerenciamento do Supabase).
 // Uso: node scripts/backup/fetch.mjs <saida.json>
 // Env: SUPABASE_BACKUP_TOKEN (secret, token de leitura restrito ao projeto), SUPABASE_PROJECT_REF.
-// Nunca imprime dados, corpo de resposta ou token: só contagens.
+// Nunca imprime dados, corpo de resposta ou token: só contagens. O texto do backup é gravado exatamente como o banco
+// o devolveu (sem reserializar), preservando a precisão dos campos numeric.
 import { writeFileSync } from 'node:fs'
-import { buildBackupQuery, extractBackup } from './lib.mjs'
+import { buildBackupQuery, extractBackupText } from './lib.mjs'
 
 const out = process.argv[2]
 const token = process.env.SUPABASE_BACKUP_TOKEN
@@ -25,12 +27,13 @@ for (let attempt = 1; attempt <= 3; attempt++) {
     })
     lastStatus = `HTTP ${res.status}`
     if (res.ok) {
-      const doc = extractBackup(await res.json())
-      writeFileSync(out, JSON.stringify(doc), { mode: 0o600 })
-      console.log('consulta concluida; contagens:', JSON.stringify(doc.counts))
+      const text = extractBackupText(await res.json())
+      const counts = JSON.parse(text).counts // só para conferir que é JSON; o arquivo guarda o texto original
+      writeFileSync(out, text, { mode: 0o600 })
+      console.log('consulta concluida; contagens:', JSON.stringify(counts))
       process.exit(0)
     }
-    if (res.status >= 400 && res.status < 500 && res.status !== 429) break // erro de credencial/permissão: não adianta repetir
+    if (res.status >= 400 && res.status < 500 && res.status !== 429) break // credencial/permissão: repetir não adianta
   } catch (e) {
     lastStatus = `falha de rede/leitura (${e?.name ?? 'erro'})`
   }

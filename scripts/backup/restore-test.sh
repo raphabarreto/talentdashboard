@@ -18,6 +18,9 @@ psqlq() { # $@: argumentos do psql; falha mostrando apenas códigos de erro
   fi
 }
 
+# --- travas de seguranca: este script CRIA tabelas; so pode rodar em banco local, vazio e descartavel ---
+case "${PGHOST:-}" in 127.0.0.1|localhost|::1) ;; *) echo "::error::PGHOST deve ser 127.0.0.1/localhost (banco descartavel); recusando rodar"; exit 1 ;; esac
+case "${PGHOST:-}${PGSERVICE:-}${PGSERVICEFILE:-}" in *supabase*) echo "::error::configuracao aponta para o Supabase; recusando rodar"; exit 1 ;; esac
 echo "aguardando o Postgres do Supabase..."
 for i in $(seq 1 60); do
   if psql -X -Atqc "select 1 from pg_namespace where nspname='auth'" 2>/dev/null | grep -q 1; then break; fi
@@ -26,6 +29,9 @@ for i in $(seq 1 60); do
 done
 psql -X -Atqc "select 'auth.jwt existe: ' || (to_regprocedure('auth.jwt()') is not null)::text" || true
 
+if [ "$(psql -X -Atqc "select count(*) from information_schema.tables where table_schema='public'")" != "0" ]; then
+  echo "::error::o schema public do banco alvo nao esta vazio; recusando rodar (use um banco descartavel novo)"; exit 1
+fi
 echo "1/5 estrutura (schema.sql + migration das métricas)"
 psqlq -f "$ROOT/schema.sql" >/dev/null
 psqlq -f "$ROOT/supabase/migrations/calculate_streamer_metrics.sql" >/dev/null
