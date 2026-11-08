@@ -157,7 +157,8 @@ export function evaluateCandidate({ name, artifact, run, manifest, fileSha256, f
   if (!(artifact.size_in_bytes > 0)) return 'artifact-vazio'
   const runOk = run && (run.conclusion === 'success' || (acceptRunId && String(run.id) === String(acceptRunId)))
   if (!runOk) return 'execucao-nao-concluida-com-sucesso'
-  if (run.head_branch !== 'main') return 'ramo-diferente-de-main'
+  const isSelfTestRun = acceptRunId && String(run.id) === String(acceptRunId) // auto-teste roda no ramo do PR
+  if (run.head_branch !== 'main' && !isSelfTestRun) return 'ramo-diferente-de-main'
   if (!isObj(manifest) || manifest.format !== FORMAT) return 'manifesto-invalido'
   if (manifest.name !== name) return 'manifesto-nome-diverge'
   if (manifest.file !== `${name}.json.gpg`) return 'manifesto-arquivo-diverge'
