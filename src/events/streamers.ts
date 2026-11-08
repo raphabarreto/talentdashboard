@@ -2,7 +2,7 @@ import { deleteStreamer, deleteStreamers } from '../lib/data'
 import { prepareStreamerData, buildStreamerRow, registerStreamersBatch } from '../lib/registration'
 import { fetchTwitchUsers, fetchInitialStats, fetchLastLiveDate } from '../lib/twitch'
 import { streamers, selectedStreamers, setStreamers } from '../state'
-import { showToast, confirmAction, fmt } from '../utils'
+import { showToast, confirmAction, beginBusy, isBusy, fmt } from '../utils'
 import { getTablePageStreamers } from '../ui/table'
 import { getOverviewPageStreamers, updateOverviewSelection, isSelectionMode, setSelectionMode } from '../ui/overview'
 import { setupLookupModal } from './streamers/lookup'
@@ -13,13 +13,17 @@ type TwitchUser = Awaited<ReturnType<typeof fetchTwitchUsers>>[number]
 type Callbacks = { loadData: () => Promise<void>; renderAll: () => void; renderTable: () => void }
 
 async function removeSelected(renderAll: () => void) {
+  if (isBusy()) return // já há uma remoção em andamento: ignora o clique (nem pergunta de novo)
   const n = selectedStreamers.size
   const names = streamers.filter(s => selectedStreamers.has(s.id)).map(s => s.name)
   const detail = names.length <= 3 ? `: ${names.join(', ')}` : ''
   if (!await confirmAction(`Tem certeza de que deseja remover ${n === 1 ? '1 streamer selecionado' : `os ${n} streamers selecionados`} da sua lista${detail}?`, 'Remover', { title: n === 1 ? 'Remover streamer?' : `Remover ${n} streamers?` })) return
   const ids = [...selectedStreamers]
+  const done = beginBusy(n === 1 ? 'Removendo...' : `Removendo ${n} streamers...`, [document.getElementById('removeSelectedBtn'), document.getElementById('overviewRemoveSelectedBtn')])
+  if (!done) return // já há uma remoção em andamento
   // Só mostra como removido depois que o banco confirmou; se falhar, a lista e a seleção continuam como estavam.
-  try { await deleteStreamers(ids) } catch { showToast('Não foi possível remover. Nada foi alterado.', 'error'); return }
+  try { await deleteStreamers(ids) } catch { done(); showToast('Não foi possível remover. Nada foi alterado.', 'error'); return }
+  done()
   selectedStreamers.clear()
   setStreamers(streamers.filter(s => !ids.includes(s.id)))
   renderAll()
@@ -34,11 +38,15 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     const target = e.target as HTMLElement
     const deleteBtn = target.closest('.delete-btn') as HTMLElement | null
     if (deleteBtn) {
+      if (isBusy()) return
       const id = deleteBtn.dataset.id!
       const name = streamers.find(s => s.id === id)?.name
       const message = name ? `Tem certeza de que deseja remover ${name} da sua lista?` : 'Tem certeza de que deseja remover este streamer da sua lista?'
       if (!await confirmAction(message, 'Remover', { title: 'Remover streamer?' })) return
-      try { await deleteStreamer(id) } catch { showToast('Não foi possível remover. Nada foi alterado.', 'error'); return }
+      const done = beginBusy('Removendo...', [deleteBtn])
+      if (!done) return // já há uma remoção em andamento
+      try { await deleteStreamer(id) } catch { done(); showToast('Não foi possível remover. Nada foi alterado.', 'error'); return }
+      done()
       selectedStreamers.delete(id)
       setStreamers(streamers.filter(s => s.id !== id))
       renderAll()

@@ -42,7 +42,7 @@ export function isActive(s: Streamer): boolean {
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined
-export function showToast(msg: string, type: 'success' | 'error' = 'success') {
+export function showToast(msg: string, type: 'success' | 'error' = 'success', durationMs = 3000) {
   const toast = document.getElementById('toast')!
   const toastMsg = document.getElementById('toast-message')!
   toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 ${type === 'error' ? 'bg-red-600' : 'bg-emerald-600'} text-white`
@@ -50,7 +50,24 @@ export function showToast(msg: string, type: 'success' | 'error' = 'success') {
   toast.classList.remove('translate-y-[200%]')
   toast.classList.add('translate-y-0')
   clearTimeout(toastTimer) // um aviso novo reinicia a contagem (o anterior não o esconde antes da hora)
-  toastTimer = setTimeout(() => { toast.classList.remove('translate-y-0'); toast.classList.add('translate-y-[200%]') }, 3000)
+  toastTimer = setTimeout(() => { toast.classList.remove('translate-y-0'); toast.classList.add('translate-y-[200%]') }, durationMs)
+}
+
+// Operação demorada em andamento (ex.: remover): mostra o aviso, trava os botões indicados e impede uma segunda
+// execução ao mesmo tempo. Devolve a função que encerra o estado, ou null se já havia outra em andamento.
+let busy = false
+export const isBusy = () => busy
+export function beginBusy(label: string, buttons: Array<HTMLElement | null> = []): (() => void) | null {
+  if (busy) return null
+  busy = true
+  const els = buttons.filter((b): b is HTMLButtonElement => !!b)
+  const wasDisabled = els.map(b => b.disabled)
+  els.forEach(b => { b.disabled = true; b.setAttribute('aria-busy', 'true'); b.classList.add('opacity-50', 'cursor-wait') })
+  showToast(label, 'success', 30000) // fica até o resultado chegar (que o substitui)
+  return () => {
+    busy = false
+    els.forEach((b, i) => { b.disabled = wasDisabled[i]; b.removeAttribute('aria-busy'); b.classList.remove('opacity-50', 'cursor-wait') })
+  }
 }
 
 export interface ConfirmOptions {

@@ -34,7 +34,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   // Os botões fixos (com ouvintes ligados uma vez) ficam fora do trecho que é recriado a cada teste.
   if (!document.getElementById('removeSelectedBtn')) {
-    document.body.innerHTML = '<button id="removeSelectedBtn"></button><button id="overviewRemoveSelectedBtn"></button><div id="dyn"></div>'
+    document.body.innerHTML = '<button id="removeSelectedBtn"></button><button id="overviewRemoveSelectedBtn"></button><div id="dyn"></div><div id="toast"><span id="toast-message"></span></div>'
   }
   document.getElementById('dyn')!.innerHTML = `
     <button class="delete-btn" id="del1" data-id="1"></button>
@@ -109,5 +109,56 @@ describe('exclusão de campanha', () => {
     document.getElementById('delC')!.click(); await flush()
     expect(campaigns).toHaveLength(0)
     expect(h.toast).toHaveBeenCalledWith('Campanha removida!')
+  })
+})
+
+describe('remoção em andamento: feedback e proteção contra clique duplo', () => {
+  let release!: () => void
+  let fail!: () => void
+  const pending = () => new Promise<void>((res, rej) => { release = res; fail = () => rej(new Error('rede')) })
+  const feedback = () => document.getElementById('toast-message')!.textContent
+
+  it('mostra "Removendo...", trava o botão e ignora o segundo clique enquanto o banco não responde', async () => {
+    h.deleteStreamer.mockReturnValue(pending())
+    const btn = document.getElementById('del1') as HTMLButtonElement
+    btn.click(); await flush()
+    expect(feedback()).toBe('Removendo...')
+    expect(btn.disabled).toBe(true)
+    expect(btn.getAttribute('aria-busy')).toBe('true')
+    document.getElementById('del1')!.click(); document.getElementById('removeSelectedBtn')!.click(); await flush()
+    expect(h.confirm).toHaveBeenCalledTimes(1) // não pergunta de novo
+    expect(h.deleteStreamer).toHaveBeenCalledTimes(1)
+    expect(h.deleteStreamers).not.toHaveBeenCalled()
+    expect(streamers).toHaveLength(2) // ainda não foi confirmado pelo banco
+    release(); await flush()
+    expect(streamers.map(s => s.id)).toEqual(['2'])
+    expect(btn.disabled).toBe(false)
+  })
+
+  it('falha: libera o botão, mantém os dados e permite tentar de novo', async () => {
+    h.deleteStreamer.mockReturnValueOnce(pending())
+    const btn = document.getElementById('del1') as HTMLButtonElement
+    btn.click(); await flush()
+    fail(); await flush()
+    expect(streamers).toHaveLength(2)
+    expect(btn.disabled).toBe(false)
+    expect(btn.hasAttribute('aria-busy')).toBe(false)
+    expect(h.toast).toHaveBeenCalledWith(expect.stringContaining('Nada foi alterado'), 'error')
+    btn.click(); await flush()
+    expect(h.deleteStreamer).toHaveBeenCalledTimes(2)
+    expect(streamers.map(s => s.id)).toEqual(['2'])
+  })
+
+  it('remoção em massa: botões travados durante a operação e liberados no fim', async () => {
+    h.deleteStreamers.mockReturnValue(pending())
+    const bulk = document.getElementById('removeSelectedBtn') as HTMLButtonElement
+    bulk.click(); await flush()
+    expect(feedback()).toBe('Removendo 2 streamers...')
+    expect(bulk.disabled).toBe(true)
+    bulk.click(); await flush()
+    expect(h.deleteStreamers).toHaveBeenCalledTimes(1)
+    release(); await flush()
+    expect(bulk.disabled).toBe(false)
+    expect(streamers).toHaveLength(0)
   })
 })
