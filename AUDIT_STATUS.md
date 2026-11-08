@@ -108,14 +108,14 @@ Nenhuma em andamento. Sessão encerrada em 08/11: main @ 517412f igual ao remoto
 - [usuário] Usar o modal Gerenciar Campanha na OperaGX (45 streamers) em produção e avisar se algo ficar apertado/estranho (08/11: grupos por status, cartões compactos, "Marcar contato").
 - [usuário] Marcar como resolvidos no Sentry os itens de teste ("teste sentry 2", "Teste do túnel…", "teste sentry tunel real").
 - 403 direto do `twitch-proxy` com conta fora da allowlist: precisa de uma segunda conta Google; o login já barra essas contas. Baixo risco.
-- Atualizações pequenas de rotina (opcional, PR próprio): `@supabase/supabase-js` 2.118→2.119 (também fixado nas Edge Functions, tratar à parte), `tailwindcss`/`@tailwindcss/postcss` 4.3.4→4.3.5. Versões grandes (vite 8, typescript 7, vitest 5, sentry 11): não mexer agora.
+- Edge Functions: `supabase-js` fixado em 2.118.0 (esm.sh); atualizar só se houver motivo (deploy de produção). Versões grandes (vite 8, typescript 7, vitest 5, sentry 11): não mexer agora.
 - Ambiente local limpo (08/11): servidor de teste desligado e `.env` removido. Para testar de novo: recriar `.env` com as 3 variáveis `VITE_*` públicas (extraídas do bundle de produção; as da Vercel são "sensíveis") e `npm run dev`.
 - Sessões logadas nesta máquina: Supabase CLI (`npx supabase`, conta do usuário) e `gh`. Deslogar o Supabase quando não for usar (`npx supabase logout`); novo login precisa ser feito pelo usuário num PowerShell separado.
 - Usuário usa só PC: não listar conferências de celular.
 
 ## Próximo passo sugerido
 1. Mesclar o PR de fechamento da sessão (só `AUDIT_STATUS.md`) quando o usuário autorizar.
-2. Opcional: PR de rotina com as atualizações pequenas (supabase-js, tailwind), com testes/tsc/build e reversão descrita.
+2. (feito em 08/11) PR de rotina com as atualizações pequenas.
 3. Aguardar novos ajustes do usuário; revisão periódica com `npm audit`; deslogar o Supabase CLI se não for usar.
 
 ## Feito em 07/11
@@ -146,7 +146,7 @@ Nenhuma em andamento. Sessão encerrada em 08/11: main @ 517412f igual ao remoto
   - Formulário: rótulo "Empresa" acima do campo.
   - Modal "Gerenciar Campanha": coluna única (cabeçalho com X, card único "Resumo da campanha", seção Streamers com badge de total, Fechar). Até 5 streamers: lista direta com status abaixo do nome, sem busca; 6+: busca + grupos por status recolhidos (Contatados, Pendentes, Sem resposta, Confirmados, Recusados; vazios ocultos; busca abre os grupos com resultado), sem filtros horizontais; lista com altura máx. ~380 px e rolagem interna. Botão "Marcar contato" (ação para pendente → contatado, mesma transição), "Reverter status" com tooltip. Valor em dólar exibido com vírgula. Regras de status e Recusado inalterados.
   - [ok] testes 180/180, `tsc`, build. [a verificar] em produção: uso real do modal com a OperaGX (45 streamers). Reversão: revert do PR.
-- Modal Gerenciar Campanha, cartões compactos nos grupos (08/11, aprovado no localhost): avatar 32 px, menos padding e espaço (só com 6+ streamers; lista direta inalterada). Só apresentação. [ok] testes 181/181, `tsc`, build. Reversão: revert do PR.
+- Modal Gerenciar Campanha, cartões compactos nos grupos (08/11, aprovado no localhost): avatar 32 px, menos padding e espaço (só com 6+ streamers; lista direta inalterada). Só apresentação. [ok] testes 181/181, `tsc`, build. Reversão: revert do PR.- Dependências de rotina (08/11, autorizado): `@supabase/supabase-js` 2.118→2.119.0 (só o front; as Edge Functions seguem fixadas em 2.118.0 no esm.sh), `tailwindcss` e `@tailwindcss/postcss` 4.3.4→4.3.5 (só `package.json`/lock). [ok] testes 181/181, `tsc`, build, `npm audit` 0. Reversão: revert do PR.
 ## Testes (07/11)
 - [ok] `vitest run`: 28 arquivos, 135 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
 - Os testes de Edge Function simulam `Deno` e `supabase-js`; não há Deno aqui para rodá-las de verdade.
