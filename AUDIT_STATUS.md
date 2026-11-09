@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-07. Base: main @ 0b59147 (PR #103). Sem segredos neste arquivo.
+Atualizado em 2026-11-09. Base: main @ be396b0 (PR #105). Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -112,7 +112,7 @@ Auditoria técnica CONCLUÍDA em 07/11/2026 e **em operação** (ver seção aba
 
 ## Próximo passo sugerido
 1. Aguardar novos ajustes do usuário; revisão periódica com `npm audit`.
-2. **Recomendação futura (não executada): estratégia de backup do Supabase.** O projeto Dash Lugs não tem backup automático (sem PITR; lista de backups vazia em 07/11/2026). Opções a avaliar: plano com backups diários/PITR, ou rotina de exportação periódica (leitura) das tabelas `campaigns`, `campaign_streamers`, `streamers`, `prospect_shortlist` guardada fora do banco. Decidir com o usuário; exige conta/custo ou novo workflow.
+2. **[Implementado em 09/11: ver "Backup automático"; falta ativar o agendamento] Estratégia de backup do Supabase.** O projeto Dash Lugs não tem backup automático (sem PITR; lista de backups vazia em 07/11/2026). Opções a avaliar: plano com backups diários/PITR, ou rotina de exportação periódica (leitura) das tabelas `campaigns`, `campaign_streamers`, `streamers`, `prospect_shortlist` guardada fora do banco. Decidir com o usuário; exige conta/custo ou novo workflow.
 3. Itens opcionais da auditoria (P3-06, P3-08, P3-09 e outros listados em "Riscos residuais") só se o usuário pedir.
 
 ## Feito em 07/11
@@ -166,14 +166,17 @@ Resultado: 0 problemas P0; 1 P1, 5 P2 e 9 P3 identificados; os confirmados foram
 - Salvar campanha NÃO é uma transação única: se a lista de participantes falhar na edição, os dados da campanha podem já ter sido gravados (a janela fica aberta com erro; repetir é seguro). A atomicidade estrita exigiria uma função no banco (RPC), não implementada por não haver perda silenciosa.
 - Duas abas editando a mesma campanha: o índice único impede nome duplicado (a segunda gravação recebe erro genérico "Erro ao salvar campanha"; repetir resolve). Cada gravação é "último a gravar vence" por item.
 - O índice usa `trim()` do Postgres (só espaços); o app usa o `trim()` do JavaScript (também tabs/espaços especiais). Nomes que diferem só por tab/espaço especial não são bloqueados pelo banco; efeito prático desprezível.
-- Supabase sem backup automático (sem PITR; lista de backups vazia): não há recuperação de dados pelo painel. Foi feita cópia local (somente leitura) da tabela antes do índice; considerar rotina de exportação ou plano com backup. [a verificar]
+- Supabase sem backup automático (sem PITR; lista de backups vazia): não há recuperação de dados pelo painel. Foi feita cópia local (somente leitura) da tabela antes do índice; considerar rotina de exportação ou plano com backup. Atualização (09/11): backup manual criptografado criado e recuperação validada (ver "Backup automático"); falta ativar o agendamento. [a verificar]
 - Edge Functions de cron (`collect-snapshots`, `consolidate-daily`) ainda devolvem o texto do erro (exigem o segredo; decisão consciente, útil para diagnóstico).
 - Não feitos de propósito: P3-06 (Esc fecha formulário preenchido), P3-08 (lotes de 10 no `collect-snapshots`, sem lentidão medida), P3-09 (nome do pacote), lint (exigiria dependência nova). Latência da remoção em cascata no servidor não medida.
 - Actions pinadas por tag (`@v4`), não por hash; avisos de descontinuação do Node 20 nas Actions (sem impacto hoje).
 
-## Backup automático (PR aberto, desligado)
-- Implementado em `scripts/backup/` + workflows `backup.yml` (só manual; sem agendamento, chave, token ou secret) e `backup-selftest.yml` (dados fictícios no CI). Documentação: `docs/BACKUP.md`.
-- Pendente de autorização do dono: gerar chaves GPG, token Supabase `database_read`, cadastrar secret/variáveis, 1ª execução real, ativar agendamento (06h e 18h Brasília). Até lá a funcionalidade é **a verificar** (não validada em produção).
+## Backup automático (PR #105 na main; execução manual validada; agendamento DESLIGADO)
+- Implementado em `scripts/backup/` + workflows `backup.yml` (só manual; agendamento comentado) e `backup-selftest.yml` (dados fictícios no CI). Documentação: `docs/BACKUP.md`.
+- [ok] Configuração (09/11, com autorização): token Supabase só `Database → Read`, restrito ao projeto Dash Lugs, testado localmente (8 OK, 0 excesso) e cadastrado como secret `SUPABASE_BACKUP_TOKEN` somente no ambiente `backup` (restrito à `main`; sem secret equivalente no repositório); variável de repositório `BACKUP_GPG_PUBLIC_KEY` (só a chave pública; fingerprint conferida) e variável do ambiente `SUPABASE_PROJECT_REF`. Chave privada nunca esteve no GitHub.
+- [ok] 1ª execução real (09/11, run 42637202782, `main`, sem `force`): todas as etapas com sucesso (leitura das 6 tabelas, validação, teste de restauração, criptografia, upload e conferência). Artifact `backup-2026-11-09` (21.543 bytes, retenção 30 dias, expira 09/12/2026). Linhas: campaigns 20, streamers 166, allowed_users 3, streamer_history 0, campaign_streamers 193, prospect_shortlist 13 (395 no total).
+- [usuário] Recuperação validada localmente (09/11) com a chave privada, sem rede nem banco: SHA-256 e tamanho conforme o manifesto, destinatários, descriptografia, JSON/estrutura/relacionamentos e contagens das 6 tabelas (0 erros, 0 avisos), limpeza dos temporários. Obs. técnica: o GPG do Git, chamado do PowerShell, só inicia o keyboxd com `C:\Program Files\Git\usr\bin` no PATH do processo (sem isso: DLL não encontrada).
+- Pendente de autorização do dono: ativar o agendamento (06h e 18h Brasília; descomentar o bloco `schedule` de `backup.yml`, em PR próprio). Até lá o backup é só manual. [a verificar] execução agendada; [a verificar] restauração real em outro projeto (o teste cobriu o arquivo, não um restore no Supabase).
 - Limitações registradas: agendamento desativa após 60 dias sem atividade (sem commits artificiais, por decisão); artifacts ficam no GitHub (ponto único de falha); chave privada é insubstituível.
 
 ## Testes (07/11)
