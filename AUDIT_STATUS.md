@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-09. Base: main @ be396b0 (PR #105). Sem segredos neste arquivo.
+Atualizado em 2026-11-09. Base: main @ bb408b7 (PR #106). Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -178,6 +178,12 @@ Resultado: 0 problemas P0; 1 P1, 5 P2 e 9 P3 identificados; os confirmados foram
 - [usuário] Recuperação validada localmente (09/11) com a chave privada, sem rede nem banco: SHA-256 e tamanho conforme o manifesto, destinatários, descriptografia, JSON/estrutura/relacionamentos e contagens das 6 tabelas (0 erros, 0 avisos), limpeza dos temporários. Obs. técnica: o GPG do Git, chamado do PowerShell, só inicia o keyboxd com `C:\Program Files\Git\usr\bin` no PATH do processo (sem isso: DLL não encontrada).
 - Pendente de autorização do dono: ativar o agendamento (06h e 18h Brasília; descomentar o bloco `schedule` de `backup.yml`, em PR próprio). Até lá o backup é só manual. [a verificar] execução agendada; [a verificar] restauração real em outro projeto (o teste cobriu o arquivo, não um restore no Supabase).
 - Limitações registradas: agendamento desativa após 60 dias sem atividade (sem commits artificiais, por decisão); artifacts ficam no GitHub (ponto único de falha); chave privada é insubstituível.
+- [ok] Deduplicação testada (09/11, run 42655934118, `main`, sem `force`): o job `backup` foi ignorado e nenhum novo artifact foi criado.
+- **Achado (09/11): repositório público = artifacts e logs baixáveis por qualquer conta GitHub logada.** Conteúdo está criptografado (só a chave privada abre), mas o dono NÃO aceitou formalmente esse risco. Decisão: não ativar o agendamento enquanto os backups estiverem como artifacts públicos. Não tornar o repositório principal privado (GitHub Free: ambientes só em repositório público).
+- **Migração em andamento (Opção A, aprovada):** backups criptografados como GitHub Releases em repositório PRIVADO separado, `talentdashboard-backups` (tag `backup-AAAA-MM-DD`, arquivos `.json.gpg` + `manifest.json`; rascunho → upload → conferência → publicação), retenção 90 dias (começa só em dry-run), job único (sujeito à revisão do PR), gravação dupla só em transição curta.
+  - [ok] Fase 0 parcial (09/11): repositório criado PRIVADO, Actions desabilitado, sem colaboradores, issues/wiki/projects desligados, **releases imutáveis ativadas** (confirmado pela API; vale só para releases futuras). Branch padrão `master` (renomear para `main` é decisão aberta). 0 releases, nenhum token/secret criado.
+  - Próximos passos, cada um com autorização própria: (1) dono cria token fine-grained só no repositório `talentdashboard-backups` com `Contents: Read and write` (validade 1 ano) e cadastra como `BACKUPS_REPO_TOKEN` só no ambiente `backup`; (2) teste local do token (script fora do projeto, sem imprimir token; cobrir upload de asset e exclusão de release de teste); (3) importar manualmente `backup-2026-11-09` como release e rodar a recuperação a partir dela; (4) PR de gravação dupla; (5) PR de corte (remove `upload-artifact`/`verify-upload`, teste de CI contra `upload-artifact`, `GITHUB_TOKEN` só `contents: read`, reescrever procedência em `check-existing.mjs` para releases, limpeza de retenção em dry-run); excluir o artifact público só com autorização; (6) PR separado para ativar o agendamento.
+  - Estado ao encerrar a sessão (09/11): agendamento DESLIGADO; nenhum backup novo; artifact `backup-2026-11-09` continua disponível (expira 09/12/2026, antes disso o backup precisa existir também na release privada).
 
 ## Testes (07/11)
 - [ok] `vitest run`: 28 arquivos, 135 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
