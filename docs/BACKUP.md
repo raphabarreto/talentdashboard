@@ -1,6 +1,6 @@
 # Backup automático do Supabase (GitHub Actions)
 
-**Estado: implementado; os backups vão para Releases do repositório PRIVADO `talentdashboard-backups`. O agendamento está DESLIGADO** (só execução manual até validar um backup real e sua recuperação).
+**Estado: implementado e agendado. Os backups vão para Releases do repositório PRIVADO `talentdashboard-backups`, às 06h e 18h de Brasília** (um backup válido por dia; a execução manual continua disponível). Primeiro backup real e recuperação validados em 10/11/2026.
 
 ## O que faz
 1. Uma consulta SQL **somente leitura** (API de gerenciamento do Supabase, token restrito a este projeto e à permissão `database_read`) devolve as 6 tabelas essenciais em um único JSON: `allowed_users`, `streamers`, `campaigns`, `campaign_streamers`, `prospect_shortlist`, `streamer_history`. Todas as colunas e IDs originais, sem alterar nada.
@@ -12,7 +12,7 @@
 
 Custo: R$ 0 (Actions gratuito no repositório público; Releases no repositório privado). Nada roda no computador do dono.
 
-## Agendamento (quando autorizado)
+## Agendamento (ativo)
 Duas verificações por dia, 06h e 18h de Brasília (`0 9 * * *` e `0 21 * * *`, em UTC), gerando **um** backup por dia: se já existir um backup válido do dia, o workflow encerra sem criar outro. "Válido" **não** é só o nome da Release; é preciso: Release **publicada** (rascunho de tentativa que falhou não conta) com a tag `backup-AAAA-MM-DD`, não marcada como mutável, arquivo `.gpg` com o mesmo hash e tamanho do manifesto, e criptografado para a chave pública configurada. A chave pública é pública: qualquer pessoa consegue gerar um `.gpg` "válido" para ela; por isso a origem vem do lugar: repositório privado, escrito só pelo token restrito, em Release imutável. Se a verificação não puder ser feita, cria-se um backup novo (um a mais é inofensivo). Se a tag do dia já estiver publicada e o backup for forçado (`force`), a nova Release usa o sufixo `-r<número da execução>`. **Limite:** sem a chave privada não dá para abrir o conteúdo; a checagem prova origem e integridade do arquivo, não o conteúdo (por isso o conteúdo é validado ANTES de criptografar e o teste mensal com a chave privada continua necessário).
 
 ## Teste de restauração (o que cobre)
@@ -57,7 +57,7 @@ Em produção, qualquer restauração exige autorização explícita (CLAUDE.md)
 1. Gerar o par de chaves GPG no computador; guardar a privada fora do GitHub.
 2. Criar no Supabase um token pessoal escopado a este projeto, com permissões personalizadas: somente Database read. Criar também o repositório privado `talentdashboard-backups` (Actions desabilitado, Releases imutáveis ativadas) e um token fine-grained só nele (`Contents: Read and write`), cadastrado como `BACKUPS_REPO_TOKEN` no ambiente `backup`.
 3. **Ordem obrigatória (o ambiente vem antes de qualquer secret):** (a) no GitHub, Settings → Environments → criar `backup` com "Deployment branches and tags" = *Selected branches* → somente `main`; (b) rodar `bash scripts/backup/check-environment.sh` e só continuar se imprimir `OK` (ele falha se o ambiente não existir, se aceitar outro ramo, ou se já houver secret `SUPABASE_BACKUP_TOKEN` no repositório/organização, o que ignoraria a restrição); (c) só então cadastrar `SUPABASE_BACKUP_TOKEN` **no ambiente**. Se o workflow rodar antes do ambiente existir, o GitHub o cria sem restrição: por isso nenhum secret pode existir antes do passo (b). Além disso, o job `backup` aborta se não estiver rodando a partir de `refs/heads/main`. Em Settings → Variables (repositório): `BACKUP_GPG_PUBLIC_KEY` (UMA chave pública ASCII, sem expiração curta) e `SUPABASE_PROJECT_REF`.
-4. Rodar o workflow manualmente uma vez, conferir, e só então descomentar o bloco `schedule`.
+4. Rodar o workflow manualmente uma vez, conferir a recuperação, e só então ativar o bloco `schedule` (feito em 10/11/2026).
 
 ## Auto-teste no CI
 `Backup auto-teste` roda em PRs que mexem nesses arquivos, com dados fictícios e chave descartável (sem secrets): valida, restaura no Postgres do Supabase, criptografa e recupera com a chave privada.
