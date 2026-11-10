@@ -211,6 +211,18 @@ export function buildManifest({ date, generatedAt, fileName, fileBytes, recipien
   }
 }
 
+// Reconhece rascunhos criados pelo NOSSO processo de backup (os únicos que podem ser apagados na nova tentativa):
+// rascunho, tag exata do dia (ou com sufixo -r<número>), corpo idêntico ao nosso e só os 2 arquivos que nós enviamos.
+export const RELEASE_BODY = 'Backup criptografado automatico (GPG) do talentdashboard. Ver docs/BACKUP.md no repositorio principal.'
+export function isOurDraft(release, name) {
+  if (!release || release.draft !== true) return false
+  const tag = String(release.tag_name ?? '')
+  const okTag = tag === name || (tag.startsWith(`${name}-r`) && /^[0-9]+$/.test(tag.slice(name.length + 2)))
+  if (!okTag || release.body !== RELEASE_BODY) return false
+  const allowed = [`${name}.json.gpg`, 'manifest.json']
+  return (release.assets ?? []).every((a) => allowed.includes(a.name))
+}
+
 // Decide se uma Release encontrada conta como "backup válido do dia". Não confia no nome:
 // confere estado da Release, integridade do arquivo e para quem foi criptografado.
 // Procedência: a chave pública é pública, então qualquer pessoa consegue criar um arquivo "criptografado para ela".
@@ -219,7 +231,7 @@ export function buildManifest({ date, generatedAt, fileName, fileBytes, recipien
 export function evaluateCandidate({ name, release, manifest, fileSha256, fileSize, expectedKeyIds }) {
   if (!release || release.draft) return 'rascunho'
   if (release.tag_name !== name) return 'tag-diverge'
-  if (release.immutable === false) return 'release-nao-imutavel'
+  if (release.immutable !== true) return 'release-nao-imutavel' // só vale com confirmação explícita
   if (!isObj(manifest) || manifest.format !== FORMAT) return 'manifesto-invalido'
   if (manifest.name !== name) return 'manifesto-nome-diverge'
   if (manifest.file !== `${name}.json.gpg`) return 'manifesto-arquivo-diverge'

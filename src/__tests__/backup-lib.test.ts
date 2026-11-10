@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   TABLES, buildBackupQuery, extractBackup, extractBackupText, validateBackup, diffTables, diffOk, normalizeDecimal, normalizeTimestamp, parseLossless,
-  brasiliaDate, artifactNameFor, sha256, buildManifest, evaluateCandidate, parsePacketKeyIds, parseEncryptionKeyIds,
+  brasiliaDate, artifactNameFor, sha256, buildManifest, evaluateCandidate, isOurDraft, RELEASE_BODY, parsePacketKeyIds, parseEncryptionKeyIds,
 } from '../../scripts/backup/lib.mjs'
 import { createFixture } from '../../scripts/backup/fixture.mjs'
 import { runWithBadInput } from '../../scripts/backup/test-helpers.mjs'
@@ -195,12 +195,21 @@ describe('backup: datas e backup do dia', () => {
     expect(t((b) => { b.release.draft = true })).toBe('rascunho')
     expect(t((b) => { b.release.tag_name = 'backup-2000-01-01' })).toBe('tag-diverge')
     expect(t((b) => { b.release.immutable = false })).toBe('release-nao-imutavel')
+    expect(t((b) => { delete b.release.immutable })).toBe('release-nao-imutavel') // ausente não é confirmação
     expect(t((b) => { b.fileSha256 = 'ff' })).toBe('hash-diverge')
     expect(t((b) => { b.fileSize += 1 })).toBe('tamanho-diverge')
     expect(t((b) => { b.manifest.name = 'backup-2000-01-01' })).toBe('manifesto-nome-diverge')
     expect(t((b) => { b.manifest.recipients = ['CCCC3333'] })).toBe('chave-diferente-da-configurada')
     expect(t((b) => { b.manifest.recipients = [] })).toBe('sem-destinatario')
     expect(t((b) => { b.manifest.counts.streamers = 0 })).toBe('contagens-invalidas')
+  })
+  it('só reconhece como nosso o rascunho com tag, corpo e arquivos do nosso processo', () => {
+    const ours = { draft: true, tag_name: name, body: RELEASE_BODY, assets: [{ name: `${name}.json.gpg` }, { name: 'manifest.json' }] }
+    expect(isOurDraft(ours, name)).toBe(true)
+    expect(isOurDraft({ ...ours, tag_name: `${name}-r123` }, name)).toBe(true)
+    for (const bad of [{ draft: false }, { body: 'outro' }, { body: undefined }, { tag_name: `${name}-x` }, { tag_name: `${name}-r` }, { tag_name: 'backup-2000-01-01' }, { assets: [{ name: 'outro.txt' }] }]) {
+      expect(isOurDraft({ ...ours, ...bad }, name)).toBe(false)
+    }
   })
   it('manifesto não contém dados, só contagens e hash', () => {
     expect(Object.keys(manifest).sort()).toEqual(['counts', 'date', 'file', 'format', 'generated_at', 'name', 'recipients', 'sha256', 'size', 'tables'])

@@ -2,13 +2,14 @@ import './safe.mjs'
 // Publica o backup criptografado como Release do repositório PRIVADO de backups.
 // Ordem: confere o arquivo local -> confere o token/repositório -> cria RASCUNHO -> envia os 2 arquivos ->
 // baixa de volta e compara hash e tamanho -> só então publica (a Release publicada é imutável).
-// Qualquer falha antes de publicar apaga o rascunho e termina com erro; rascunhos de tentativas anteriores são apagados.
+// Qualquer falha antes de publicar apaga o rascunho e termina com erro. Rascunhos de tentativas anteriores só são apagados
+// se forem comprovadamente nossos (ver isOurDraft); qualquer outro rascunho é deixado como está.
 // Uso: node scripts/backup/publish-release.mjs <pasta-saida-do-seal>
 // Env: BACKUPS_REPO_TOKEN, BACKUPS_REPO (dono/repositorio), GITHUB_RUN_ID (sufixo se a tag do dia já estiver publicada).
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { downloadAsset, ghFetch, ghJson, listReleases } from './ghapi.mjs'
-import { sha256 } from './lib.mjs'
+import { isOurDraft, RELEASE_BODY, sha256 } from './lib.mjs'
 
 const die = (m) => { console.error(`::error::${m}`); process.exit(1) }
 const dir = process.argv[2]
@@ -37,14 +38,14 @@ try {
 
   // 3. Rascunhos de tentativas anteriores saem; se a tag do dia já estiver publicada (ex.: execução forçada), usa sufixo
   const releases = await listReleases(repo, token)
-  for (const r of releases.filter((x) => x.draft && String(x.tag_name).startsWith(name))) {
+  for (const r of releases.filter((x) => isOurDraft(x, name))) {
     await ghFetch('DELETE', `/repos/${repo}/releases/${r.id}`, { token })
   }
   const taken = releases.some((r) => !r.draft && r.tag_name === name)
   const tag = taken ? `${name}-r${process.env.GITHUB_RUN_ID || Date.now()}` : name
 
   // 4. Rascunho + envio
-  const draft = await ghJson('POST', `/repos/${repo}/releases`, { token, body: { tag_name: tag, name: tag, draft: true, body: 'Backup criptografado (GPG). Ver docs/BACKUP.md no repositorio principal.' } })
+  const draft = await ghJson('POST', `/repos/${repo}/releases`, { token, body: { tag_name: tag, name: tag, draft: true, body: RELEASE_BODY } })
   draftId = draft.id
   const uploadBase = String(draft.upload_url).replace(/\{.*$/, '')
   const sent = []
@@ -64,8 +65,9 @@ try {
   const published = await ghJson('PATCH', `/repos/${repo}/releases/${draftId}`, { token, body: { draft: false } })
   draftId = null // publicada: não há mais rascunho para apagar
   if (published.draft !== false) die('a Release nao foi publicada')
-  if (published.immutable === false) die('Release publicada, mas NAO esta imutavel; conferir a configuracao do repositorio de backups')
-  console.log(`Release publicada: ${published.tag_name}, ${sent.length} arquivos, ${fileBytes.length} bytes criptografados (imutavel: ${published.immutable === true ? 'sim' : 'nao informado'})`)
+  // Só vale com confirmação explícita; valor ausente ou falso não é aceito
+  if (published.immutable !== true) die('Release publicada, mas a imutabilidade NAO foi confirmada (immutable !== true); conferir a configuracao do repositorio de backups')
+  console.log(`Release publicada: ${published.tag_name}, ${sent.length} arquivos, ${fileBytes.length} bytes criptografados (imutavel: confirmado)`)
 } catch (e) {
   await cleanup()
   die(`falha ao publicar a Release (${e?.message?.slice(0, 80) ?? 'erro'})`)

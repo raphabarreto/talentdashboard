@@ -7,7 +7,7 @@ import { promisify } from 'node:util'
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { buildManifest } from '../../scripts/backup/lib.mjs'
+import { buildManifest, RELEASE_BODY } from '../../scripts/backup/lib.mjs'
 import { gpg } from '../../scripts/backup/gpg.mjs'
 
 const run = promisify(execFile)
@@ -16,12 +16,12 @@ const TOKEN = 'ghp_TOKEN_FALSO_PARA_TESTE_123'
 const NAME = 'backup-2026-11-10'
 
 type Asset = { id: number; name: string; bytes: Buffer }
-type Rel = { id: number; tag_name: string; draft: boolean; immutable?: boolean; assets: Asset[] }
-const mock = { releases: [] as Rel[], nextId: 1, isPrivate: true, canPush: true, corrupt: false, failUpload: false, calls: [] as string[] }
+type Rel = { id: number; tag_name: string; draft: boolean; immutable?: boolean; body?: string; assets: Asset[] }
+const mock = { releases: [] as Rel[], nextId: 1, isPrivate: true, canPush: true, corrupt: false, failUpload: false, omitImmutable: false, calls: [] as string[] }
 let server: Server
 let base = ''
 
-const view = (r: Rel) => ({ id: r.id, tag_name: r.tag_name, draft: r.draft, immutable: r.immutable, upload_url: `${base}/uploads/${r.id}/assets{?name,label}`, assets: r.assets.map((a) => ({ id: a.id, name: a.name, size: a.bytes.length })) })
+const view = (r: Rel) => ({ id: r.id, tag_name: r.tag_name, draft: r.draft, immutable: r.immutable, body: r.body, upload_url: `${base}/uploads/${r.id}/assets{?name,label}`, assets: r.assets.map((a) => ({ id: a.id, name: a.name, size: a.bytes.length })) })
 
 beforeAll(async () => {
   server = createServer((req, res) => {
@@ -39,7 +39,7 @@ beforeAll(async () => {
       if (req.method === 'GET' && p === `/repos/${REPO}/releases`) return json(200, mock.releases.map(view))
       if (req.method === 'POST' && p === `/repos/${REPO}/releases`) {
         const d = JSON.parse(body.toString())
-        const r: Rel = { id: mock.nextId++, tag_name: d.tag_name, draft: d.draft, assets: [] }
+        const r: Rel = { id: mock.nextId++, tag_name: d.tag_name, draft: d.draft, body: d.body, assets: [] }
         mock.releases.push(r)
         return json(201, view(r))
       }
@@ -65,7 +65,7 @@ beforeAll(async () => {
       if (req.method === 'PATCH' && (m = p.match(/^\/repos\/.+\/releases\/(\d+)$/))) {
         const r = mock.releases.find((x) => x.id === Number(m[1]))!
         r.draft = false; r.immutable = true
-        return json(200, view(r))
+        return json(200, { ...view(r), immutable: mock.omitImmutable ? undefined : true })
       }
       json(404, {})
     })
@@ -74,7 +74,7 @@ beforeAll(async () => {
   base = `http://127.0.0.1:${(server.address() as { port: number }).port}`
 })
 afterAll(() => { server.close() })
-beforeEach(() => Object.assign(mock, { releases: [], nextId: 1, isPrivate: true, canPush: true, corrupt: false, failUpload: false, calls: [] }))
+beforeEach(() => Object.assign(mock, { releases: [], nextId: 1, isPrivate: true, canPush: true, corrupt: false, failUpload: false, omitImmutable: false, calls: [] }))
 
 function makeOut(file: Buffer, over: Record<string, unknown> = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'bkrel-'))
@@ -145,11 +145,35 @@ describe('backup: publicação na Release privada', () => {
   })
 
   it('nova tentativa: rascunho de falha anterior é apagado e o backup é publicado', async () => {
-    mock.releases.push({ id: 99, tag_name: NAME, draft: true, assets: [{ id: 98, name: 'velho', bytes: Buffer.from('x') }] })
+    mock.releases.push({ id: 99, tag_name: NAME, draft: true, body: RELEASE_BODY, assets: [{ id: 98, name: 'manifest.json', bytes: Buffer.from('x') }] })
     const r = await publish(makeOut(file))
     expect(r.code).toBe(0)
     expect(mock.releases).toHaveLength(1)
     expect(mock.releases[0]).toMatchObject({ tag_name: NAME, draft: false })
+  })
+
+  it('só apaga rascunhos comprovadamente nossos: os de outra origem ficam intactos', async () => {
+    const foreign = [
+      { id: 70, tag_name: NAME, draft: true, body: 'rascunho de outra pessoa', assets: [] }, // corpo diferente
+      { id: 71, tag_name: NAME, draft: true, assets: [] }, // sem corpo
+      { id: 72, tag_name: NAME, draft: true, body: RELEASE_BODY, assets: [{ id: 73, name: 'planilha.xlsx', bytes: Buffer.from('x') }] }, // arquivo que não é nosso
+      { id: 74, tag_name: `${NAME}-extra`, draft: true, body: RELEASE_BODY, assets: [] }, // tag fora do padrão
+      { id: 75, tag_name: NAME, draft: false, body: RELEASE_BODY, immutable: true, assets: [] }, // publicada nunca é apagada
+    ] as Rel[]
+    mock.releases.push(...foreign, { id: 80, tag_name: `${NAME}-r5`, draft: true, body: RELEASE_BODY, assets: [] })
+    const r = await publish(makeOut(file))
+    expect(r.code).toBe(0)
+    const ids = mock.releases.map((x) => x.id)
+    for (const f of foreign) expect(ids).toContain(f.id)
+    expect(ids).not.toContain(80) // o nosso, de tentativa anterior, foi apagado
+    expect(mock.calls.filter((c) => c.startsWith('DELETE'))).toHaveLength(1)
+  })
+
+  it('imutabilidade sem confirmação (valor ausente) na publicação: falha', async () => {
+    mock.omitImmutable = true
+    const r = await publish(makeOut(file))
+    expect(r.code).toBe(1)
+    expect(r.out).toContain('imutabilidade NAO foi confirmada')
   })
 
   it('tag do dia já publicada (execução forçada): usa sufixo e não mexe na existente', async () => {
@@ -205,6 +229,7 @@ describe.skipIf(!hasGpg)('backup: checagem "já existe backup do dia" nas Releas
   })
   it('rascunho (tentativa que falhou) não conta como backup', async () => expect(await check({ release: { draft: true } })).toBe('exists=false'))
   it('Release não imutável não conta', async () => expect(await check({ release: { immutable: false } })).toBe('exists=false'))
+  it('imutabilidade ausente (não confirmada) não conta', async () => expect(await check({ release: { immutable: undefined } })).toBe('exists=false'))
   it('arquivo alterado (hash diferente do manifesto) não conta', async () => expect(await check({ bytes: Buffer.concat([encrypted, Buffer.from('x')]) })).toBe('exists=false'))
   it('criptografado para outra chave não conta', async () => expect(await check({ manifest: { recipients: ['FFFFFFFFFFFFFFFF'] } })).toBe('exists=false'))
   it('Release sem o manifesto não conta', async () => expect(await check({ release: { assets: [] } })).toBe('exists=false'))

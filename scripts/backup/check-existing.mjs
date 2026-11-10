@@ -1,6 +1,6 @@
 import './safe.mjs'
 // Já existe um backup VÁLIDO de hoje (data de Brasília)? Procura a Release publicada `backup-AAAA-MM-DD` no repositório
-// privado de backups e não confia só no nome: confere estado (publicada, imutável), hash/tamanho do arquivo, manifesto
+// privado de backups e não confia só no nome: confere estado (publicada, imutável confirmada: immutable === true), hash/tamanho do arquivo, manifesto
 // e destinatário da criptografia.
 // Limite conhecido: sem a chave privada não dá para abrir o conteúdo; a checagem prova integridade e origem, não o conteúdo.
 // Se não for possível verificar, responde "não existe" (um backup a mais é inofensivo; um a menos, não).
