@@ -1,7 +1,7 @@
 name: Backup Supabase
 
-# ETAPA 1: SOMENTE EXECUÇÃO MANUAL. Nenhum agendamento está ativo.
-# Quando o dono autorizar, descomente o bloco "schedule" (06h e 18h de Brasília = 09:00 e 21:00 UTC).
+# Agendamento ATIVO (autorizado pelo dono): 06h e 18h de Brasília = 09:00 e 21:00 UTC. A checagem "já existe backup de hoje"
+# garante no máximo um backup válido por dia; a execução manual continua disponível.
 # Ver docs/BACKUP.md (limitações, recuperação, o que fica fora do backup).
 on:
   workflow_dispatch:
@@ -10,9 +10,9 @@ on:
         description: 'Ignorar a checagem "já existe backup de hoje" e criar outro'
         type: boolean
         default: false
-  # schedule:
-  #   - cron: '0 9 * * *'   # 06h Brasília
-  #   - cron: '0 21 * * *'  # 18h Brasília
+  schedule:
+    - cron: '0 9 * * *'   # 06h Brasília
+    - cron: '0 21 * * *'  # 18h Brasília
 
 # Mínimo necessário: só ler o código. O backup vai para o repositório PRIVADO de backups com o BACKUPS_REPO_TOKEN
 # (secret do ambiente "backup"); este workflow não publica artifacts no repositório público.
