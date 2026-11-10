@@ -24,4 +24,6 @@ export function sha256(buf: Uint8Array | string): string
 export function parsePacketKeyIds(text: string): string[]
 export function parseEncryptionKeyIds(text: string): string[]
 export function buildManifest(a: { date: string; generatedAt: string; fileName: string; fileBytes: Uint8Array; recipients: string[]; counts: Record<string, number> }): any
-export function evaluateCandidate(a: { name: string; artifact: any; run: any; manifest: any; fileSha256: string; fileSize: number; expectedKeyIds: string[]; acceptRunId?: string; repo?: string }): string | null
+export const RELEASE_BODY: string
+export function isOurDraft(release: any, name: string): boolean
+export function evaluateCandidate(a: { name: string; release: any; manifest: any; fileSha256: string; fileSize: number; expectedKeyIds: string[] }): string | null

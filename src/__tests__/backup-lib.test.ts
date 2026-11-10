@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   TABLES, buildBackupQuery, extractBackup, extractBackupText, validateBackup, diffTables, diffOk, normalizeDecimal, normalizeTimestamp, parseLossless,
-  brasiliaDate, artifactNameFor, sha256, buildManifest, evaluateCandidate, parsePacketKeyIds, parseEncryptionKeyIds,
+  brasiliaDate, artifactNameFor, sha256, buildManifest, evaluateCandidate, isOurDraft, RELEASE_BODY, parsePacketKeyIds, parseEncryptionKeyIds,
 } from '../../scripts/backup/lib.mjs'
 import { createFixture } from '../../scripts/backup/fixture.mjs'
 import { runWithBadInput } from '../../scripts/backup/test-helpers.mjs'
@@ -173,7 +173,7 @@ describe('backup: comparação exata com o banco restaurado', () => {
   })
 })
 
-describe('backup: datas e artifact do dia', () => {
+describe('backup: datas e backup do dia', () => {
   it('usa a data de Brasília (UTC-3)', () => {
     expect(brasiliaDate(new Date('2026-11-08T02:30:00Z'))).toBe('2026-11-07')
     expect(brasiliaDate(new Date('2026-11-08T09:00:00Z'))).toBe('2026-11-08')
@@ -185,22 +185,17 @@ describe('backup: datas e artifact do dia', () => {
   const bytes = new TextEncoder().encode('conteudo-criptografado-ficticio'.repeat(10))
   const manifest = buildManifest({ date: '2026-11-08', generatedAt: 'x', fileName: `${name}.json.gpg`, fileBytes: bytes, recipients: ['AAAA1111'], counts: { allowed_users: 1, streamers: 3 } })
   const base = () => ({
-    name, artifact: { expired: false, size_in_bytes: 500 }, repo: 'dono/repo',
-    run: { id: 1, conclusion: 'success', head_branch: 'main', event: 'workflow_dispatch', path: '.github/workflows/backup.yml@refs/heads/main', head_repository: { full_name: 'dono/repo' }, repository: { full_name: 'dono/repo' } } as Record<string, unknown>,
+    name, release: { tag_name: name, draft: false, immutable: true } as Record<string, unknown>,
     manifest: clone(manifest), fileSha256: sha256(bytes), fileSize: bytes.length, expectedKeyIds: ['AAAA1111', 'BBBB2222'],
   })
-  it('aceita artifact íntegro', () => expect(evaluateCandidate(base())).toBeNull())
+  it('aceita Release íntegra', () => expect(evaluateCandidate(base())).toBeNull())
   it('não confia só no nome: rejeita cada tipo de defeito', () => {
     const t = (mut: (b: ReturnType<typeof base>) => void) => { const b = base(); mut(b); return evaluateCandidate(b) }
-    expect(t((b) => { b.artifact.expired = true })).toBe('expirado')
-    expect(t((b) => { b.artifact.size_in_bytes = 0 })).toBe('artifact-vazio')
-    expect(t((b) => { b.run.conclusion = 'failure' })).toBe('execucao-nao-concluida-com-sucesso')
-    // falso positivo: a chave pública é pública; um terceiro consegue gerar um .gpg "válido" para ela
-    expect(t((b) => { b.run.event = 'pull_request' })).toBe('evento-nao-confiavel')
-    expect(t((b) => { b.run.path = '.github/workflows/outro.yml@refs/heads/main' })).toBe('workflow-diferente')
-    expect(t((b) => { b.run.head_repository = { full_name: 'fork/repo' } })).toBe('origem-fora-do-repositorio')
-    expect(t((b) => { b.repo = '' })).toBe('origem-fora-do-repositorio')
-    expect(t((b) => { b.run.head_branch = 'outro' })).toBe('ramo-diferente-de-main')
+    // rascunho = tentativa que não terminou; Release não imutável poderia ser trocada depois
+    expect(t((b) => { b.release.draft = true })).toBe('rascunho')
+    expect(t((b) => { b.release.tag_name = 'backup-2000-01-01' })).toBe('tag-diverge')
+    expect(t((b) => { b.release.immutable = false })).toBe('release-nao-imutavel')
+    expect(t((b) => { delete b.release.immutable })).toBe('release-nao-imutavel') // ausente não é confirmação
     expect(t((b) => { b.fileSha256 = 'ff' })).toBe('hash-diverge')
     expect(t((b) => { b.fileSize += 1 })).toBe('tamanho-diverge')
     expect(t((b) => { b.manifest.name = 'backup-2000-01-01' })).toBe('manifesto-nome-diverge')
@@ -208,10 +203,13 @@ describe('backup: datas e artifact do dia', () => {
     expect(t((b) => { b.manifest.recipients = [] })).toBe('sem-destinatario')
     expect(t((b) => { b.manifest.counts.streamers = 0 })).toBe('contagens-invalidas')
   })
-  it('execução em andamento só conta no auto-teste (ACCEPT_RUN_ID)', () => {
-    const b = base(); b.run = { ...b.run, id: 7, conclusion: null, event: 'pull_request', head_branch: 'feat/x' }
-    expect(evaluateCandidate(b)).toBe('execucao-nao-concluida-com-sucesso')
-    expect(evaluateCandidate({ ...b, acceptRunId: '7' })).toBeNull()
+  it('só reconhece como nosso o rascunho com tag, corpo e arquivos do nosso processo', () => {
+    const ours = { draft: true, tag_name: name, body: RELEASE_BODY, assets: [{ name: `${name}.json.gpg` }, { name: 'manifest.json' }] }
+    expect(isOurDraft(ours, name)).toBe(true)
+    expect(isOurDraft({ ...ours, tag_name: `${name}-r123` }, name)).toBe(true)
+    for (const bad of [{ draft: false }, { body: 'outro' }, { body: undefined }, { tag_name: `${name}-x` }, { tag_name: `${name}-r` }, { tag_name: 'backup-2000-01-01' }, { assets: [{ name: 'outro.txt' }] }]) {
+      expect(isOurDraft({ ...ours, ...bad }, name)).toBe(false)
+    }
   })
   it('manifesto não contém dados, só contagens e hash', () => {
     expect(Object.keys(manifest).sort()).toEqual(['counts', 'date', 'file', 'format', 'generated_at', 'name', 'recipients', 'sha256', 'size', 'tables'])

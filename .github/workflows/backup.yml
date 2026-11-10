@@ -14,10 +14,10 @@ on:
   #   - cron: '0 9 * * *'   # 06h Brasília
   #   - cron: '0 21 * * *'  # 18h Brasília
 
-# Mínimo necessário: ler o código e listar/ler artifacts. Sem permissão de escrita no repositório.
+# Mínimo necessário: só ler o código. O backup vai para o repositório PRIVADO de backups com o BACKUPS_REPO_TOKEN
+# (secret do ambiente "backup"); este workflow não publica artifacts no repositório público.
 permissions:
   contents: read
-  actions: read
 
 concurrency:
   group: backup-supabase
@@ -27,6 +27,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: backup # precisa do BACKUPS_REPO_TOKEN para consultar as Releases privadas
     outputs:
       exists: ${{ steps.check.outputs.exists }}
     steps:
@@ -37,7 +38,8 @@ jobs:
       - name: Já existe um backup válido de hoje?
         id: check
         env:
-          GH_TOKEN: ${{ github.token }}
+          BACKUPS_REPO_TOKEN: ${{ secrets.BACKUPS_REPO_TOKEN }}
+          BACKUPS_REPO: ${{ github.repository_owner }}/talentdashboard-backups
           BACKUP_GPG_PUBLIC_KEY: ${{ vars.BACKUP_GPG_PUBLIC_KEY }}
           FORCE: ${{ inputs.force }}
         run: |
@@ -46,7 +48,7 @@ jobs:
 
   backup:
     needs: check
-    # Ambiente com a regra "somente ramo main": o token do Supabase fica como secret DESTE ambiente (ver docs/BACKUP.md).
+    # Ambiente com a regra "somente ramo main": os tokens (Supabase e repositório de backups) ficam como secrets DESTE ambiente (ver docs/BACKUP.md).
     environment: backup
     if: needs.check.outputs.exists != 'true'
     runs-on: ubuntu-latest
@@ -92,25 +94,11 @@ jobs:
       - name: 4. Criptografar com a chave pública e gerar manifesto
         run: node scripts/backup/seal.mjs "$RUNNER_TEMP/backup.json" "$RUNNER_TEMP/out"
 
-      - name: 5. Publicar artifact (30 dias)
-        id: upload
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: backup-${{ steps.date.outputs.d }}
-          path: ${{ runner.temp }}/out/
-          retention-days: 30
-          if-no-files-found: error
-          overwrite: true
-          compression-level: 0
-
-      - name: 6. Confirmar que o GitHub guardou o artifact
+      - name: 5. Publicar na Release privada (rascunho, conferência de hash e só então publica)
         env:
-          GH_TOKEN: ${{ github.token }}
-          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
-          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
-        run: |
-          NAME="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).name)' "$RUNNER_TEMP/out/manifest.json")"
-          EXPECTED_NAME="$NAME" node scripts/backup/verify-upload.mjs
+          BACKUPS_REPO_TOKEN: ${{ secrets.BACKUPS_REPO_TOKEN }}
+          BACKUPS_REPO: ${{ github.repository_owner }}/talentdashboard-backups
+        run: node scripts/backup/publish-release.mjs "$RUNNER_TEMP/out"
 
       - name: Apagar o JSON em texto puro do disco do runner
         if: always()
