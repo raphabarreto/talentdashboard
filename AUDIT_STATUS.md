@@ -1,6 +1,6 @@
 # AUDIT_STATUS — Talent Dashboard
 
-Atualizado em 2026-11-09. Base: main @ bb408b7 (PR #106). Sem segredos neste arquivo.
+Atualizado em 2026-11-10. Base: main @ c8f4108 (PR #111). Sem segredos neste arquivo.
 Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário · [a verificar]
 
 ## Concluído
@@ -111,6 +111,7 @@ Auditoria técnica CONCLUÍDA em 07/11/2026 e **em operação** (ver seção aba
 - Usuário usa só PC: não listar conferências de celular.
 
 ## Próximo passo sugerido
+0. **Conferir a 1ª execução agendada dos backups (11/11) e registrar o resultado** (ver "Backup em Releases privadas" abaixo). Depois, nada urgente.
 1. Aguardar novos ajustes do usuário; revisão periódica com `npm audit`.
 2. **[Implementado em 09/11: ver "Backup automático"; falta ativar o agendamento] Estratégia de backup do Supabase.** O projeto Dash Lugs não tem backup automático (sem PITR; lista de backups vazia em 07/11/2026). Opções a avaliar: plano com backups diários/PITR, ou rotina de exportação periódica (leitura) das tabelas `campaigns`, `campaign_streamers`, `streamers`, `prospect_shortlist` guardada fora do banco. Decidir com o usuário; exige conta/custo ou novo workflow.
 3. Itens opcionais da auditoria (P3-06, P3-08, P3-09 e outros listados em "Riscos residuais") só se o usuário pedir.
@@ -184,11 +185,13 @@ Resultado: 0 problemas P0; 1 P1, 5 P2 e 9 P3 identificados; os confirmados foram
   - [ok] Fase 0 parcial (09/11): repositório criado PRIVADO, Actions desabilitado, sem colaboradores, issues/wiki/projects desligados, **releases imutáveis ativadas** (confirmado pela API; vale só para releases futuras). Branch padrão `master` (renomear para `main` é decisão aberta). 0 releases, nenhum token/secret criado.
   - **Plano simplificado (10/11, aprovado):** em vez de gravação dupla/importação manual/retenção, um único PR (`feat/backup-releases-privadas`): `publish-release.mjs` (valida repositório privado e escrita, rascunho → envio → baixa de volta e compara hash → publica), `check-existing.mjs` e `evaluateCandidate` olhando a Release do dia, sem `upload-artifact`/`verify-upload`, `GITHUB_TOKEN` só `contents: read`. PR #108 (workflow temporário de teste) fechado sem merge. Testes com API simulada. [a verificar] primeiro backup real na Release e recuperação a partir dela; depois, PR separado do agendamento. O artifact público de 09/11 expira em 09/12.
   - (Plano anterior, substituído) Próximos passos, cada um com autorização própria: (1) dono cria token fine-grained só no repositório `talentdashboard-backups` com `Contents: Read and write` (validade 1 ano) e cadastra como `BACKUPS_REPO_TOKEN` só no ambiente `backup`; (2) teste local do token (script fora do projeto, sem imprimir token; cobrir upload de asset e exclusão de release de teste); (3) importar manualmente `backup-2026-11-09` como release e rodar a recuperação a partir dela; (4) PR de gravação dupla; (5) PR de corte (remove `upload-artifact`/`verify-upload`, teste de CI contra `upload-artifact`, `GITHUB_TOKEN` só `contents: read`, reescrever procedência em `check-existing.mjs` para releases, limpeza de retenção em dry-run); excluir o artifact público só com autorização; (6) PR separado para ativar o agendamento.
-  - Estado ao encerrar a sessão (09/11): agendamento DESLIGADO; nenhum backup novo; artifact `backup-2026-11-09` continua disponível (expira 09/12/2026, antes disso o backup precisa existir também na release privada).
+  - Estado ao encerrar a sessão de 10/11: agendamento ATIVO, backup real em Release privada validado (10/11), artifact público removido.
 
 - **Backup em Releases privadas: implementado e validado (10/11).** PR #109 na main (merge `8a53879`; exige `immutable === true`, só apaga rascunhos comprovadamente nossos). [ok] 1ª execução real (run 42890001041, `main`, sem `force`): leitura das 6 tabelas, validação, teste de restauração, criptografia, publicação e conferência por download; Release `backup-2026-11-10` publicada, `immutable: true`, 2 arquivos (.json.gpg 20.618 bytes + manifest.json 631 bytes), 395 linhas (campaigns 20, streamers 166, allowed_users 3, streamer_history 0, campaign_streamers 193, prospect_shortlist 13). Tokens mascarados nos logs. [ok] 2ª execução (run 42890243157, sem `force`): job `check` achou o backup íntegro e o job `backup` foi ignorado; continua 1 só Release. [usuário] Recuperação local validada a partir da Release (10/11): SHA-256 correto, descriptografia GPG, estrutura válida, 395 registros, 0 erros, limpeza confirmada.
 - [ok] Artifact público `backup-2026-11-09` (id 13683106962, run 42637202782) excluído em 10/11 com autorização; antes era o único artifact do repositório (agora 0). Release privada de 10/11 conferida intacta (publicada, imutável, mesmos hashes). Não há mais cópia de backup em repositório público.
-- **Pendente (autorização própria):** ativar o agendamento (06h e 18h de Brasília) em PR separado. [a verificar] execução agendada; [a verificar] restauração real em outro projeto (testes cobrem o arquivo, não um restore no Supabase). Sem retenção automática (cada backup ~21 KB). Chave privada é insubstituível.
+- [ok] **Agendamento ATIVO desde 10/11 (PR #111, merge `c8f4108`, autorizado):** 06h e 18h de Brasília (`0 9`/`0 21` UTC), um backup válido por dia pela deduplicação; execução manual segue disponível; só repositório privado; nenhum secret, permissão ou lógica alterados. Nenhuma execução agendada ocorreu ainda (o merge foi depois do horário de 21:00 UTC de 10/11).
+- **Pendente (próxima sessão):** conferir a 1ª execução agendada (11/11, ~09:00 UTC): run `schedule` com sucesso e logs sem token/dados; Release `backup-2026-11-11` publicada, imutável, 2 arquivos com hash igual ao do manifesto; execução de ~21:00 UTC com o job `backup` ignorado (deduplicação, 1 Release por dia); 0 artifacts no repositório público. Não fazer backups manuais extras. Se algo falhar, avisar o usuário antes de corrigir. Depois, registrar o resultado aqui (PR separado).
+- [a verificar] execução agendada real; [a verificar] restauração real em outro projeto (testes cobrem o arquivo, não um restore no Supabase). Sem retenção automática (cada backup ~21 KB). Chave privada é insubstituível.
 
 ## Testes (07/11)
 - [ok] `vitest run`: 28 arquivos, 135 testes passando; [ok] `npm run build`; [ok] `tsc --noEmit`: 0 erros.
