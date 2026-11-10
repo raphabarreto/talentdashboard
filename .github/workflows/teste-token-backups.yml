@@ -1,0 +1,105 @@
+name: Teste temporário do token de backups (SOMENTE LEITURA)
+
+# TEMPORÁRIO: remover após a validação da Fase 1. Só execução manual, só na main.
+# Usa SOMENTE o secret BACKUPS_REPO_TOKEN do ambiente "backup". Faz apenas requisições GET
+# (nenhuma escrita, nenhuma release, nenhuma alteração de configuração). Não imprime o token.
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: teste-token-backups
+  cancel-in-progress: false
+
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: backup
+    if: github.ref == 'refs/heads/main'
+    env:
+      BACKUPS_REPO_TOKEN: ${{ secrets.BACKUPS_REPO_TOKEN }}
+      BACKUPS_REPO: ${{ github.repository_owner }}/talentdashboard-backups
+      MAIN_REPO: ${{ github.repository }}
+    steps:
+      - name: Testes A a C (somente leitura)
+        shell: bash
+        run: |
+          set +x
+          set -u
+          if [ -z "${BACKUPS_REPO_TOKEN}" ]; then echo "FALHA: secret BACKUPS_REPO_TOKEN vazio ou ausente"; exit 1; fi
+          echo "::add-mask::${BACKUPS_REPO_TOKEN}"
+          API="https://api.github.com"
+          FAILS=0
+          pass() { echo "OK    $1"; echo "- OK: $1" >> "$GITHUB_STEP_SUMMARY"; }
+          fail() { echo "FALHA $1"; echo "- FALHA: $1" >> "$GITHUB_STEP_SUMMARY"; FAILS=$((FAILS+1)); }
+
+          # GET somente leitura; grava o corpo em /tmp/body e devolve só o código HTTP. Sem -v/-i: nada de cabeçalhos no log.
+          get() {
+            curl -sS -o /tmp/body -w '%{http_code}' -X GET \
+              -H "Authorization: Bearer ${BACKUPS_REPO_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "$API$1"
+          }
+          # Espera 403 ou 404 (acesso negado)
+          expect_denied() {
+            code=$(get "$2")
+            if [ "$code" = "403" ] || [ "$code" = "404" ]; then pass "$1: acesso negado como esperado (HTTP $code)"; else fail "$1: esperado 403/404, veio HTTP $code"; fi
+          }
+
+          echo "## Teste do token de backups (somente leitura)" >> "$GITHUB_STEP_SUMMARY"
+
+          # A1/A2: autentica e enxerga o repositório de backups; precisa ser privado
+          code=$(get "/repos/${BACKUPS_REPO}")
+          if [ "$code" = "200" ]; then
+            pass "A1: token autentica e acessa ${BACKUPS_REPO}"
+            priv=$(jq -r '.private' /tmp/body)
+            [ "$priv" = "true" ] && pass "A2: repositório de backups é privado" || fail "A2: repositório NÃO está privado (private=$priv)"
+            perms=$(jq -c '.permissions // {}' /tmp/body)
+            echo "     permissões do token neste repositório: ${perms}"
+            echo "- Permissões informadas pela API (repositório de backups): \`${perms}\`" >> "$GITHUB_STEP_SUMMARY"
+            for k in has_issues has_wiki has_projects archived; do echo "     ${k}=$(jq -r ".${k}" /tmp/body)"; done
+          else
+            fail "A1: não acessou ${BACKUPS_REPO} (HTTP $code)"
+          fi
+
+          # A3: lista de releases (leitura); esperado 0 releases antes do backup real
+          code=$(get "/repos/${BACKUPS_REPO}/releases?per_page=100")
+          if [ "$code" = "200" ]; then
+            n=$(jq 'length' /tmp/body)
+            [ "$n" = "0" ] && pass "A3: leitura de releases ok, 0 releases" || pass "A3: leitura de releases ok, ${n} release(s) existente(s)"
+          else
+            fail "A3: não listou releases (HTTP $code)"
+          fi
+
+          # B4: o token só deve enxergar o repositório de backups
+          code=$(get "/user/repos?per_page=100")
+          if [ "$code" = "200" ]; then
+            names=$(jq -r '.[].full_name' /tmp/body | sort | tr '\n' ' ')
+            total=$(jq 'length' /tmp/body)
+            echo "     repositórios visíveis ao token: ${names}"
+            if [ "$total" = "1" ] && [ "$(jq -r '.[0].full_name' /tmp/body)" = "${BACKUPS_REPO}" ]; then
+              pass "B4: token enxerga apenas ${BACKUPS_REPO}"
+            else
+              fail "B4: token enxerga ${total} repositório(s): ${names}"
+            fi
+          else
+            echo "     /user/repos HTTP $code (não conclusivo)"; echo "- B4 /user/repos: HTTP $code (não conclusivo)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # B4b: segredos e Actions do repositório principal (leitura; deve ser negada)
+          expect_denied "B4b: secrets do repositório principal" "/repos/${MAIN_REPO}/actions/secrets"
+          expect_denied "B4c: ambientes do repositório principal" "/repos/${MAIN_REPO}/environments"
+
+          # B5: administração do repositório de backups (leitura; deve ser negada)
+          expect_denied "B5a: secrets do repositório de backups" "/repos/${BACKUPS_REPO}/actions/secrets"
+          expect_denied "B5b: colaboradores" "/repos/${BACKUPS_REPO}/collaborators"
+          expect_denied "B5c: webhooks" "/repos/${BACKUPS_REPO}/hooks"
+          expect_denied "B5d: chaves de deploy" "/repos/${BACKUPS_REPO}/keys"
+          expect_denied "B5e: configuração de Actions" "/repos/${BACKUPS_REPO}/actions/permissions"
+
+          rm -f /tmp/body
+          echo "---"
+          if [ "$FAILS" -eq 0 ]; then echo "RESULTADO: todos os testes passaram"; echo "**Resultado: todos os testes passaram**" >> "$GITHUB_STEP_SUMMARY"; else echo "RESULTADO: ${FAILS} falha(s)"; echo "**Resultado: ${FAILS} falha(s)**" >> "$GITHUB_STEP_SUMMARY"; exit 1; fi
