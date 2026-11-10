@@ -1,8 +1,9 @@
 name: Backup auto-teste
 
 # Exercita TODO o fluxo do backup com dados 100% FICTÍCIOS e uma chave GPG descartável:
-# validação, restauração em Postgres do Supabase (RLS/auth reais), criptografia, upload, verificação do upload,
-# checagem "já existe backup do dia" e recuperação com a chave privada. Não usa secrets nem toca em produção.
+# validação, restauração em Postgres do Supabase (RLS/auth reais), criptografia e recuperação com a chave privada.
+# A publicação e a checagem "já existe backup do dia" (Releases) são testadas com API simulada em src/__tests__/backup-release.test.ts.
+# Não usa secrets nem toca em produção.
 on:
   pull_request:
     paths:
@@ -14,7 +15,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   selftest:
@@ -72,47 +72,6 @@ jobs:
 
       - name: Criptografar
         run: node scripts/backup/seal.mjs "$RUNNER_TEMP/backup.json" "$RUNNER_TEMP/out"
-
-      - name: Enviar artifact (1 dia)
-        id: upload
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: backup-${{ env.BACKUP_DATE }}
-          path: ${{ runner.temp }}/out/
-          retention-days: 1
-          if-no-files-found: error
-          overwrite: true
-          compression-level: 0
-
-      - name: Confirmar o upload
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
-          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
-          EXPECTED_NAME: backup-${{ env.BACKUP_DATE }}
-        run: node scripts/backup/verify-upload.mjs
-
-      - name: Checagem "já existe backup do dia" encontra o artifact íntegro
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ARTIFACT_NAME: backup-${{ env.BACKUP_DATE }}
-          ACCEPT_RUN_ID: ${{ github.run_id }}
-          CHECK_OUTPUT: ${{ runner.temp }}/check.out
-        run: |
-          : > "$CHECK_OUTPUT"
-          node scripts/backup/check-existing.mjs
-          grep -qx 'exists=true' "$CHECK_OUTPUT"
-
-      - name: Checagem rejeita execução ainda não concluída com sucesso
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ARTIFACT_NAME: backup-${{ env.BACKUP_DATE }}
-          CHECK_OUTPUT: ${{ runner.temp }}/check2.out
-        run: |
-          : > "$CHECK_OUTPUT"
-          # sem ACCEPT_RUN_ID a execução em andamento não conta como concluída com sucesso => deve dizer "não existe"
-          node scripts/backup/check-existing.mjs
-          grep -qx 'exists=false' "$CHECK_OUTPUT"
 
       - name: Recuperar com a chave privada e comparar com o original
         run: |

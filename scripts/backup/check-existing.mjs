@@ -1,20 +1,18 @@
 import './safe.mjs'
-// Já existe um backup VÁLIDO de hoje (data de Brasília)? Não confia no nome do artifact: confere procedência
-// (nosso workflow, neste repositório, evento manual/agendado, ramo main, execução concluída com sucesso),
-// hash/tamanho do arquivo, manifesto e destinatário da criptografia.
-// Limite conhecido: sem a chave privada não dá para abrir o conteúdo; a checagem prova integridade e procedência, não o conteúdo.
+// Já existe um backup VÁLIDO de hoje (data de Brasília)? Procura a Release publicada `backup-AAAA-MM-DD` no repositório
+// privado de backups e não confia só no nome: confere estado (publicada, imutável), hash/tamanho do arquivo, manifesto
+// e destinatário da criptografia.
+// Limite conhecido: sem a chave privada não dá para abrir o conteúdo; a checagem prova integridade e origem, não o conteúdo.
 // Se não for possível verificar, responde "não existe" (um backup a mais é inofensivo; um a menos, não).
-// Env: GH_TOKEN, GITHUB_REPOSITORY, BACKUP_GPG_PUBLIC_KEY, GITHUB_OUTPUT (ou CHECK_OUTPUT); opcionais: ARTIFACT_NAME, ACCEPT_RUN_ID (auto-teste).
-import { execFileSync } from 'node:child_process'
-import { appendFileSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+// Env: BACKUPS_REPO_TOKEN, BACKUPS_REPO, BACKUP_GPG_PUBLIC_KEY, GITHUB_OUTPUT (ou CHECK_OUTPUT); opcional: BACKUP_NAME (testes).
+import { appendFileSync } from 'node:fs'
 import { listPackets, withPublicKeyring } from './gpg.mjs'
+import { downloadAsset, listReleases } from './ghapi.mjs'
 import { artifactNameFor, brasiliaDate, evaluateCandidate, parsePacketKeyIds, sha256 } from './lib.mjs'
 
-const repo = process.env.GITHUB_REPOSITORY
-const name = process.env.ARTIFACT_NAME || artifactNameFor(brasiliaDate())
-const gh = (args) => execFileSync('gh', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
+const repo = process.env.BACKUPS_REPO
+const token = process.env.BACKUPS_REPO_TOKEN
+const name = process.env.BACKUP_NAME || artifactNameFor(brasiliaDate())
 
 function finish(exists, reason) {
   console.log(`backup do dia (${name}): ${exists ? 'ja existe e esta integro' : `nao encontrado (${reason})`}`)
@@ -33,21 +31,20 @@ try {
 let found = false
 const reasons = []
 try {
-  const list = JSON.parse(gh(['api', `repos/${repo}/actions/artifacts?name=${encodeURIComponent(name)}&per_page=100`]))
-  const candidates = (list.artifacts ?? []).filter((a) => a.name === name && !a.expired).sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
-  if (candidates.length === 0) reasons.push('nenhum artifact')
-  for (const artifact of candidates) {
-    const dir = mkdtempSync(join(tmpdir(), 'bkchk-'))
+  if (!repo || !token) throw new Error('repositorio ou token de backups nao configurado')
+  const candidates = (await listReleases(repo, token)).filter((r) => r.tag_name === name && !r.draft)
+  if (candidates.length === 0) reasons.push('nenhuma release publicada')
+  for (const release of candidates) {
     try {
-      const runId = artifact.workflow_run?.id
-      const run = JSON.parse(gh(['api', `repos/${repo}/actions/runs/${runId}`]))
-      gh(['run', 'download', String(runId), '-R', repo, '-n', name, '-D', dir])
-      const manifest = JSON.parse(readFileSync(join(dir, 'manifest.json'), 'utf8'))
-      const bytes = readFileSync(join(dir, `${name}.json.gpg`))
+      const mAsset = release.assets?.find((a) => a.name === 'manifest.json')
+      const fAsset = release.assets?.find((a) => a.name === `${name}.json.gpg`)
+      if (!mAsset || !fAsset) { reasons.push('arquivos-ausentes'); continue }
+      const manifest = JSON.parse((await downloadAsset(repo, token, mAsset)).toString('utf8'))
+      const bytes = await downloadAsset(repo, token, fAsset)
       const recipients = withPublicKeyring(process.env.BACKUP_GPG_PUBLIC_KEY, ({ home }) => parsePacketKeyIds(listPackets(home, bytes)))
       const reason = evaluateCandidate({
-        name, artifact, run, manifest, fileSha256: sha256(bytes), fileSize: bytes.length, repo,
-        expectedKeyIds: recipients.length ? expectedKeyIds : [], acceptRunId: process.env.ACCEPT_RUN_ID,
+        name, release, manifest, fileSha256: sha256(bytes), fileSize: bytes.length,
+        expectedKeyIds: recipients.length ? expectedKeyIds : [],
       })
       if (reason) reasons.push(reason)
       // o destinatário real do arquivo precisa coincidir com o declarado no manifesto
@@ -55,12 +52,10 @@ try {
       else { found = true; break }
     } catch (e) {
       reasons.push(`nao-verificavel(${e?.name ?? 'erro'})`)
-    } finally {
-      rmSync(dir, { recursive: true, force: true })
     }
   }
 } catch (e) {
-  console.log(`::warning::nao foi possivel consultar os artifacts (${e?.name ?? 'erro'}); sera criado um novo backup`)
+  console.log(`::warning::nao foi possivel consultar as releases (${e?.name ?? 'erro'}); sera criado um novo backup`)
   reasons.push('consulta-falhou')
 }
 finish(found, [...new Set(reasons)].join(','))

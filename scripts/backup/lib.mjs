@@ -178,7 +178,7 @@ export function diffTables(original, restored) {
 }
 export const diffOk = (d) => Object.values(d).every((x) => x.original === x.restored && x.different === 0)
 
-// ---- nomes, datas e verificações do artifact ----
+// ---- nomes, datas e verificações do backup do dia ----
 export function brasiliaDate(d = new Date()) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d)
 }
@@ -211,23 +211,15 @@ export function buildManifest({ date, generatedAt, fileName, fileBytes, recipien
   }
 }
 
-// Decide se um artifact encontrado conta como "backup válido do dia". Não confia no nome:
-// confere conclusão do workflow, ramo, integridade do arquivo e para quem foi criptografado.
+// Decide se uma Release encontrada conta como "backup válido do dia". Não confia no nome:
+// confere estado da Release, integridade do arquivo e para quem foi criptografado.
 // Procedência: a chave pública é pública, então qualquer pessoa consegue criar um arquivo "criptografado para ela".
-// Por isso só vale artifact vindo do NOSSO workflow, neste repositório (não de fork), disparado manualmente/agendado, na main.
-export const BACKUP_WORKFLOW_PATH = '.github/workflows/backup.yml'
-export function evaluateCandidate({ name, artifact, run, manifest, fileSha256, fileSize, expectedKeyIds, acceptRunId, repo }) {
-  if (!artifact || artifact.expired) return 'expirado'
-  if (!(artifact.size_in_bytes > 0)) return 'artifact-vazio'
-  const isSelfTestRun = Boolean(acceptRunId) && run && String(run.id) === String(acceptRunId) // auto-teste: execução atual, no ramo do PR
-  const runOk = run && (run.conclusion === 'success' || isSelfTestRun)
-  if (!runOk) return 'execucao-nao-concluida-com-sucesso'
-  if (!isSelfTestRun) {
-    if (run.head_branch !== 'main') return 'ramo-diferente-de-main'
-    if (run.event !== 'workflow_dispatch' && run.event !== 'schedule') return 'evento-nao-confiavel'
-    if (!String(run.path ?? '').startsWith(`${BACKUP_WORKFLOW_PATH}@`) && run.path !== BACKUP_WORKFLOW_PATH) return 'workflow-diferente'
-    if (!repo || run.head_repository?.full_name !== repo || run.repository?.full_name !== repo) return 'origem-fora-do-repositorio'
-  }
+// Aqui a procedência vem do LUGAR: Release PUBLICADA (não rascunho) no repositório privado de backups, onde só o token
+// restrito escreve, e imutável (não pode ser trocada depois de publicada).
+export function evaluateCandidate({ name, release, manifest, fileSha256, fileSize, expectedKeyIds }) {
+  if (!release || release.draft) return 'rascunho'
+  if (release.tag_name !== name) return 'tag-diverge'
+  if (release.immutable === false) return 'release-nao-imutavel'
   if (!isObj(manifest) || manifest.format !== FORMAT) return 'manifesto-invalido'
   if (manifest.name !== name) return 'manifesto-nome-diverge'
   if (manifest.file !== `${name}.json.gpg`) return 'manifesto-arquivo-diverge'
