@@ -83,6 +83,11 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
     updateOverviewSelection()
     renderTable()
   })
+  document.getElementById('clearSelectionBtn')?.addEventListener('click', () => {
+    selectedStreamers.clear()
+    renderTable()
+    updateOverviewSelection()
+  })
   document.getElementById('selectAll')?.addEventListener('change', (e) => {
     // Só a página atual: marca/desmarca os streamers visíveis, sem mexer na seleção das outras páginas.
     const checked = (e.target as HTMLInputElement).checked

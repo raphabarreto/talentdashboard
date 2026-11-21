@@ -90,6 +90,8 @@ export function updateActions() {
   const btn = document.getElementById('addToListBtn') as HTMLButtonElement
   const count = ps.selected.size
   btn.disabled = count === 0
+  const clearBtn = document.getElementById('clearProspectSelectionBtn') as HTMLButtonElement | null
+  if (clearBtn) clearBtn.disabled = count === 0
   btn.title = count === 0 ? 'Marque streamers na tabela abaixo' : ''
   document.getElementById('prospectSelectedCount')!.textContent = String(count)
   // Checkbox do cabeçalho reflete só a página atual.

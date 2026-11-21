@@ -109,6 +109,11 @@ function setupResultsTable(els: Els) {
     renderResults()
   })
 
+  document.getElementById('clearProspectSelectionBtn')?.addEventListener('click', () => {
+    ps.selected.clear()
+    renderResults()
+  })
+
   els.addToListBtn.addEventListener('click', () => {
     const toAdd = ps.results.filter(r => ps.selected.has(r.user_login) && !shortlist.some(s => s.user_login === r.user_login))
     shortlist.push(...toAdd)
