@@ -79,6 +79,7 @@ export function updateSelectionButtons() {
   const count = selectedStreamers.size
   document.getElementById('generatePdfBtn')!.classList.toggle('hidden', count === 0)
   document.getElementById('removeSelectedBtn')!.classList.toggle('hidden', count === 0)
+  document.getElementById('clearSelectionBtn')?.classList.toggle('hidden', count === 0)
   document.getElementById('selectedCount')!.textContent = String(count)
   document.getElementById('selectedCountRemove')!.textContent = String(count)
 }

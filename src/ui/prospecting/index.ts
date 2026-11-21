@@ -9,7 +9,7 @@ import { shortlist, setShortlist, persistAdded, persistRemoved, persistCleared, 
 import { extractEmail } from './email'
 import { ps } from './state'
 import type { ProspectStream } from './types'
-import { getVisibleResults, renderResults, renderShortlist, updateActions } from './render'
+import { getSelectablePageResults, renderResults, renderShortlist, updateActions } from './render'
 
 export { searchCategoriesCached } from './categories'
 
@@ -103,9 +103,14 @@ function setupSearch(els: Els) {
 function setupResultsTable(els: Els) {
   els.selectAll.addEventListener('change', (e) => {
     const checked = (e.target as HTMLInputElement).checked
-    const visible = getVisibleResults()
-    if (checked) visible.forEach(r => ps.selected.add(r.user_login))
-    else ps.selected.clear()
+    const page = getSelectablePageResults()
+    if (checked) page.forEach(r => ps.selected.add(r.user_login))
+    else page.forEach(r => ps.selected.delete(r.user_login))
+    renderResults()
+  })
+
+  document.getElementById('clearProspectSelectionBtn')?.addEventListener('click', () => {
+    ps.selected.clear()
     renderResults()
   })
 
