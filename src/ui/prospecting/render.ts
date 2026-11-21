@@ -17,6 +17,13 @@ export function getVisibleResults(): ProspectStream[] {
   return ps.results
 }
 
+// Streamers da página atual que podem ser marcados (os que já estão na lista ficam de fora).
+export function getSelectablePageResults(): ProspectStream[] {
+  return getVisibleResults()
+    .slice((ps.page - 1) * PROSPECT_PAGE_SIZE, ps.page * PROSPECT_PAGE_SIZE)
+    .filter(r => !shortlist.some(s => s.user_login === r.user_login))
+}
+
 // Bandeira pelo idioma (ícone do flag-icons; emoji de bandeira vira "BR"/"ES" no Windows).
 // O idioma vem da configuração do canal na Twitch (não do país do streamer).
 export function langFlag(language: string): string {
@@ -85,6 +92,14 @@ export function updateActions() {
   btn.disabled = count === 0
   btn.title = count === 0 ? 'Marque streamers na tabela abaixo' : ''
   document.getElementById('prospectSelectedCount')!.textContent = String(count)
+  // Checkbox do cabeçalho reflete só a página atual.
+  const selectAll = document.getElementById('prospectSelectAll') as HTMLInputElement | null
+  if (selectAll) {
+    const page = getSelectablePageResults()
+    const marked = page.filter(r => ps.selected.has(r.user_login)).length
+    selectAll.checked = page.length > 0 && marked === page.length
+    selectAll.indeterminate = marked > 0 && marked < page.length
+  }
 }
 
 export function renderShortlist() {
