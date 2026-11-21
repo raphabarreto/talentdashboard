@@ -35,7 +35,7 @@ export function renderTable() {
       <td class="p-3"><input type="checkbox" class="streamer-checkbox w-4 h-4 rounded" data-id="${s.id}" aria-label="Selecionar ${esc(s.name)}" ${selectedStreamers.has(s.id) ? 'checked' : ''}></td>
       <td class="p-3 font-medium">
         <div class="flex items-center gap-2 min-w-0">
-          ${s.is_live ? '<span class="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0"></span>' : ''}
+          ${s.is_live ? '<span class="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0" title="Ao vivo" aria-label="Ao vivo" role="img"></span>' : ''}
           <span class="text-white truncate">${esc(s.name)}</span>
         </div>
       </td>
@@ -81,6 +81,9 @@ export function updateSelectionButtons() {
   ;(document.getElementById('removeSelectedBtn') as HTMLButtonElement).disabled = count === 0
   const clearBtn = document.getElementById('clearSelectionBtn') as HTMLButtonElement | null
   if (clearBtn) clearBtn.disabled = count === 0
+  // Os botões aparecem ao lado de "Adicionar", na linha dos filtros, só com seleção (sem reservar espaço).
+  document.getElementById('tableSelectionBar')?.classList.toggle('hidden', count === 0)
+  document.getElementById('tableSelectionBar')?.classList.toggle('flex', count > 0)
   document.getElementById('selectedCount')!.textContent = String(count)
   document.getElementById('selectedCountRemove')!.textContent = String(count)
 }
