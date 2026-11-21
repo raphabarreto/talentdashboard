@@ -81,6 +81,8 @@ export function updateSelectionButtons() {
   ;(document.getElementById('removeSelectedBtn') as HTMLButtonElement).disabled = count === 0
   const clearBtn = document.getElementById('clearSelectionBtn') as HTMLButtonElement | null
   if (clearBtn) clearBtn.disabled = count === 0
+  // Os botões só aparecem com seleção; a linha mantém a altura (invisible) para a tabela não pular.
+  document.getElementById('tableSelectionBar')?.classList.toggle('invisible', count === 0)
   document.getElementById('selectedCount')!.textContent = String(count)
   document.getElementById('selectedCountRemove')!.textContent = String(count)
 }
