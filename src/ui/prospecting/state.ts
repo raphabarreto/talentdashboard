@@ -5,6 +5,7 @@ export const ps = {
   results: [] as ProspectStream[],
   selected: new Set<string>(),
   page: 1,
+  listPage: 1, // página da Minha Lista
   gameId: '',
   loaded: 0, // transmissões ao vivo carregadas da Twitch (antes dos filtros)
 }

@@ -71,6 +71,7 @@ export function prospectingHtml(): string {
             </table>
           </div>
         </div>
+        <div id="shortlistPagination" class="flex items-center justify-center gap-4 mt-4"></div>
       </div>
     </div>
   `
