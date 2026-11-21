@@ -57,7 +57,7 @@ export function renderResults() {
     <tr class="hover:bg-slate-700/30 transition-colors ${inList ? 'opacity-50' : ''}">
       <td class="p-3"><input type="checkbox" class="prospect-check w-4 h-4 rounded" data-login="${esc(r.user_login)}" ${ps.selected.has(r.user_login) ? 'checked' : ''} ${inList ? 'disabled' : ''}></td>
       <td class="p-3 truncate">
-        <a href="https://twitch.tv/${esc(r.user_login)}" target="_blank" class="text-white hover:text-indigo-400 font-semibold text-base">${esc(r.user_name)}</a>${inList ? ' <span class="text-xs text-slate-500">✓ na lista</span>' : ''}
+        <a href="https://twitch.tv/${esc(r.user_login)}" target="_blank" rel="noopener noreferrer" class="text-white hover:text-indigo-400 font-semibold text-base">${esc(r.user_name)}</a>${inList ? ' <span class="text-xs text-slate-500">✓ na lista</span>' : ''}
       </td>
       <td class="p-3 text-sm text-slate-400 truncate" title="${esc(r.game_name)}">${esc(r.game_name) || '-'}</td>
       <td class="p-3 text-center">
@@ -109,6 +109,11 @@ export function renderShortlist() {
   const body = document.getElementById('shortlistBody')!
   section.classList.remove('hidden') // Always visible
   document.getElementById('shortlistCount')!.textContent = String(shortlist.length)
+
+  if (!shortlist.length) {
+    body.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">Sua lista está vazia. Marque streamers nos resultados ou adicione pelo nome na Twitch.</td></tr>'
+    return
+  }
 
   body.innerHTML = shortlist.map(r => `
     <tr class="hover:bg-slate-700/30 transition-colors">

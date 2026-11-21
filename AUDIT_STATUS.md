@@ -97,6 +97,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Layout, Campanhas e Consultar Streamer (21/11): tabela de Campanhas com colunas de largura fixa e Ações alinhadas à direita; cartão "Meu Valor Total" em linha única, mais compacto; no modal Consultar Streamer, "+ Minha Lista" virou botão cheio (verde) e canal sem histórico mostra "—" em vez de 0. Barras de filtros das abas já seguem o mesmo padrão (busca, Consultar, filtro, Adicionar); não foi reorganizada. Só front. [ok] testes 295/295, `tsc`, build. [a verificar] visual no navegador e em produção. Reversão: revert do PR.
 
+- Listas vazias e links (21/11): Tabela de Dados ("Nenhum streamer encontrado."), Campanhas ("Nenhuma campanha neste período.") e Minha Lista da Prospecção (orientação quando vazia) mostram mensagem em vez de tabela em branco; links externos com `rel="noopener noreferrer"`. Só front. [ok] testes 296/296 (1 novo), `tsc`, build. [a verificar] visual no navegador e em produção. Reversão: revert do PR. Próximo (PR separado): modais (Esc seguro, foco, padronização).
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).

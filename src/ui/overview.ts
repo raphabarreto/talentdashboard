@@ -75,7 +75,7 @@ export function renderOverview() {
         <div class="w-12 h-12 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 font-bold text-xl flex-shrink-0">${esc(s.name.charAt(0).toUpperCase())}</div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
-            <a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors truncate">${esc(s.name)}</a>
+            <a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" rel="noopener noreferrer" class="text-xl font-bold text-white hover:text-indigo-400 transition-colors truncate">${esc(s.name)}</a>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-xs text-slate-400 flex items-center gap-1">${flagHtml}</span>

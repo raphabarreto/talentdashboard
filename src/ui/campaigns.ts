@@ -95,6 +95,12 @@ export function renderCampaigns() {
     tbody.appendChild(row)
   })
 
+  if (filtered.length === 0) {
+    const empty = document.createElement('tr')
+    empty.innerHTML = '<td colspan="5" class="p-6 text-center text-slate-400">Nenhuma campanha neste período.</td>'
+    tbody.appendChild(empty)
+  }
+
   document.getElementById('monthly-total')!.textContent = fmtCurrency(grandTotal)
   document.getElementById('monthly-total-label')!.textContent = buildTotalLabel(monthVal, yearVal)
 }
