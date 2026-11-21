@@ -91,6 +91,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Filtro de meses das Campanhas fora de ordem (Novembro antes de Abril): `.sort()` sem comparação ordenava números como texto; agora `.sort((a, b) => a - b)` em meses e anos (`src/ui/campaigns.ts`). Lógica de filtragem, mês/ano selecionados e visual inalterados; só existe esse filtro de meses no dashboard. Teste novo falha sem a correção. [ok] testes 101/101, `tsc`, build. Reversão: revert do PR.
 
+- Seleção e layout (PRs #113, #114, #115, 21/11): checkbox do cabeçalho da Prospecção marca só a página atual; botão "Limpar seleção" na Tabela de Dados e na Prospecção; tabelas padronizadas (cabeçalho, moldura, altura de linha); botões de seleção da Tabela de Dados sempre visíveis (apagados sem seleção); paginação da Prospecção com total; aba ativa não muda de cor no hover. Só front. [ok] testes 295/295, `tsc`, build, deploys com sucesso. [a verificar] visual no navegador. Reversão: revert de cada PR.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).
