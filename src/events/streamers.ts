@@ -125,6 +125,8 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       return
     }
     const progress = document.getElementById('multipleProgress')!
+    const saveMultipleBtn = document.getElementById('saveMultipleBtn') as HTMLButtonElement
+    saveMultipleBtn.disabled = true // evita duplo clique e marca a janela como "gravando"
     progress.classList.remove('hidden')
     progress.textContent = `Buscando ${names.length} streamers...`
     try {
@@ -174,7 +176,7 @@ export function setupStreamersEvents({ loadData, renderAll, renderTable }: Callb
       if (lastLiveFailures) msg += `, ${lastLiveFailures} sem data de última live`
       showToast(msg)
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Erro', 'error') }
-    finally { progress.classList.add('hidden') }
+    finally { progress.classList.add('hidden'); saveMultipleBtn.disabled = false }
   })
 
   // Remove selected

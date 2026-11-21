@@ -99,6 +99,8 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Listas vazias e links (21/11): Tabela de Dados ("Nenhum streamer encontrado."), Campanhas ("Nenhuma campanha neste período.") e Minha Lista da Prospecção (orientação quando vazia) mostram mensagem em vez de tabela em branco; links externos com `rel="noopener noreferrer"`. Só front. [ok] testes 296/296 (1 novo), `tsc`, build. [a verificar] visual no navegador e em produção. Reversão: revert do PR. Próximo (PR separado): modais (Esc seguro, foco, padronização).
 
+- Modais (21/11, `src/lib/modals.ts`): Esc fecha só a janela de cima, não fecha durante gravação (aviso) e pede confirmação ao descartar texto não salvo em Campanha e Adicionar vários (usa a janela de confirmação existente); `role="dialog"`/`aria-modal`/`aria-labelledby` nos modais que não tinham; foco vai ao primeiro campo, fica preso na janela e volta ao botão de origem; fundo e altura de botões padronizados; "Buscar e Salvar" desativa o botão enquanto grava (evita duplo clique). Só front, sem mudança de dados/banco. [ok] testes 304/304 (8 novos), `tsc`, build. [a verificar] uso real (teclado: Esc, Tab) no navegador e em produção. Reversão: revert do PR.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).

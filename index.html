@@ -262,7 +262,7 @@
     </div>
 
     <!-- Modal: Adicionar Streamer(s) -->
-    <div id="addMultipleModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div id="addMultipleModal" class="modal hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-sm">
             <h3 class="text-lg font-bold text-white mb-4">Adicionar Streamer</h3>
             <textarea id="multipleNamesInput" rows="8" placeholder="Um por linha: nome ou nome - URL&#10;Ex: gaules&#10;alanzoka&#10;https://twitch.tv/yoda" class="w-full px-4 py-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></textarea>
@@ -276,7 +276,7 @@
     </div>
 
     <!-- Modal: Campanha -->
-    <div id="campaignModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div id="campaignModal" class="modal hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-md">
             <h3 id="campaignModalTitle" class="text-lg font-bold text-white mb-4">Adicionar Campanha</h3>
             <form id="campaignForm" class="space-y-4">
@@ -396,7 +396,7 @@
     </div>
 
     <!-- Modal: Lookup Streamer -->
-    <div id="lookupModal" class="modal hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div id="lookupModal" class="modal hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-md">
             <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-search mr-2"></i>Consultar na Twitch</h3>
             <div class="mb-4 space-y-3">
@@ -432,7 +432,7 @@
                         <p id="lookupHoursStreamed" class="text-white font-bold text-lg"></p>
                     </div>
                 </div>
-                <button id="lookupShortlistBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors disabled:bg-slate-700 disabled:text-slate-400 disabled:hover:bg-slate-700 disabled:cursor-not-allowed">+ Minha Lista (Prospecção)</button>
+                <button id="lookupShortlistBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors disabled:bg-slate-700 disabled:text-slate-400 disabled:hover:bg-slate-700 disabled:cursor-not-allowed">+ Minha Lista (Prospecção)</button>
                 <div id="lookupShortlistStatus" class="hidden flex items-center justify-between gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-sm">
                     <span class="text-emerald-400 font-medium"><i class="fas fa-check-circle mr-1.5"></i>Na sua Minha Lista de Prospecção</span>
                     <button id="lookupGoShortlist" class="text-emerald-300 hover:text-white font-semibold whitespace-nowrap transition-colors">Ver lista →</button>
@@ -440,10 +440,10 @@
             </div>
             <p id="lookupError" class="hidden text-red-400 text-sm mt-2"></p>
             <div id="lookupActions" class="hidden flex gap-3 mt-4">
-                <button id="lookupAddBtn" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">+ Adicionar ao Dashboard</button>
-                <button id="closeLookupModal" class="flex-1 py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>
+                <button id="lookupAddBtn" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">+ Adicionar ao Dashboard</button>
+                <button id="closeLookupModal" class="flex-1 py-3 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>
             </div>
-            <button id="closeLookupModalAlt" class="mt-4 w-full py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>
+            <button id="closeLookupModalAlt" class="mt-4 w-full py-3 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-colors">Fechar</button>
         </div>
     </div>
 
