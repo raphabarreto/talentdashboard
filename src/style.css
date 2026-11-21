@@ -29,7 +29,7 @@ button {
 }
 
 /* Seleção nos cards da Visão Geral: caixa arredondada (marcada = azul com ✓) e card marcado com borda azul. */
-.card-checkbox {
+:is(.card-checkbox, .streamer-checkbox, .prospect-check, #selectAll, #prospectSelectAll) {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
@@ -41,10 +41,10 @@ button {
   cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s;
 }
-.card-checkbox:hover { border-color: #818cf8; }
-.card-checkbox:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; }
-.card-checkbox:checked { background: #8b5cf6; border-color: #8b5cf6; }
-.card-checkbox:checked::after {
+:is(.card-checkbox, .streamer-checkbox, .prospect-check, #selectAll, #prospectSelectAll):hover { border-color: #818cf8; }
+:is(.card-checkbox, .streamer-checkbox, .prospect-check, #selectAll, #prospectSelectAll):focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; }
+:is(.card-checkbox, .streamer-checkbox, .prospect-check, #selectAll, #prospectSelectAll):checked { background: #8b5cf6; border-color: #8b5cf6; }
+:is(.card-checkbox, .streamer-checkbox, .prospect-check, #selectAll, #prospectSelectAll):checked::after {
   content: '';
   position: absolute;
   left: 0.32rem;
@@ -57,5 +57,6 @@ button {
 }
 .card-selected { border-color: #8b5cf6 !important; } /* borda roxa discreta; sem mudar fundo nem tamanho */
 
-/* Caixas de seleção padrão (tabelas e Prospecção) no tom do tema, em vez do branco do navegador. */
-input[type="checkbox"]:not(.card-checkbox) { accent-color: #6366f1; color-scheme: dark; }
+/* As caixas das tabelas (Tabela de Dados e Prospecção) usam o mesmo desenho dos cards, alinhadas ao centro da linha. */
+:is(.streamer-checkbox, .prospect-check, #selectAll, #prospectSelectAll) { display: block; vertical-align: middle; }
+
