@@ -18,6 +18,7 @@ export function setupNav() {
         l.classList.toggle('text-indigo-400', active)
         l.classList.toggle('border-transparent', !active)
         l.classList.toggle('text-slate-400', !active)
+        l.classList.toggle('hover:text-slate-300', !active) // aba ativa não muda de cor ao passar o mouse
       })
       const streamerBtns = viewId === 'overview' || viewId === 'table'
       const actionsGroup = document.getElementById('streamerActionsTemplate')!

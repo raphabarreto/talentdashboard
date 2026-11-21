@@ -77,9 +77,10 @@ export function renderTable() {
 
 export function updateSelectionButtons() {
   const count = selectedStreamers.size
-  document.getElementById('generatePdfBtn')!.classList.toggle('hidden', count === 0)
-  document.getElementById('removeSelectedBtn')!.classList.toggle('hidden', count === 0)
-  document.getElementById('clearSelectionBtn')?.classList.toggle('hidden', count === 0)
+  ;(document.getElementById('generatePdfBtn') as HTMLButtonElement).disabled = count === 0
+  ;(document.getElementById('removeSelectedBtn') as HTMLButtonElement).disabled = count === 0
+  const clearBtn = document.getElementById('clearSelectionBtn') as HTMLButtonElement | null
+  if (clearBtn) clearBtn.disabled = count === 0
   document.getElementById('selectedCount')!.textContent = String(count)
   document.getElementById('selectedCountRemove')!.textContent = String(count)
 }

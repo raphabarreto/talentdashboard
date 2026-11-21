@@ -78,7 +78,7 @@ function renderPagination(totalPages: number) {
   if (totalPages <= 1) { pag.innerHTML = ''; return }
   pag.innerHTML = `
     <button class="prospect-prev py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm" ${ps.page === 1 ? 'disabled' : ''}>← Anterior</button>
-    <span class="text-sm text-slate-400">Página <span class="text-white font-semibold">${ps.page}</span> de ${totalPages}</span>
+    <span class="text-sm text-slate-400">Página <span class="text-white font-semibold">${ps.page}</span> de ${totalPages} <span class="text-slate-500">· ${ps.results.length} streamer${ps.results.length !== 1 ? 's' : ''}</span></span>
     <button class="prospect-next py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm" ${ps.page === totalPages ? 'disabled' : ''}>Próxima →</button>
   `
   pag.querySelector('.prospect-prev')?.addEventListener('click', () => { ps.page--; renderResults() })
