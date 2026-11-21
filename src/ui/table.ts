@@ -81,8 +81,9 @@ export function updateSelectionButtons() {
   ;(document.getElementById('removeSelectedBtn') as HTMLButtonElement).disabled = count === 0
   const clearBtn = document.getElementById('clearSelectionBtn') as HTMLButtonElement | null
   if (clearBtn) clearBtn.disabled = count === 0
-  // Os botões só aparecem com seleção; a linha mantém a altura (invisible) para a tabela não pular.
-  document.getElementById('tableSelectionBar')?.classList.toggle('invisible', count === 0)
+  // Os botões aparecem ao lado de "Adicionar", na linha dos filtros, só com seleção (sem reservar espaço).
+  document.getElementById('tableSelectionBar')?.classList.toggle('hidden', count === 0)
+  document.getElementById('tableSelectionBar')?.classList.toggle('flex', count > 0)
   document.getElementById('selectedCount')!.textContent = String(count)
   document.getElementById('selectedCountRemove')!.textContent = String(count)
 }
