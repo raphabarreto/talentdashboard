@@ -5,6 +5,7 @@ import { DEBOUNCE_SEARCH_MS } from '../constants'
 import { renderOverview } from '../ui/overview'
 import { renderTable } from '../ui/table'
 import { renderCampaigns } from '../ui/campaigns'
+import { handleEscape, setupModals } from '../lib/modals'
 
 export function setupNav() {
   document.querySelectorAll('.nav-link').forEach(link => {
@@ -73,10 +74,11 @@ export function setupFiltersAndSort() {
 }
 
 export function setupGlobalEvents() {
+  setupModals()
   // Close modals on Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'))
+      void handleEscape() // fecha só a janela de cima; não fecha durante gravação e pergunta se há texto não salvo
       // Fechar dropdowns também
       document.querySelectorAll('.dropdown-menu:not(.hidden)').forEach(d => d.classList.add('hidden'))
     }
