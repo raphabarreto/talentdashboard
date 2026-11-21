@@ -101,7 +101,8 @@ export function renderCampaigns() {
     tbody.appendChild(empty)
   }
 
-  document.getElementById('monthly-total')!.textContent = fmtCurrency(grandTotal)
+  // Sem campanhas ou sem nada lançado, "R$ 0,00" parece erro: diz o que está acontecendo.
+  document.getElementById('monthly-total')!.textContent = grandTotal > 0 ? fmtCurrency(grandTotal) : (filtered.length ? 'Nenhum valor lançado' : '—')
   document.getElementById('monthly-total-label')!.textContent = buildTotalLabel(monthVal, yearVal)
 }
 

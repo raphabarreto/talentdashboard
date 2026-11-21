@@ -17,8 +17,8 @@ beforeEach(() => {
 const rows = () => [...document.querySelectorAll('#table-body tr')]
 
 describe('Tabela de Dados: coluna Links', () => {
-  it('cada linha tem: seleção, nome, média, links e ações (5 colunas)', () => {
-    rows().forEach(r => expect(r.querySelectorAll('td')).toHaveLength(5))
+  it('cada linha tem: seleção, nome, média, pico, horas em live, links e ações (7 colunas)', () => {
+    rows().forEach(r => expect(r.querySelectorAll('td')).toHaveLength(7))
   })
 
   it('ícone da Twitch abre o canal certo de cada streamer, em nova aba', () => {
@@ -107,5 +107,15 @@ describe('Tabela de Dados: página e seleção', () => {
 
   it('não existe mais o botão de exportar CSV', () => {
     expect(document.getElementById('exportCsvBtn')).toBeNull()
+  })
+})
+
+describe('Tabela de Dados: Pico e Horas em live', () => {
+  it('mostram os valores de cada streamer nas colunas novas', () => {
+    setStreamers([{ ...streamer('1', 'Toniki', 2387), peak_viewers: 8381, hours_streamed: 94 } as Streamer])
+    renderTable()
+    const cells = [...document.querySelectorAll('#table-body tr:first-child td')].map(td => td.textContent!.trim())
+    expect(cells[3]).toBe('8.381')
+    expect(cells[4]).toBe('94')
   })
 })
