@@ -1,6 +1,9 @@
 import { registerStreamer, type PreparedStreamer } from '../../lib/registration'
 import { streamers } from '../../state'
 import { showToast, fmt } from '../../utils'
+
+// Canal sem histórico vem zerado: mostrar "—" em vez de 0, que parece erro.
+const fmtStat = (n: number) => (n > 0 ? fmt(n) : '—')
 import { addToShortlist, isInShortlist, prospectFromLookup } from '../../ui/prospecting/shortlist'
 import { renderShortlist } from '../../ui/prospecting/render'
 
@@ -92,10 +95,10 @@ export function setupLookupModal(
       const link = document.getElementById('lookupTwitchLink') as HTMLAnchorElement
       link.href = `https://twitch.tv/${user.login}`
       link.textContent = `twitch.tv/${user.login}`
-      document.getElementById('lookupAvgViewers')!.textContent = fmt(streamerData.avg_viewers)
-      document.getElementById('lookupPeakViewers')!.textContent = fmt(streamerData.peak_viewers)
-      document.getElementById('lookupHoursWatched')!.textContent = fmt(streamerData.hours_watched)
-      document.getElementById('lookupHoursStreamed')!.textContent = fmt(streamerData.hours_streamed)
+      document.getElementById('lookupAvgViewers')!.textContent = fmtStat(streamerData.avg_viewers)
+      document.getElementById('lookupPeakViewers')!.textContent = fmtStat(streamerData.peak_viewers)
+      document.getElementById('lookupHoursWatched')!.textContent = fmtStat(streamerData.hours_watched)
+      document.getElementById('lookupHoursStreamed')!.textContent = fmtStat(streamerData.hours_streamed)
       setShortlistBtn(isInShortlist(user.login))
       document.getElementById('lookupResult')!.classList.remove('hidden')
       
