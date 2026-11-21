@@ -4,7 +4,7 @@ export function prospectingHtml(): string {
       <div>
         <div class="flex flex-wrap gap-3 items-end">
           <div class="relative">
-            <input id="prospectCategoryInput" type="text" placeholder="Categoria (ex.: VALORANT)" aria-label="Categoria" class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[260px]">
+            <input id="prospectCategoryInput" type="text" placeholder="Categoria (ex.: VALORANT)" aria-label="Categoria" class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[260px]">
             <div id="prospectCategorySuggestions" class="absolute z-50 mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg shadow-lg hidden max-h-48 overflow-y-auto"></div>
           </div>
           <div>
@@ -15,7 +15,7 @@ export function prospectingHtml(): string {
             </select>
           </div>
           <div>
-            <input id="prospectMinViewers" type="number" min="0" placeholder="Viewers mín." aria-label="Viewers mínimos" class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[130px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+            <input id="prospectMinViewers" type="number" min="0" placeholder="Viewers mín." aria-label="Viewers mínimos" class="h-10 px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[130px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
           </div>
           <button id="prospectSearchBtn" class="h-10 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-search text-xs"></i>Buscar</button>
         </div>
@@ -54,7 +54,7 @@ export function prospectingHtml(): string {
             <button id="manualAddBtn" class="h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 rounded-r-lg text-sm transition-colors cursor-pointer" title="Adicionar à Minha Lista"><i class="fas fa-plus"></i></button>
           </div>
           <button id="copyListBtn" class="h-10 flex items-center gap-2 border border-slate-600 text-slate-200 hover:bg-slate-700 font-semibold px-4 rounded-lg text-sm transition-colors cursor-pointer"><i class="fas fa-copy text-xs"></i>Copiar Lista</button>
-          <button id="clearListBtn" class="h-10 flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 rounded-lg text-sm transition-colors cursor-pointer" title="Apaga todos os streamers da Minha Lista"><i class="fas fa-trash text-xs"></i>Limpar lista</button>
+          <button id="clearListBtn" class="h-10 flex items-center gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/30 px-3 rounded-lg text-sm transition-colors cursor-pointer" title="Apaga todos os streamers da Minha Lista"><i class="fas fa-trash text-xs"></i>Limpar lista</button>
         </div>
         <div class="rounded-lg border border-slate-700 bg-slate-800">
           <div class="overflow-x-auto">

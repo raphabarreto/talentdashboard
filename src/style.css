@@ -56,3 +56,6 @@ button {
   transform: rotate(45deg);
 }
 .card-selected { border-color: #8b5cf6 !important; } /* borda roxa discreta; sem mudar fundo nem tamanho */
+
+/* Caixas de seleção padrão (tabelas e Prospecção) no tom do tema, em vez do branco do navegador. */
+input[type="checkbox"]:not(.card-checkbox) { accent-color: #6366f1; color-scheme: dark; }
