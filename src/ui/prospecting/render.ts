@@ -1,5 +1,5 @@
 import { escapeHtml as esc } from '../../lib/escape'
-import { PROSPECT_PAGE_SIZE, PROSPECT_FETCH_LIMIT } from '../../constants'
+import { PROSPECT_PAGE_SIZE, PROSPECT_FETCH_LIMIT, SHORTLIST_PAGE_SIZE } from '../../constants'
 import { shortlist } from './shortlist'
 import { ps } from './state'
 import type { ProspectStream } from './types'
@@ -110,12 +110,16 @@ export function renderShortlist() {
   section.classList.remove('hidden') // Always visible
   document.getElementById('shortlistCount')!.textContent = String(shortlist.length)
 
+  const totalPages = Math.ceil(shortlist.length / SHORTLIST_PAGE_SIZE)
+  if (ps.listPage > totalPages) ps.listPage = Math.max(1, totalPages)
+  renderShortlistPagination(totalPages)
   if (!shortlist.length) {
     body.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-400">Sua lista está vazia. Marque streamers nos resultados ou adicione pelo nome na Twitch.</td></tr>'
     return
   }
 
-  body.innerHTML = shortlist.map(r => `
+  const paged = shortlist.slice((ps.listPage - 1) * SHORTLIST_PAGE_SIZE, ps.listPage * SHORTLIST_PAGE_SIZE)
+  body.innerHTML = paged.map(r => `
     <tr class="hover:bg-slate-700/30 transition-colors">
       <td class="p-3 truncate">
         <a href="https://www.twitch.tv/${esc(r.user_login)}/about" target="_blank" rel="noopener" class="text-white hover:text-indigo-400 font-semibold" title="Abrir a página Sobre do canal">${esc(r.user_name)}</a>
@@ -128,4 +132,18 @@ export function renderShortlist() {
     </tr>
   `).join('')
 
+}
+
+// Paginação da Minha Lista (mesmo visual dos resultados); copiar e limpar continuam valendo para a lista inteira.
+function renderShortlistPagination(totalPages: number) {
+  const pag = document.getElementById('shortlistPagination')
+  if (!pag) return
+  if (totalPages <= 1) { pag.innerHTML = ''; return }
+  pag.innerHTML = `
+    <button class="shortlist-prev py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm" ${ps.listPage === 1 ? 'disabled' : ''}>← Anterior</button>
+    <span class="text-sm text-slate-400">Página <span class="text-white font-semibold">${ps.listPage}</span> de ${totalPages} <span class="text-slate-500">· ${shortlist.length} streamers</span></span>
+    <button class="shortlist-next py-2 px-4 bg-slate-700 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm" ${ps.listPage === totalPages ? 'disabled' : ''}>Próxima →</button>
+  `
+  pag.querySelector('.shortlist-prev')?.addEventListener('click', () => { ps.listPage--; renderShortlist() })
+  pag.querySelector('.shortlist-next')?.addEventListener('click', () => { ps.listPage++; renderShortlist() })
 }
