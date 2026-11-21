@@ -40,6 +40,8 @@ export function renderTable() {
         </div>
       </td>
       <td class="p-3">${fmt(s.avg_viewers)}</td>
+      <td class="p-3">${fmt(s.peak_viewers)}</td>
+      <td class="p-3">${fmt(s.hours_streamed)}</td>
       <td class="p-3">
         <div class="flex items-center gap-2">
           <a href="https://twitch.tv/${esc(s.name.toLowerCase())}" target="_blank" rel="noopener noreferrer" class="table-link-twitch inline-flex items-center justify-center w-9 h-9 -my-1 rounded-md text-indigo-400 hover:text-indigo-300 hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors" title="Abrir Twitch" aria-label="Abrir Twitch de ${esc(s.name)}"><i class="fab fa-twitch" aria-hidden="true"></i></a>
@@ -53,7 +55,7 @@ export function renderTable() {
 
   if (paged.length === 0) {
     const empty = document.createElement('tr')
-    empty.innerHTML = '<td colspan="5" class="p-6 text-center text-slate-400">Nenhum streamer encontrado.</td>'
+    empty.innerHTML = '<td colspan="7" class="p-6 text-center text-slate-400">Nenhum streamer encontrado.</td>'
     fragment.appendChild(empty)
   }
 

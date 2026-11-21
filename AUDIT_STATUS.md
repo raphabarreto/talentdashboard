@@ -103,6 +103,9 @@ Legenda: [ok] confirmado no repo/testes · [usuário] informado pelo usuário ·
 
 - Minha Lista (Prospecção), paginação (21/11): 10 por página (`SHORTLIST_PAGE_SIZE`) com "Página X de N · total" no mesmo visual dos resultados; contador do título, "Copiar Lista" e "Limpar lista" continuam valendo para a lista inteira; página se ajusta ao remover itens. Só front, sem mudança de dados. [ok] testes 308/308 (4 novos), `tsc`, build. [a verificar] visual no navegador e em produção. Reversão: revert do PR.
 
+- Tabela de Dados, colunas Pico e Horas em live (21/11): duas colunas novas, ordenáveis (mesmo comportamento e seta da Média; `data-sort` `peak_viewers` e `hours_streamed`), usando campos que já vinham do banco; estrutura agora Seleção | Nome | Média | Pico | Horas em live | Links | Ações. Campanhas: o total do mês mostra "Nenhum valor lançado" (campanhas sem valor lançado) ou "—" (nenhuma campanha) em vez de "R$ 0,00". Só front, sem mudança de dados. [ok] testes 309/309 (1 novo), `tsc`, build. [a verificar] visual no navegador e em produção. Reversão: revert do PR.
+- Não feito (exige autorização própria): foto do streamer nos cards (o banco não guarda a foto; exigiria nova coluna) e teste de restauração do backup em outro projeto Supabase.
+
 ## Pendente (por prioridade)
 Baixa
 1. [feito] Zod das functions unificado em 4.6.7 (PR #39; deploy de functions ok em 03/11; [usuário] cadastro de streamer ok em produção com Zod 4 (03/11)) (igual ao front). `deno.json` de `collect-snapshots` e `consolidate-daily` MANTIDOS: o `supabase/config.toml` os usa como `import_map` (remover quebrou o deploy; restaurados). [ok] testes 51/51, `tsc`, build. Reversão: revert do PR (redeploy automático).

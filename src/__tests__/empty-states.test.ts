@@ -17,5 +17,6 @@ describe('Tabela de Dados sem resultado', () => {
     const rows = document.querySelectorAll('#table-body tr')
     expect(rows).toHaveLength(1)
     expect(rows[0].textContent).toContain('Nenhum streamer encontrado.')
+    expect(rows[0].querySelector('td')!.getAttribute('colspan')).toBe('7')
   })
 })
