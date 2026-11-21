@@ -72,14 +72,14 @@ export function renderCampaigns() {
     const row = document.createElement('tr')
     row.className = 'hover:bg-slate-700/50 transition-colors'
     row.innerHTML = `
-      <td class="p-4">${esc(c.company)}</td>
-      <td class="p-4 whitespace-nowrap">${formatPeriod(c.start_date, c.end_date, false)}</td>
-      <td class="p-4 font-semibold">
+      <td class="p-3">${esc(c.company)}</td>
+      <td class="p-3 whitespace-nowrap">${formatPeriod(c.start_date, c.end_date, false)}</td>
+      <td class="p-3 font-semibold">
         ${!isLaunched ? '<span class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1 rounded text-sm font-semibold bg-amber-500/20 text-amber-400">Não lançado</span>' : fmtCurrency(myCommission)}
         ${c.payment_date ? `<span class="block text-xs font-normal text-slate-500 mt-0.5">Pagamento: ${formatPaymentShort(c.payment_date, c.start_date)}</span>` : ''}
       </td>
-      <td class="p-4">${total > 0 ? `<span class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap px-3 py-1 rounded text-sm font-semibold bg-emerald-500/20 text-emerald-400">${confirmed} confirmado${confirmed !== 1 ? 's' : ''}</span>` : '—'}</td>
-      <td class="p-4">
+      <td class="p-3">${total > 0 ? `<span class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap px-3 py-1 rounded text-sm font-semibold bg-emerald-500/20 text-emerald-400">${confirmed} confirmado${confirmed !== 1 ? 's' : ''}</span>` : '—'}</td>
+      <td class="p-3">
         <div class="flex items-center gap-2">
           <button class="details-campaign-btn h-8 px-3 inline-flex items-center gap-1.5 rounded-md bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 hover:text-white text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" data-id="${c.id}" title="Gerenciar streamers da campanha" aria-label="Gerenciar streamers da campanha ${esc(c.company)}"><i class="fas fa-users text-xs" aria-hidden="true"></i>Gerenciar</button>
           <button class="edit-campaign-btn w-8 h-8 inline-flex items-center justify-center rounded-md text-amber-500 hover:text-amber-400 hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" data-id="${c.id}" title="Editar" aria-label="Editar campanha ${esc(c.company)}"><i class="fas fa-pen" aria-hidden="true"></i></button>
